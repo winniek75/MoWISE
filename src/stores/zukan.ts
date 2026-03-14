@@ -1,6 +1,15 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { supabase, isOfflineMode } from '@/lib/supabase'
+
+// デモ用パターンデータ
+const DEMO_PATTERNS = [
+  { pattern_no: 'P001', pattern_text: 'S is ～', area: 'area1' },
+  { pattern_no: 'P002', pattern_text: 'This is ～', area: 'area1' },
+  { pattern_no: 'P003', pattern_text: 'Nice to meet you', area: 'area1' },
+  { pattern_no: 'P004', pattern_text: 'I like ～', area: 'area1' },
+  { pattern_no: 'P005', pattern_text: 'I want ～', area: 'area1' },
+]
 
 export const useZukanStore = defineStore('zukan', () => {
   const patterns  = ref<any[]>([])
@@ -8,6 +17,11 @@ export const useZukanStore = defineStore('zukan', () => {
   const loading   = ref(false)
 
   async function fetchAll() {
+    if (isOfflineMode) {
+      patterns.value = DEMO_PATTERNS
+      loading.value = false
+      return
+    }
     loading.value = true
     const { data: { user } } = await supabase.auth.getUser()
 

@@ -160,9 +160,19 @@ onMounted(async () => {
         <span class="text-xl">⚔️</span>
         <span class="text-xs font-title">練習</span>
       </button>
-      <button class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-colors">
+      <button
+        class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-colors"
+        @click="router.push({ name: 'Zukan' })"
+      >
         <span class="text-xl">📖</span>
         <span class="text-xs font-title">図鑑</span>
+      </button>
+      <button
+        class="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-colors"
+        @click="router.push({ name: 'Settings' })"
+      >
+        <span class="text-xl">⚙️</span>
+        <span class="text-xs font-title">設定</span>
       </button>
       <button
         v-if="auth.isTeacher"
