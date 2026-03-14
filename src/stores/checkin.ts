@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { supabase, isOfflineMode } from '@/lib/supabase'
 import { useAuthStore } from './auth'
 
 // ─── Types ────────────────────────────────────────────────────
@@ -96,7 +96,7 @@ export const useCheckinStore = defineStore('checkin', () => {
 
   /** 朝チェックイン保存 */
   async function saveMorningCheckin(payload: SaveMorningPayload) {
-    if (!authStore.user) return
+    if (!authStore.user || isOfflineMode) return
     isSaving.value = true
     error.value = null
     try {
@@ -125,7 +125,7 @@ export const useCheckinStore = defineStore('checkin', () => {
 
   /** 夜チェックイン保存 */
   async function saveEveningCheckin(payload: SaveEveningPayload) {
-    if (!authStore.user) return
+    if (!authStore.user || isOfflineMode) return
     isSaving.value = true
     error.value = null
     try {
@@ -154,7 +154,7 @@ export const useCheckinStore = defineStore('checkin', () => {
 
   /** 今日のチェックイン状態をDBから取得 */
   async function fetchTodayCheckins() {
-    if (!authStore.user) return
+    if (!authStore.user || isOfflineMode) return
     try {
       const { data, error: sbError } = await supabase
         .from('checkins')
@@ -174,7 +174,7 @@ export const useCheckinStore = defineStore('checkin', () => {
 
   /** ストリーク日数取得 */
   async function fetchStreakDays() {
-    if (!authStore.user) {
+    if (!authStore.user || isOfflineMode) {
       streakDays.value = 0
       return
     }
@@ -217,7 +217,7 @@ export const useCheckinStore = defineStore('checkin', () => {
 
   /** 過去チェックイン履歴取得（週次ビュー用） */
   async function fetchRecentCheckins(days = 14) {
-    if (!authStore.user) return []
+    if (!authStore.user || isOfflineMode) return []
     try {
       const from = new Date()
       from.setDate(from.getDate() - days)

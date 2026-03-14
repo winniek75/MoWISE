@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { supabase, isOfflineMode } from '@/lib/supabase'
 import { useAuthStore } from './auth'
 import type { MorningFeelingId, EveningFeelingId } from './checkin'
 
@@ -119,7 +119,7 @@ export const useMowiStore = defineStore('mowi', () => {
 
   /** DBからMowi状態を取得 */
   async function fetchMowiState() {
-    if (!authStore.user) return
+    if (!authStore.user || isOfflineMode) return
     isLoading.value = true
     try {
       const { data, error } = await supabase
@@ -254,7 +254,7 @@ export const useMowiStore = defineStore('mowi', () => {
 
   /** Supabase upsert */
   async function upsertMowiState() {
-    if (!authStore.user) return
+    if (!authStore.user || isOfflineMode) return
     try {
       await supabase
         .from('mowi_state')

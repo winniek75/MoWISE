@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCheckinStore } from '@/stores/checkin'
 import { useSessionStore } from '@/stores/session'
+import { isOfflineMode } from '@/lib/supabase'
 
 
 const router = createRouter({
@@ -60,7 +61,7 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   // ホーム到達時：朝の時間帯（04:00〜13:59）かつ朝チェックイン未完了なら朝チェックインへ
-  if (to.name === 'Home' && auth.isAuthenticated) {
+  if (to.name === 'Home' && auth.isAuthenticated && !isOfflineMode) {
     const checkin = useCheckinStore()
     await checkin.fetchTodayCheckins()
     const hour = new Date().getHours()
