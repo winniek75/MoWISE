@@ -3,7 +3,7 @@
 // ============================================================
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '@/lib/supabase'
+import { supabase, isOfflineMode } from '@/lib/supabase'
 import type { UserRow, UserRole } from '@/types/database'
 import type { User, Session } from '@supabase/supabase-js'
 
@@ -30,6 +30,22 @@ export const useAuthStore = defineStore('auth', () => {
     if (_initialized) return
     _initialized = true
     loading.value = true
+
+    // デモモード：Supabase未接続時はダミーユーザーで即認証
+    if (isOfflineMode) {
+      const demoUser = { id: 'demo-user', email: 'demo@mowise.app' } as User
+      authUser.value = demoUser
+      session.value = { user: demoUser, access_token: 'demo', refresh_token: 'demo' } as Session
+      userRow.value = {
+        id: 'demo-user',
+        display_name: 'Demo User',
+        role: 'student',
+        avatar_url: null,
+      } as UserRow
+      loading.value = false
+      return
+    }
+
     try {
       const { data } = await supabase.auth.getSession()
       session.value  = data.session

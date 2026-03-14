@@ -4,9 +4,11 @@ import type { Database } from '@/types/database'
 const supabaseUrl  = import.meta.env.VITE_SUPABASE_URL  as string | undefined
 const supabaseAnon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
 
-if (!supabaseUrl || !supabaseAnon) {
+export const isOfflineMode = !supabaseUrl || !supabaseAnon
+
+if (isOfflineMode) {
   console.warn(
-    '[MoWISE] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY が未設定です。Supabase機能は無効になります。'
+    '[MoWISE] VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY が未設定です。デモモードで起動します。'
   )
 }
 
