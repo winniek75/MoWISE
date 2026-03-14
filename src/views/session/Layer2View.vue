@@ -36,7 +36,7 @@
     </div>
 
     <!-- 問題エリア -->
-    <div class="question-area">
+    <div v-if="currentQ" class="question-area">
       <!-- 日本語プロンプト -->
       <p class="prompt-ja">{{ currentQ.promptJa }}</p>
 

@@ -178,8 +178,8 @@ const showToast = ref(false)
 let autoTimer: ReturnType<typeof setTimeout> | null = null
 
 // ─── computed ──────────────────────────────────────────
-const morningFeeling = computed(() => checkinStore.todayMorningFeeling as keyof typeof MORNING_MAP | null)
-const eveningFeeling = computed(() => checkinStore.todayEveningFeeling as keyof typeof EVENING_MAP | null)
+const morningFeeling = computed(() => (checkinStore.todayMorning?.feeling ?? null) as keyof typeof MORNING_MAP | null)
+const eveningFeeling = computed(() => (checkinStore.todayEvening?.feeling ?? null) as keyof typeof EVENING_MAP | null)
 
 const morningChoice = computed(() =>
   morningFeeling.value ? MORNING_MAP[morningFeeling.value] : null
@@ -243,7 +243,7 @@ function goToSaveCard() {
 }
 
 function goHome() {
-  router.push({ name: 'home' })
+  router.push({ name: 'Home' })
 }
 
 // ─── lifecycle ────────────────────────────────────────
