@@ -171,11 +171,21 @@ export const useAuthStore = defineStore('auth', () => {
     userRow.value = data as UserRow
   }
 
+  /** デモモード：ロール切替 */
+  function toggleDemoRole() {
+    if (!isOfflineMode || !userRow.value) return
+    userRow.value = {
+      ...userRow.value,
+      role: userRow.value.role === 'student' ? 'teacher' : 'student',
+    } as UserRow
+  }
+
   return {
     session, authUser, userRow, loading, error,
     isAuthenticated, isTeacher, isStudent, userId, displayName,
     // 新ストア（checkin.ts / mowi.ts）が authStore.user でアクセスできるようエイリアス
     user: authUser,
     initialize, fetchUserRow, signUpWithEmail, signInWithEmail, signInWithGoogle, signOut, updateProfile,
+    toggleDemoRole,
   }
 })

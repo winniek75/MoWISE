@@ -113,6 +113,26 @@
         </div>
       </section>
 
+      <!-- デモモード切替（オフライン時のみ） -->
+      <section v-if="isDemoMode">
+        <p class="text-xs font-bold text-gray-400 mb-2 px-1">デモモード</p>
+        <div class="bg-white rounded-2xl shadow-sm">
+          <div class="px-4 py-3 flex items-center justify-between">
+            <div>
+              <p class="text-sm font-bold text-gray-900">ロール切替</p>
+              <p class="text-xs text-gray-400">現在: <span class="font-bold" :class="authStore.isTeacher ? 'text-purple-600' : 'text-blue-600'">{{ authStore.isTeacher ? 'Teacher' : 'Student' }}</span></p>
+            </div>
+            <button
+              @click="authStore.toggleDemoRole()"
+              class="px-4 py-2 rounded-full text-sm font-bold transition-colors"
+              :class="authStore.isTeacher ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'"
+            >
+              {{ authStore.isTeacher ? 'Student に切替' : 'Teacher に切替' }}
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- ログアウト -->
       <section>
         <div class="bg-white rounded-2xl shadow-sm">
@@ -129,9 +149,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '@/lib/supabase'
+import { supabase, isOfflineMode } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/auth'
 
-const router   = useRouter()
+const router    = useRouter()
+const authStore = useAuthStore()
+const isDemoMode = isOfflineMode
 const user     = ref<any>(null)
 const settings = ref({
   notify_morning:      true,
@@ -143,6 +166,10 @@ const settings = ref({
 })
 
 onMounted(async () => {
+  if (isOfflineMode) {
+    user.value = authStore.userRow
+    return
+  }
   const { data: { user: u } } = await supabase.auth.getUser()
   const { data } = await supabase.from('users').select('*').eq('id', u!.id).single()
   user.value = data
@@ -157,6 +184,7 @@ onMounted(async () => {
 })
 
 async function save() {
+  if (isOfflineMode) return
   const { data: { user: u } } = await supabase.auth.getUser()
   await supabase.from('users').update(settings.value).eq('id', u!.id)
 }
