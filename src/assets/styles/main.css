@@ -1,0 +1,145 @@
+/* ============================================================
+   MoWISE Global Styles
+   ============================================================ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Base ─────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --color-brand-primary:   #4A7AFF;
+    --color-brand-secondary: #9B5CF6;
+    --color-bg-dark:         #0d0d1a;
+    --color-bg-surface:      #141428;
+    --color-bg-card:         #1e1e3a;
+    --color-correct:         #4CAF50;
+    --color-wrong:           #F44336;
+    --color-star-active:     #FFD700;
+    --color-combo-low:       #64B5F6;
+    --color-combo-mid:       #9C27B0;
+    --color-combo-high:      #FF9800;
+
+    --text-pattern: 22px;
+    --text-mowi:    16px;
+  }
+
+  html, body {
+    @apply bg-bg-dark text-white;
+    font-family: 'Noto Sans JP', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    /* iOS Safari セーフエリア対応 */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ─── Components ────────────────────────────────────────────── */
+@layer components {
+  /* Mowi オーブ */
+  .mowi-orb {
+    @apply rounded-full relative;
+    background: radial-gradient(circle at 35% 35%, #c8b8ff, #6040c0 60%, #1a0a4a);
+  }
+
+  .mowi-orb.grayscale {
+    filter: grayscale(100%) brightness(0.6);
+  }
+
+  .mowi-orb.glow-low {
+    box-shadow: 0 0 20px 4px rgba(74, 122, 255, 0.4);
+  }
+
+  .mowi-orb.glow-mid {
+    box-shadow: 0 0 30px 8px rgba(155, 92, 246, 0.6);
+  }
+
+  .mowi-orb.glow-high {
+    box-shadow: 0 0 40px 12px rgba(255, 152, 0, 0.7);
+  }
+
+  .mowi-orb.glow-rainbow {
+    animation: rainbowGlow 1s linear infinite;
+  }
+
+  /* カード */
+  .mowisse-card {
+    @apply bg-bg-card rounded-2xl p-4 border border-white/10;
+  }
+
+  /* ボタン */
+  .btn-primary {
+    @apply bg-brand-primary text-white font-semibold rounded-xl px-6 py-3
+           active:scale-95 transition-transform duration-100;
+  }
+
+  .btn-outline {
+    @apply border border-brand-primary text-brand-primary font-semibold rounded-xl px-6 py-3
+           active:scale-95 transition-transform duration-100;
+  }
+
+  /* チェックイン選択肢ボタン */
+  .checkin-choice {
+    @apply mowisse-card flex items-center gap-3 w-full text-left
+           hover:border-brand-primary/50 active:scale-[0.98]
+           transition-all duration-150 cursor-pointer;
+  }
+
+  /* Layer 3 タイル */
+  .tile-btn {
+    @apply bg-bg-surface border border-white/20 rounded-xl px-4 py-2
+           font-title font-semibold text-white
+           active:scale-95 transition-all duration-100 animate-tile-enter;
+  }
+
+  .tile-btn.selected {
+    @apply border-brand-primary bg-brand-primary/20;
+  }
+
+  /* コンボゲージ */
+  .combo-gauge-fill {
+    @apply h-full rounded-full transition-all duration-300;
+    background: linear-gradient(90deg, var(--color-brand-primary), var(--color-brand-secondary));
+  }
+
+  /* Mowiセリフ */
+  .mowi-quote {
+    font-size: var(--text-mowi);
+    @apply text-white/80 italic leading-relaxed;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* パターンテキスト */
+  .pattern-text {
+    font-size: var(--text-pattern);
+    @apply font-bold text-white font-title tracking-wide;
+  }
+}
+
+/* ─── Utilities ─────────────────────────────────────────────── */
+@layer utilities {
+  .safe-pb {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .safe-pt {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+}
+
+/* ─── Keyframes ─────────────────────────────────────────────── */
+@keyframes rainbowGlow {
+  0%   { box-shadow: 0 0 40px 12px #FF0080; }
+  17%  { box-shadow: 0 0 40px 12px #FF8C00; }
+  33%  { box-shadow: 0 0 40px 12px #FFD700; }
+  50%  { box-shadow: 0 0 40px 12px #00FF88; }
+  67%  { box-shadow: 0 0 40px 12px #00BFFF; }
+  83%  { box-shadow: 0 0 40px 12px #8B5CF6; }
+  100% { box-shadow: 0 0 40px 12px #FF0080; }
+}
