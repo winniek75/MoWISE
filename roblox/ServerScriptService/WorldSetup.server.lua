@@ -684,8 +684,26 @@ local function setupZone2()
 end
 
 ------------------------------------------------------------------------
--- 実行
+-- API連動: MoWISERemotes フォルダ作成（他スクリプトより先に実行）
 ------------------------------------------------------------------------
+local function setupRemotes()
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	if ReplicatedStorage:FindFirstChild("MoWISERemotes") then
+		print("[MoWISE] MoWISERemotes already exists, skipping")
+		return
+	end
+
+	local remotes = Instance.new("Folder")
+	remotes.Name   = "MoWISERemotes"
+	remotes.Parent = ReplicatedStorage
+
+	print("[MoWISE] MoWISERemotes created in ReplicatedStorage")
+end
+
+------------------------------------------------------------------------
+-- 実行（MoWISERemotes を最初に作成）
+------------------------------------------------------------------------
+setupRemotes()
 setupLighting()
 setupTerrain()
 setupRuins()

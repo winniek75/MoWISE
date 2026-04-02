@@ -6,7 +6,7 @@ local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- SyncService モジュール読み込み
-local SyncService = require(script.Parent:WaitForChild("SyncService.module"))
+local SyncService = require(script.Parent:WaitForChild("SyncService"))
 
 local remotes = ReplicatedStorage:WaitForChild("MoWISERemotes", 30)
 if not remotes then

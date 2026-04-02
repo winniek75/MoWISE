@@ -44,9 +44,10 @@ local function getShuffledQuestion(qData)
 end
 
 -- 他スクリプトが作る BindableEvent を事前キャッシュ（起動順に依存しない）
-local giveMaterial    = nil  -- MaterialSystem が作成
-local enableClearance = nil  -- ClearanceSystem が作成
-local mowiReaction    = nil  -- MowiSpawner が作成
+local giveMaterial         = nil  -- MaterialSystem が作成
+local enableClearance      = nil  -- ClearanceSystem が作成
+local mowiReaction         = nil  -- MowiSpawner が作成
+local mowiEmotionTrigger   = nil  -- MowiSpawner が作成（ワールドMowi感情演出用）
 
 task.spawn(function()
     giveMaterial    = remotes:WaitForChild("GiveMaterial", 30)
@@ -59,6 +60,10 @@ end)
 task.spawn(function()
     mowiReaction    = remotes:WaitForChild("MowiReaction", 30)
     if not mowiReaction then warn("[MoWISE] MowiReaction not found") end
+end)
+task.spawn(function()
+    mowiEmotionTrigger = remotes:WaitForChild("MowiEmotionTrigger", 30)
+    if not mowiEmotionTrigger then warn("[MoWISE] MowiEmotionTrigger not found") end
 end)
 
 -- プレイヤーのセッション管理
@@ -559,6 +564,7 @@ onAnswered.OnServerEvent:Connect(function(player, selectedTiles)
         if isCorrect then
             zs.score = zs.score + 1
             if mowiReaction then mowiReaction:Fire(player, "correct") end
+            if mowiEmotionTrigger then mowiEmotionTrigger:Fire("joy") end
             -- ZoneSystem に正解通知
             if patternCorrectBE then
                 patternCorrectBE:Fire(player, zs.zoneId, true)
@@ -571,6 +577,7 @@ onAnswered.OnServerEvent:Connect(function(player, selectedTiles)
             if enableClearance then enableClearance:Fire(player) end
         else
             if mowiReaction then mowiReaction:Fire(player, "incorrect") end
+            if mowiEmotionTrigger then mowiEmotionTrigger:Fire("sad") end
             if patternCorrectBE then
                 patternCorrectBE:Fire(player, zs.zoneId, false)
             end
@@ -612,8 +619,10 @@ onAnswered.OnServerEvent:Connect(function(player, selectedTiles)
             enableClearance:Fire(player)
         end
         if mowiReaction then mowiReaction:Fire(player, "correct") end
+        if mowiEmotionTrigger then mowiEmotionTrigger:Fire("joy") end
     else
         if mowiReaction then mowiReaction:Fire(player, "incorrect") end
+        if mowiEmotionTrigger then mowiEmotionTrigger:Fire("sad") end
     end
 
     answerResult:FireClient(player, isCorrect, q.answer)
@@ -629,6 +638,53 @@ onAnswered.OnServerEvent:Connect(function(player, selectedTiles)
         sessions[player.UserId] = nil
     end
 end)
+
+------------------------------------------------------------------------
+-- ★UP 時の即時 sync-push（差分のみ）
+------------------------------------------------------------------------
+local function pushStarUp(player, patternNo, newStar, delta)
+    local remoteFolder = ReplicatedStorage:FindFirstChild("MoWISERemotes")
+    if not remoteFolder then return end
+    local getSyncBF = remoteFolder:FindFirstChild("GetPlayerSync")
+    if not getSyncBF then return end
+
+    local sync = getSyncBF:Invoke(player.UserId)
+    if not sync or not sync.linked then return end
+
+    local pushData = {
+        session = nil,  -- セッション全体ではなく差分のみ
+        pattern_updates = {
+            {
+                pattern_no            = patternNo,
+                flash_output_correct  = 5,
+                flash_output_total    = 5,
+                npc_mission_completed = false,
+                mastery_delta         = delta,
+            }
+        },
+        mowi_update = nil,
+        town_state  = nil,
+    }
+
+    -- ★UP → ワールドMowi Grow 演出
+    if mowiEmotionTrigger then mowiEmotionTrigger:Fire("grow") end
+
+    task.spawn(function()
+        sync:pushToWeb(pushData)
+        print(string.format("[★UP] %s %s → ★%d sync-push 送信", player.Name, patternNo, newStar))
+    end)
+
+    -- パターン更新をセッション蓄積にも追加
+    local addUpdateBE = remoteFolder:FindFirstChild("AddPatternUpdate")
+    if addUpdateBE then
+        addUpdateBE:Fire(player.UserId, {
+            pattern_no    = patternNo,
+            mastery_delta = delta,
+            flash_output_total   = 5,
+            flash_output_correct = 5,
+        })
+    end
+end
 
 -- FlashTriggerZone の ProximityPrompt に接続
 local function connectTrigger()

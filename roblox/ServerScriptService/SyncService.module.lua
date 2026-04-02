@@ -11,7 +11,7 @@ SyncService.__index = SyncService
 
 -- ★ デプロイ時に実際のURLとキーに変更する
 local API_BASE = "https://yytxgxlhgotscwztlsqj.supabase.co/functions/v1"
-local API_KEY  = "YOUR_ROBLOX_API_KEY"  -- ServerScriptService 内のみで使用
+local API_KEY  = "mowise_roblox_2026"  -- ServerScriptService 内のみで使用
 
 -- DataStore: 連携トークンの永続保存
 local linkStore = DataStoreService:GetDataStore("MoWISE_LinkTokens")
@@ -164,22 +164,30 @@ end
 ------------------------------------------------------------------------
 -- Sync Pull（ログイン時: Web→Roblox）
 ------------------------------------------------------------------------
-function SyncService:pullFromWeb(fields)
+function SyncService:pullFromWeb()
     if not self.linked then return false end
 
-    local query = "?fields=" .. (fields or "patterns,mowi,badges,streaks")
-    local ok, data = self:makeRequest("GET", "/roblox-sync-pull" .. query)
-    if ok and data then
-        self.localCache = data
-        -- ブースト状態も更新
-        if data.boosts then
-            self.boosts.coin_multiplier   = data.boosts.coin_multiplier or 1.0
-            self.boosts.premium_materials = data.boosts.premium_materials or false
-        end
-        print(("[SyncService] %s: sync-pull 完了"):format(self.player.Name))
-        return true
+    local ok, data = self:makeRequest("GET", "/roblox-sync-pull?fields=patterns,mowi,badges")
+    if not ok or not data then
+        warn("[SyncService] sync-pull 失敗 - オフラインモードで続行")
+        return false
     end
-    return false
+
+    -- ローカルキャッシュに保存
+    self.localCache.patterns  = data.patterns or {}
+    self.localCache.mowi      = data.mowi or {}
+    self.localCache.badges    = data.badges or {}
+    self.localCache.boosts    = data.boosts or { coin_multiplier = 1.0 }
+    self.localCache.synced_at = data.synced_at
+
+    -- ブースト状態も更新
+    if data.boosts then
+        self.boosts.coin_multiplier   = data.boosts.coin_multiplier or 1.0
+        self.boosts.premium_materials = data.boosts.premium_materials or false
+    end
+
+    print(string.format("[SyncService] sync-pull 完了: %d パターン取得", #self.localCache.patterns))
+    return true, data
 end
 
 ------------------------------------------------------------------------
@@ -188,11 +196,13 @@ end
 function SyncService:pushToWeb(sessionData)
     if not self.linked then return false end
 
-    local ok, data = self:makeRequest("POST", "/roblox-sync-push", sessionData)
-    if ok then
-        print(("[SyncService] %s: sync-push 完了"):format(self.player.Name))
+    local ok, resp = self:makeRequest("POST", "/roblox-sync-push", sessionData)
+    if ok and resp and resp.synced then
+        print(string.format("[SyncService] sync-push 完了: %d パターン更新", #(resp.updated_patterns or {})))
+        return true, resp
     end
-    return ok
+    warn("[SyncService] sync-push 失敗")
+    return false
 end
 
 ------------------------------------------------------------------------

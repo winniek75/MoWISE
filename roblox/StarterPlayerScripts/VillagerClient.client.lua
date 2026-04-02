@@ -55,8 +55,12 @@ local function showNotif(msg)
     end)
 end
 
-villagerApproach.OnClientEvent:Connect(function(name, role)
-    showNotif("Mowi: \"だれかが近づいてきてる…\"\n" .. role .. " " .. name .. " が来るよ！")
+villagerApproach.OnClientEvent:Connect(function(name, role, zone)
+    if zone == "zone2" then
+        showNotif("🏪 " .. role .. " " .. name .. " が\nマーケットに向かっている…")
+    else
+        showNotif("🌿 " .. role .. " " .. name .. " が\n近づいてきてる…")
+    end
 end)
 
 ------------------------------------------------------------------------

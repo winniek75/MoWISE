@@ -75,6 +75,16 @@ local function startHeartbeat(player)
             if result.daily_login_bonus_available then
                 -- TODO: ログインボーナス付与処理
             end
+
+            -- Mowi 状態更新（MowiSpawner へ通知）
+            local mowiSyncData = remotes:FindFirstChild("MowiSyncData")
+            if mowiSyncData then
+                -- heartbeat の結果から Mowi パラメータを推定
+                -- brightness_level: boost_active なら高め、なければ低め
+                local brightness = result.boost_active and 5 or 2
+                local growth     = 1  -- デフォルト
+                mowiSyncData:Fire(brightness, growth)
+            end
         end
     end
 end

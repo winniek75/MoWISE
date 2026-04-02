@@ -2,9 +2,12 @@
   <div class="min-h-screen bg-gray-50">
     <!-- ヘッダー -->
     <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <div>
-        <p class="text-xs text-gray-400 font-medium tracking-widest uppercase">MoWISE</p>
-        <h1 class="text-xl font-bold text-gray-900">チャートマスター ダッシュボード</h1>
+      <div class="flex items-center gap-3">
+        <button @click="router.push({ name: 'Home' })" class="text-gray-500 text-sm font-bold">← 戻る</button>
+        <div>
+          <p class="text-xs text-gray-400 font-medium tracking-widest uppercase">MoWISE</p>
+          <h1 class="text-xl font-bold text-gray-900">チャートマスター ダッシュボード</h1>
+        </div>
       </div>
       <button
         @click="showCreateModal = true"

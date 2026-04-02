@@ -164,6 +164,135 @@ local VILLAGER_DATA = {
 }
 
 ------------------------------------------------------------------------
+-- Zone 2 町民データ（Market Zone: 3人）
+------------------------------------------------------------------------
+local ZONE2_VILLAGER_DATA = {
+    {
+        id        = "barista_maria",
+        name      = "Maria",
+        role      = "☕ バリスタ",
+        bodyColor = Color3.fromRGB(200, 140, 80),
+        hatColor  = Color3.fromRGB(60, 30, 10),
+        spawnZone = "Zone2",
+        dialogue  = {
+            {
+                npc  = "Hi! Welcome to the market. I'd like to open a café here. Is that okay?",
+                options = {
+                    { text = "Of course! I'd like a café here too.", correct = true },
+                    { text = "No, go away.", correct = false },
+                    { text = "I'd like you to leave.", correct = false },
+                    { text = "What's a café?", correct = false },
+                },
+                hint = "「I'd like ～」で気持ちを伝えよう"
+            },
+            {
+                npc  = "Can I get your help to set up? I need a good spot.",
+                options = {
+                    { text = "Sure! Can I get you anything to start?", correct = true },
+                    { text = "I can't help.", correct = false },
+                    { text = "Can I get out of here?", correct = false },
+                    { text = "You need what?", correct = false },
+                },
+                hint = "「Can I get ～」を使って会話しよう"
+            },
+            {
+                npc  = "I'll make the best coffee in town. You'll love it!",
+                options = {
+                    { text = "I'll be your first customer!", correct = true },
+                    { text = "I'll leave now.", correct = false },
+                    { text = "Coffee is bad.", correct = false },
+                    { text = "I'll think about it.", correct = false },
+                },
+                hint = "「I'll ～」で決意を表そう"
+            },
+        },
+        moveReward = { itemName = "Coffee", amount = 2 },
+    },
+    {
+        id        = "merchant_sam",
+        name      = "Sam",
+        role      = "🛒 商人",
+        bodyColor = Color3.fromRGB(80, 120, 60),
+        hatColor  = Color3.fromRGB(40, 60, 30),
+        spawnZone = "Zone2",
+        dialogue  = {
+            {
+                npc  = "Hello! Do you have a place for a general store here?",
+                options = {
+                    { text = "Yes! Do you have what this town needs?", correct = true },
+                    { text = "Do you have any money?", correct = false },
+                    { text = "No, we don't have space.", correct = false },
+                    { text = "I don't understand.", correct = false },
+                },
+                hint = "「Do you have ～」で質問しよう"
+            },
+            {
+                npc  = "I'll bring all kinds of goods. What do you need most?",
+                options = {
+                    { text = "I'll help you build the store!", correct = true },
+                    { text = "I'll go now.", correct = false },
+                    { text = "Nothing, thanks.", correct = false },
+                    { text = "What do you sell?", correct = false },
+                },
+                hint = "「I'll ～」を使って応えよう"
+            },
+            {
+                npc  = "Do you have any friends who might want to trade?",
+                options = {
+                    { text = "Sure! Do you have anything rare?", correct = true },
+                    { text = "No, I don't have friends.", correct = false },
+                    { text = "Do you have to ask?", correct = false },
+                    { text = "I don't trade.", correct = false },
+                },
+                hint = "「Do you have ～」を繰り返し使おう"
+            },
+        },
+        moveReward = { itemName = "Coins", amount = 150 },
+    },
+    {
+        id        = "agent_lily",
+        name      = "Lily",
+        role      = "🌍 旅行エージェント",
+        bodyColor = Color3.fromRGB(140, 100, 200),
+        hatColor  = Color3.fromRGB(80, 50, 150),
+        spawnZone = "Zone2",
+        dialogue  = {
+            {
+                npc  = "Hi there! I'm going to open a travel agency in this market.",
+                options = {
+                    { text = "I'm going to welcome you! Please stay.", correct = true },
+                    { text = "I'm going to leave.", correct = false },
+                    { text = "I'm not going anywhere.", correct = false },
+                    { text = "Where are you going?", correct = false },
+                },
+                hint = "「I'm going to ～」で意思を伝えよう"
+            },
+            {
+                npc  = "How about putting my shop near the fountain? It's perfect!",
+                options = {
+                    { text = "How about right here? It's the best spot!", correct = true },
+                    { text = "How about you leave?", correct = false },
+                    { text = "I don't like fountains.", correct = false },
+                    { text = "How about no.", correct = false },
+                },
+                hint = "「How about ～」で提案しよう"
+            },
+            {
+                npc  = "I'm going to help people travel to other zones. Sound good?",
+                options = {
+                    { text = "Great! I'm going to be your first traveler.", correct = true },
+                    { text = "I'm going to say no.", correct = false },
+                    { text = "I don't like travel.", correct = false },
+                    { text = "What zones?", correct = false },
+                },
+                hint = "「I'm going to ～」でもう一度使おう"
+            },
+        },
+        moveReward = { itemName = "Map", amount = 1 },
+    },
+}
+
+------------------------------------------------------------------------
 -- 住民管理
 ------------------------------------------------------------------------
 local residents        = {}
@@ -173,6 +302,23 @@ local villagerQueue    = {}
 for _, v in ipairs(VILLAGER_DATA) do
     table.insert(villagerQueue, v)
 end
+
+-- Zone 2 キュー
+local zone2VillagerQueue    = {}
+local zone2Residents        = {}     -- { [npcId] = npcModel }
+local zone2PendingVillagers = {}     -- { [userId] = { ... } }
+
+for _, v in ipairs(ZONE2_VILLAGER_DATA) do
+    table.insert(zone2VillagerQueue, v)
+end
+
+-- Zone 2 NPC スポーン位置（Zone 2の端・広場入口付近）
+local ZONE2_SPAWN_POSITIONS = {
+    Vector3.new(50, 5, 220),     -- Zone 2 入口付近A
+    Vector3.new(20, 5, 235),     -- Zone 2 入口付近B
+    Vector3.new(-20, 5, 240),    -- Zone 2 入口付近C
+}
+local zone2SpawnIndex = 1
 
 ------------------------------------------------------------------------
 -- NPCモデルを生成
@@ -300,6 +446,60 @@ local function walkNPCTo(npcModel, targetPos)
 end
 
 ------------------------------------------------------------------------
+-- Zone 2 NPC 召喚（Zone 2のスポーン位置を使用）
+------------------------------------------------------------------------
+local function spawnZone2Villager(player, vData)
+    local spawnPos = ZONE2_SPAWN_POSITIONS[zone2SpawnIndex]
+    zone2SpawnIndex = (zone2SpawnIndex % #ZONE2_SPAWN_POSITIONS) + 1
+
+    -- NPCモデル生成（Zone 1と同じcreateNPCModel関数を再利用）
+    local npcModel = createNPCModel(vData, spawnPos)
+
+    -- Mowi 通知（クライアントに送る）
+    for _, p in ipairs(game.Players:GetPlayers()) do
+        villagerApproach:FireClient(p,
+            vData.name,
+            vData.role,
+            "zone2"    -- Zone識別子
+        )
+    end
+
+    -- ProximityPrompt でプレイヤーが話しかけられるようにする
+    local head = npcModel:FindFirstChild("Head")
+    if head then
+        -- 既存の TalkPrompt を再利用（createNPCModel で作成済み）
+        local prompt = head:FindFirstChild("TalkPrompt")
+        if prompt then
+            prompt.Triggered:Connect(function(trigPlayer)
+                if zone2PendingVillagers[trigPlayer.UserId] then return end
+                zone2PendingVillagers[trigPlayer.UserId] = {
+                    villagerData = vData,
+                    npcModel     = npcModel,
+                    turnIndex    = 1,
+                    correctCount = 0,
+                }
+                prompt.Enabled = false
+                -- 会話ミッション開始
+                local turn = vData.dialogue[1]
+                startDialogue:FireClient(trigPlayer, {
+                    npcName  = vData.name,
+                    npcRole  = vData.role,
+                    npc      = turn.npc,
+                    options  = turn.options,
+                    hint     = turn.hint,
+                    turn     = 1,
+                    total    = #vData.dialogue,
+                })
+            end)
+        end
+    end
+
+    print(string.format("[Zone2 Villager] %s（%s）がスポーン: %s",
+        vData.name, vData.role, tostring(spawnPos)))
+    return npcModel
+end
+
+------------------------------------------------------------------------
 -- 小さな家が配置されたら町民を呼ぶ（HouseBuilt BindableEvent）
 ------------------------------------------------------------------------
 task.spawn(function()
@@ -364,85 +564,140 @@ end)
 -- 会話の回答を受け取る
 ------------------------------------------------------------------------
 dialogueAnswer.OnServerEvent:Connect(function(player, choiceIndex)
-    local session = pendingVillagers[player.UserId]
-    if not session then return end
     if type(choiceIndex) ~= "number" or choiceIndex < 1 or choiceIndex > 4 then return end
 
-    local turn    = session.vData.dialogue[session.turnIndex]
+    -- Zone 1 or Zone 2 判定
+    local session = pendingVillagers[player.UserId]
+    local session2 = zone2PendingVillagers[player.UserId]
+    local isZone2 = (session2 ~= nil and session == nil)
+    local activeSession = session or session2
+    if not activeSession then return end
+
+    -- Zone 2 は villagerData / Zone 1 は vData
+    local vData = isZone2 and activeSession.villagerData or activeSession.vData
+    local turn    = vData.dialogue[activeSession.turnIndex]
     local choice  = turn.options[choiceIndex]
     local correct = choice and choice.correct or false
 
     if correct then
-        session.correctCount = session.correctCount + 1
+        activeSession.correctCount = activeSession.correctCount + 1
         if mowiReaction then mowiReaction:Fire(player, "correct") end
     else
         if mowiReaction then mowiReaction:Fire(player, "incorrect") end
     end
 
-    session.turnIndex = session.turnIndex + 1
-    local isLast = session.turnIndex > #session.vData.dialogue
+    activeSession.turnIndex = activeSession.turnIndex + 1
+    local isLast = activeSession.turnIndex > #vData.dialogue
 
-    dialogueResult:FireClient(player, correct, turn.options, session.turnIndex - 1, isLast)
+    dialogueResult:FireClient(player, correct, turn.options, activeSession.turnIndex - 1, isLast)
 
     if isLast then
         task.wait(1.5)
-        local passed = session.correctCount >= 2
+        local passed = activeSession.correctCount >= 2
 
         if passed then
-            residents[session.vData.id] = {
-                model    = session.npcModel,
-                position = session.targetPos,
-            }
-
-            if giveMaterial then
-                for mat, amount in pairs(session.vData.moveReward) do
-                    giveMaterial:Fire(player, mat, amount)
+            -- 報酬付与
+            if isZone2 then
+                -- Zone 2: moveReward = { itemName = "...", amount = N }
+                local reward = vData.moveReward
+                if reward and reward.itemName == "Coins" then
+                    local coins = player:FindFirstChild("WordCoins")
+                    if coins then coins.Value = coins.Value + reward.amount end
+                elseif reward and giveMaterial then
+                    giveMaterial:Fire(player, reward.itemName, reward.amount)
+                end
+                zone2Residents[vData.id] = activeSession.npcModel
+            else
+                -- Zone 1: moveReward = { Wood = 2 } etc.
+                residents[vData.id] = {
+                    model    = activeSession.npcModel,
+                    position = activeSession.targetPos,
+                }
+                if giveMaterial then
+                    for mat, amount in pairs(vData.moveReward) do
+                        giveMaterial:Fire(player, mat, amount)
+                    end
                 end
             end
 
-            local head = session.npcModel:FindFirstChild("Head")
+            local head = activeSession.npcModel:FindFirstChild("Head")
             if head then
                 local markerGui = head:FindFirstChild("DialogueMarker")
                 if markerGui then markerGui:Destroy() end
 
                 local prompt2 = Instance.new("ProximityPrompt")
                 prompt2.ActionText = "おはなしする"
-                prompt2.ObjectText = session.vData.name
+                prompt2.ObjectText = vData.name
                 prompt2.MaxActivationDistance = 8
                 prompt2.Parent = head
             end
 
-            villagerMoved:FireClient(player, session.vData.name, session.vData.role, session.correctCount)
+            villagerMoved:FireClient(player, vData.name, vData.role, activeSession.correctCount)
             if mowiReaction then mowiReaction:Fire(player, "correct") end
 
-            print(("[MoWISE] %s moved in! Correct: %d/3"):format(session.vData.name, session.correctCount))
+            print(("[MoWISE] %s moved in! Correct: %d/3"):format(vData.name, activeSession.correctCount))
         else
-            local head = session.npcModel:FindFirstChild("Head")
+            local head = activeSession.npcModel:FindFirstChild("Head")
             if head then
                 local prompt = head:FindFirstChild("TalkPrompt")
                 if prompt then prompt.Enabled = true end
             end
-            villagerMoved:FireClient(player, session.vData.name, session.vData.role, -1)
+            villagerMoved:FireClient(player, vData.name, vData.role, -1)
         end
 
-        pendingVillagers[player.UserId] = nil
+        if isZone2 then
+            zone2PendingVillagers[player.UserId] = nil
+        else
+            pendingVillagers[player.UserId] = nil
+        end
     else
         task.wait(1)
-        local nextTurn = session.vData.dialogue[session.turnIndex]
+        local nextTurn = vData.dialogue[activeSession.turnIndex]
         startDialogue:FireClient(player, {
-            npcName = session.vData.name,
-            npcRole = session.vData.role,
+            npcName = vData.name,
+            npcRole = vData.role,
             npc     = nextTurn.npc,
             options = nextTurn.options,
             hint    = nextTurn.hint,
-            turn    = session.turnIndex,
-            total   = #session.vData.dialogue,
+            turn    = activeSession.turnIndex,
+            total   = #vData.dialogue,
         })
     end
 end)
 
 Players.PlayerRemoving:Connect(function(player)
     pendingVillagers[player.UserId] = nil
+    zone2PendingVillagers[player.UserId] = nil
 end)
 
-print("[MoWISE] VillagerSystem ready")
+------------------------------------------------------------------------
+-- Zone 2 建物カウント → NPC トリガー
+-- Zone 2の建物が 5棟、10棟、15棟 になるたびに次のNPCを呼ぶ
+------------------------------------------------------------------------
+local zone2BuildingThresholds = { 5, 10, 15 }
+local zone2TriggeredIndex     = 0
+local zone2BuildingCount      = 0
+
+-- BindableEvent: ZoneSystem/CraftingSystem から Zone 2 建設通知を受け取る
+local zone2BuildingAdded = Instance.new("BindableEvent")
+zone2BuildingAdded.Name  = "Zone2BuildingAdded"
+zone2BuildingAdded.Parent = remotes
+
+zone2BuildingAdded.Event:Connect(function(player)
+    zone2BuildingCount = zone2BuildingCount + 1
+    print(string.format("[Zone2] %s が建物を建設 → 合計 %d棟", player.Name, zone2BuildingCount))
+
+    -- しきい値チェック
+    local nextThreshold = zone2BuildingThresholds[zone2TriggeredIndex + 1]
+    if nextThreshold and zone2BuildingCount >= nextThreshold then
+        zone2TriggeredIndex = zone2TriggeredIndex + 1
+        local nextVillager = zone2VillagerQueue[zone2TriggeredIndex]
+        if nextVillager and not zone2Residents[nextVillager.id] then
+            task.delay(8, function()  -- 8秒後にスポーン
+                spawnZone2Villager(player, nextVillager)
+            end)
+        end
+    end
+end)
+
+print("[MoWISE] VillagerSystem ready (Zone 1: 3 NPCs | Zone 2: 3 NPCs)")

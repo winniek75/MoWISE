@@ -305,6 +305,13 @@ requestPlace.OnServerEvent:Connect(function(player, itemKey, position, rotation)
         houseBuiltEvent:Fire(player, position)
     end
 
+    -- Phase 7-8: Zone 2（マーケットゾーン）建物建設時に VillagerSystem へ通知
+    -- Zone 2 の座標範囲: Z >= 200（市場エリア）
+    local zone2BuildingAdded = remotes:FindFirstChild("Zone2BuildingAdded")
+    if zone2BuildingAdded and position and position.Z >= 200 then
+        zone2BuildingAdded:Fire(player)
+    end
+
     -- 配置確定をクライアントに通知
     placeConfirmed:FireClient(player, itemKey, ci)
 end)

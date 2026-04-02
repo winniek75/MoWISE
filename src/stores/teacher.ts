@@ -7,6 +7,7 @@ export const useTeacherStore = defineStore('teacher', () => {
   const students       = ref<any[]>([])
   const pendingMembers = ref<any[]>([])
   const pendingBadges  = ref<any[]>([])
+  const robloxStats    = ref<Record<string, any>>({})
   const loading        = ref(false)
   const error          = ref<string | null>(null)
 
@@ -132,6 +133,52 @@ export const useTeacherStore = defineStore('teacher', () => {
     return true
   }
 
+  // ─── Roblox 進捗取得 ──────────────────────────────────────────
+  async function fetchRobloxStats(classId: string) {
+    // クラス内の承認済み生徒IDを取得
+    const studentIds = students.value.map(s => s.student_id)
+    if (studentIds.length === 0) { robloxStats.value = {}; return }
+
+    // roblox_links から連携状態を取得
+    const { data: links } = await supabase
+      .from('roblox_links')
+      .select('user_id, roblox_display_name, status, last_sync_at')
+      .in('user_id', studentIds)
+      .eq('status', 'active')
+
+    // roblox_sessions から直近セッション統計を取得
+    const { data: sessions } = await supabase
+      .from('roblox_sessions')
+      .select('user_id, started_at, duration_seconds, flash_output_total, flash_output_correct, max_combo, word_coins_earned, buildings_built')
+      .in('user_id', studentIds)
+      .order('started_at', { ascending: false })
+
+    // roblox_town_state から街の状態を取得
+    const { data: towns } = await supabase
+      .from('roblox_town_state')
+      .select('user_id, word_coins, total_buildings_built, total_missions_completed, total_play_time_seconds, zones_unlocked')
+      .in('user_id', studentIds)
+
+    // 生徒ごとに集約
+    const stats: Record<string, any> = {}
+    for (const sid of studentIds) {
+      const link = links?.find(l => l.user_id === sid)
+      const userSessions = sessions?.filter(s => s.user_id === sid) ?? []
+      const town = towns?.find(t => t.user_id === sid)
+      const latest = userSessions[0] ?? null
+
+      stats[sid] = {
+        linked:              !!link,
+        roblox_display_name: link?.roblox_display_name ?? null,
+        last_sync_at:        link?.last_sync_at ?? null,
+        total_sessions:      userSessions.length,
+        latest_session:      latest,
+        town:                town ?? null,
+      }
+    }
+    robloxStats.value = stats
+  }
+
   // ─── ユーティリティ ───────────────────────────────────────────
   function generateClassCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -141,9 +188,9 @@ export const useTeacherStore = defineStore('teacher', () => {
   }
 
   return {
-    classes, students, pendingMembers, pendingBadges, loading, error,
+    classes, students, pendingMembers, pendingBadges, robloxStats, loading, error,
     fetchMyClasses, createClass,
     fetchClassStudents, fetchPendingMembers, approveMember, removeMember,
-    fetchPendingBadges, approveBadge, rejectBadge,
+    fetchPendingBadges, approveBadge, rejectBadge, fetchRobloxStats,
   }
 })
