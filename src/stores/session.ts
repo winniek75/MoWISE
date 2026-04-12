@@ -57,6 +57,12 @@ export const useSessionStore = defineStore('session', () => {
   const layer2Cleared = ref(false)
   const layer3Cleared = ref(false)
 
+  // ── ★UP / 新パターン解禁（PATTERN_MASTER / PATTERN_UNLOCK 用） ──
+  /** セッション中に★5に到達したパターン（null = なし） */
+  const masteredPattern = ref<{ patternId: string; patternLabel: string; patternJa: string; evolutionId?: string; evolutionText?: string } | null>(null)
+  /** セッション中に新たに解禁されたパターン（null = なし） */
+  const unlockedPattern = ref<{ patternId: string; patternLabel: string; patternJa: string } | null>(null)
+
   // ─────────────────────────────────────────────
   // Computed
   // ─────────────────────────────────────────────
@@ -263,6 +269,8 @@ export const useSessionStore = defineStore('session', () => {
     xpEarned.value = 0
     layer2Cleared.value = false
     layer3Cleared.value = false
+    masteredPattern.value = null
+    unlockedPattern.value = null
     isActive.value = false
     mowiEmotionState.value = 'idle'
     mowiDialogue.value = ''
@@ -285,6 +293,8 @@ export const useSessionStore = defineStore('session', () => {
     isActive,
     layer2Cleared,
     layer3Cleared,
+    masteredPattern,
+    unlockedPattern,
     // computed
     accuracy,
     currentPattern,

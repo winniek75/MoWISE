@@ -28,6 +28,8 @@ const router = createRouter({
     { path: '/session/layer2', name: 'session-layer2', component: () => import('@/views/session/Layer2View.vue'), meta: { requiresAuth: true } },
     { path: '/session/layer3', name: 'session-layer3', component: () => import('@/views/session/Layer3View.vue'), meta: { requiresAuth: true } },
     { path: '/session/end', name: 'session-end', component: () => import('@/views/session/SessionEndView.vue'), meta: { requiresAuth: true } },
+    { path: '/session/pattern-master', name: 'pattern-master', component: () => import('@/views/session/PatternMasterView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
+    { path: '/session/pattern-unlock', name: 'pattern-unlock', component: () => import('@/views/session/PatternUnlockView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
     { path: '/checkin/night', name: 'checkin-night', component: () => import('@/views/checkin/CheckinNightView.vue'), meta: { requiresAuth: true } },
     { path: '/checkin/diff',  name: 'checkin-diff',  component: () => import('@/views/checkin/DiffFeedbackView.vue'),  meta: { requiresAuth: true } },
     { path: '/teacher', name: 'TeacherDashboard', component: () => import('@/views/teacher/TeacherDashboardView.vue'), meta: { requiresAuth: true, requiresTeacher: true, hideBottomNav: true } },
@@ -55,7 +57,7 @@ router.beforeEach(async (to, _from, next) => {
 
   // セッション中断ガード：セッションが未開始なのにlayer2以降へ直接アクセスされた場合
   const sessionStore = useSessionStore()
-  const sessionGuardRoutes = ['session-layer2', 'session-layer3', 'session-end', 'Layer2SVO', 'Layer3Sprint']
+  const sessionGuardRoutes = ['session-layer2', 'session-layer3', 'session-end', 'Layer2SVO', 'Layer3Sprint', 'pattern-master', 'pattern-unlock']
   if (sessionGuardRoutes.includes(to.name as string) && !sessionStore.isActive) {
     return next({ name: 'session-start' })
   }

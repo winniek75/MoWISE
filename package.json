@@ -16,7 +16,7 @@
     "@capacitor/haptics": "^6.0.0",
     "@capacitor/ios": "^6.2.1",
     "@capacitor/status-bar": "^6.0.0",
-    "@supabase/supabase-js": "^2.39.7",
+    "@supabase/supabase-js": "^2.78.0",
     "pinia": "2.1.7",
     "vue": "3.5.13",
     "vue-router": "4.2.5"

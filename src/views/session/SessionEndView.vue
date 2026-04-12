@@ -56,6 +56,19 @@
 
     <div class="divider" />
 
+    <!-- ★5マスター / 新パターン解禁 演出ボタン -->
+    <div v-if="sessionStore.masteredPattern" class="milestone-banner" @click="goPatternMaster">
+      <span class="milestone-icon">★</span>
+      <span class="milestone-text">{{ sessionStore.masteredPattern.patternId }} をマスターした！</span>
+      <span class="milestone-arrow">→</span>
+    </div>
+
+    <div v-else-if="sessionStore.unlockedPattern" class="milestone-banner milestone-banner--unlock" @click="goPatternUnlock">
+      <span class="milestone-icon">NEW</span>
+      <span class="milestone-text">{{ sessionStore.unlockedPattern.patternId }} が解禁された！</span>
+      <span class="milestone-arrow">→</span>
+    </div>
+
     <!-- アクションボタン -->
     <div class="action-btns">
       <button class="btn-night-checkin" @click="goNightCheckin">
@@ -133,6 +146,38 @@ function sparkleStyle(i: number) {
 }
 
 // ── Navigation ──
+
+function goPatternMaster() {
+  const m = sessionStore.masteredPattern
+  if (!m) return
+  router.push({
+    name: 'pattern-master',
+    query: {
+      patternId: m.patternId,
+      patternText: m.patternLabel,
+      patternJa: m.patternJa,
+      ...(m.evolutionId ? { evolutionId: m.evolutionId, evolutionText: m.evolutionText } : {}),
+      ...(sessionStore.unlockedPattern ? {
+        unlockPatternId: sessionStore.unlockedPattern.patternId,
+        unlockPatternText: sessionStore.unlockedPattern.patternLabel,
+        unlockPatternJa: sessionStore.unlockedPattern.patternJa,
+      } : {}),
+    },
+  })
+}
+
+function goPatternUnlock() {
+  const u = sessionStore.unlockedPattern
+  if (!u) return
+  router.push({
+    name: 'pattern-unlock',
+    query: {
+      patternId: u.patternId,
+      patternText: u.patternLabel,
+      patternJa: u.patternJa,
+    },
+  })
+}
 
 function goNightCheckin() {
   sessionStore.endSession()
@@ -339,6 +384,64 @@ onMounted(async () => {
 .btn-home:hover {
   border-color: rgba(255,255,255,0.3);
   color: rgba(255,255,255,0.8);
+}
+
+/* マイルストーンバナー */
+.milestone-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  animation: banner-appear 0.6s ease-out both 0.5s;
+}
+.milestone-banner:hover {
+  background: rgba(255, 215, 0, 0.14);
+}
+
+.milestone-banner--unlock {
+  background: rgba(74, 122, 255, 0.08);
+  border-color: rgba(74, 122, 255, 0.25);
+}
+.milestone-banner--unlock:hover {
+  background: rgba(74, 122, 255, 0.14);
+}
+
+.milestone-icon {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #FFD700;
+  flex-shrink: 0;
+}
+.milestone-banner--unlock .milestone-icon {
+  font-size: 0.7rem;
+  color: #0d0d1a;
+  background: linear-gradient(135deg, #4A7AFF, #9B5CF6);
+  padding: 0.15rem 0.5rem;
+  border-radius: 5px;
+  letter-spacing: 0.1em;
+}
+
+.milestone-text {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  flex: 1;
+}
+
+.milestone-arrow {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+@keyframes banner-appear {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Keyframes */
