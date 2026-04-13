@@ -7,9 +7,11 @@ const phase     = ref<'dark' | 'appear' | 'speak'>('dark')
 const mowiLine  = ref('')
 
 const lines = [
-  'ここにいる。',
-  'まだ、かすかに。',
-  'あなたが英語を話すとき、ぼくは輝く。',
+  '…はじめまして。',
+  'ぼくは Mowi。',
+  'きみの中にある英語の光。',
+  'まだ小さいけど、ちゃんとここにいる。',
+  'これから一緒に、育てていこう。',
 ]
 
 onMounted(async () => {

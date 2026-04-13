@@ -252,6 +252,15 @@ export const useMowiStore = defineStore('mowi', () => {
     await upsertMowiState()
   }
 
+  /** オンボーディング: 初めての正解でMowiが光る */
+  async function unlockFirstLight(_userId?: string) {
+    brightness.value = 3
+    happiness.value = 30
+    growthStage.value = 1
+    emotionState.value = 'grow'
+    await upsertMowiState()
+  }
+
   /** Supabase upsert */
   async function upsertMowiState() {
     if (!authStore.user || isOfflineMode) return
@@ -311,6 +320,7 @@ export const useMowiStore = defineStore('mowi', () => {
     updateAfterEveningCheckin,
     updateMowiStateAfterCheckin,
     updateAfterSession,
+    unlockFirstLight,
     incrementBrightness,
     decrementBrightness,
     setEmotionState,
