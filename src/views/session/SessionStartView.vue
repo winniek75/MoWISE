@@ -101,8 +101,8 @@ const todayPatterns = ref<SessionPattern[]>([
     patternId: 'P001',
     patternLabel: '[代名詞] + be動詞 + [状態/情報]',
     patternJa: '〜は…です',
-    currentStar: 2,
-    startLayer: 2,
+    currentStar: 0,
+    startLayer: 0,
     isWeakPoint: false,
   },
 ])
@@ -141,7 +141,8 @@ async function startSession() {
   isStarting.value = true
   try {
     await sessionStore.startSession(todayPatterns.value)
-    router.push({ name: 'session-layer2' })
+    // Layer 0 から開始（フルフロー: L0→L1→L2→L3）
+    router.push({ name: 'session-layer0' })
   } catch (e) {
     console.error('セッション開始エラー:', e)
     isStarting.value = false

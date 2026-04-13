@@ -25,6 +25,8 @@ const router = createRouter({
     { path: '/checkin/morning', name: 'CheckinMorning', component: () => import('@/views/checkin/CheckinMorningView.vue'), meta: { requiresAuth: true } },
     { path: '/checkin/evening', name: 'CheckinEvening', component: () => import('@/views/checkin/CheckinEveningView.vue'), meta: { requiresAuth: true } },
     { path: '/session/start', name: 'session-start', component: () => import('@/views/session/SessionStartView.vue'), meta: { requiresAuth: true } },
+    { path: '/session/layer0', name: 'session-layer0', component: () => import('@/views/session/Layer0View.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
+    { path: '/session/layer1', name: 'session-layer1', component: () => import('@/views/session/Layer1View.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
     { path: '/session/layer2', name: 'session-layer2', component: () => import('@/views/session/Layer2View.vue'), meta: { requiresAuth: true } },
     { path: '/session/layer3', name: 'session-layer3', component: () => import('@/views/session/Layer3View.vue'), meta: { requiresAuth: true } },
     { path: '/session/end', name: 'session-end', component: () => import('@/views/session/SessionEndView.vue'), meta: { requiresAuth: true } },
@@ -57,7 +59,7 @@ router.beforeEach(async (to, _from, next) => {
 
   // セッション中断ガード：セッションが未開始なのにlayer2以降へ直接アクセスされた場合
   const sessionStore = useSessionStore()
-  const sessionGuardRoutes = ['session-layer2', 'session-layer3', 'session-end', 'Layer2SVO', 'Layer3Sprint', 'pattern-master', 'pattern-unlock']
+  const sessionGuardRoutes = ['session-layer0', 'session-layer1', 'session-layer2', 'session-layer3', 'session-end', 'Layer2SVO', 'Layer3Sprint', 'pattern-master', 'pattern-unlock']
   if (sessionGuardRoutes.includes(to.name as string) && !sessionStore.isActive) {
     return next({ name: 'session-start' })
   }

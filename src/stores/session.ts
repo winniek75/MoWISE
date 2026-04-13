@@ -20,7 +20,7 @@ export interface SessionPattern {
   patternLabel: string     // '[代名詞] + be動詞 + [状態/情報]'
   patternJa: string        // '〜は…です'
   currentStar: number      // 現在の★数
-  startLayer: 2 | 3        // どのLayerから始めるか
+  startLayer: 0 | 1 | 2 | 3  // どのLayerから始めるか
   isWeakPoint?: boolean    // AI弱点補強フラグ
 }
 
@@ -38,7 +38,7 @@ export const useSessionStore = defineStore('session', () => {
   // ── パターン構成 ──
   const sessionPatterns = ref<SessionPattern[]>([])
   const currentPatternIndex = ref(0)
-  const currentLayer = ref<2 | 3>(2)
+  const currentLayer = ref<0 | 1 | 2 | 3>(0)
 
   // ── スコア ──
   const combo = ref(0)
@@ -123,7 +123,7 @@ export const useSessionStore = defineStore('session', () => {
   async function startSession(patterns: SessionPattern[]) {
     sessionPatterns.value = patterns
     currentPatternIndex.value = 0
-    currentLayer.value = patterns[0]?.startLayer ?? 2
+    currentLayer.value = patterns[0]?.startLayer ?? 0
     combo.value = 0
     maxCombo.value = 0
     totalQuestions.value = 0
@@ -260,7 +260,7 @@ export const useSessionStore = defineStore('session', () => {
     sessionId.value = null
     sessionPatterns.value = []
     currentPatternIndex.value = 0
-    currentLayer.value = 2
+    currentLayer.value = 0
     combo.value = 0
     maxCombo.value = 0
     totalQuestions.value = 0
