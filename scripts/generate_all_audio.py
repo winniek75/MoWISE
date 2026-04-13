@@ -116,7 +116,8 @@ def fetch_content(layer_filter=None, pattern_filter=None):
     query = (
         sb.table("pattern_content")
         .select("pattern_no, layer, question_order, question_type, "
-                "correct_answer, tts_text_a, tts_text_b, prompt_en")
+                "correct_answer, tts_text_a, tts_text_b, prompt_en, "
+                "display_text, choices")
         .order("pattern_no")
         .order("layer")
         .order("question_order")
@@ -131,6 +132,27 @@ def fetch_content(layer_filter=None, pattern_filter=None):
     return resp.data
 
 
+def _extract_full_sentence_l2(row) -> str:
+    """Layer 2 slot_fill: display_text の ___ を最初の正解choiceで埋めて完全文を作る"""
+    import json
+    display = row.get("display_text") or ""
+    choices_raw = row.get("choices")
+    if not choices_raw or "___" not in display:
+        return ""
+    try:
+        choices = json.loads(choices_raw) if isinstance(choices_raw, str) else choices_raw
+        correct = next((c["text"] for c in choices if c.get("is_correct")), "")
+        if correct:
+            sentence = display.replace("___", correct)
+            # ピリオドがなければ追加
+            if not sentence.rstrip().endswith(('.', '!', '?')):
+                sentence = sentence.rstrip() + '.'
+            return sentence
+    except Exception:
+        pass
+    return ""
+
+
 def build_tasks(rows, layer_filter=None) -> list[AudioTask]:
     """DBの行から AudioTask リストを生成"""
     tasks = []
@@ -143,8 +165,13 @@ def build_tasks(rows, layer_filter=None) -> list[AudioTask]:
 
         spec = LAYER_SPEC[layer]
         for cat in spec["categories"]:
-            # テキスト取得（field 優先順）
-            text = r.get(cat["field"]) or r.get("correct_answer") or ""
+            # テキスト取得
+            if layer == 2:
+                # Layer 2: display_text + choices から完全文を組み立てる
+                text = _extract_full_sentence_l2(r)
+            else:
+                text = r.get(cat["field"]) or r.get("correct_answer") or ""
+
             if not text.strip():
                 continue
 
@@ -157,6 +184,82 @@ def build_tasks(rows, layer_filter=None) -> list[AudioTask]:
                 speed=cat["speed"],
                 voice_gender=cat["voice"],
             ))
+
+    return tasks
+
+
+# ─────────────────────────────────────────────
+# ローカルデータから Layer 0/1 タスク生成
+# ─────────────────────────────────────────────
+
+# P001〜P005 のローカルデータ（DB未投入分）
+LOCAL_LAYER0_DATA = {
+    "P001": [
+        ("I am tired.", "I'm tired."),
+        ("She is a teacher.", "She's a teacher."),
+        ("It is hot today.", "It's hot today."),
+        ("We are ready.", "We're ready."),
+        ("They are late.", "They're late."),
+    ],
+    "P002": [
+        ("That is my car.", "That's my car."),
+        ("This is my bag.", "This is my bag."),
+        ("That is a good idea.", "That's a good idea."),
+        ("This is our school.", "This is our school."),
+        ("That is her book.", "That's her book."),
+    ],
+    "P003": [
+        ("It is nice to meet you.", "Nice to meet you."),
+        ("It is nice to meet you too.", "Nice to meet you too."),
+        ("It is good to see you.", "Good to see you."),
+        ("It is great to meet you.", "Great to meet you."),
+        ("It is nice to see you again.", "Nice to see you again."),
+    ],
+    "P004": [
+        ("I like cats.", "I like cats."),
+        ("She likes music.", "She likes music."),
+        ("I like playing soccer.", "I like playing soccer."),
+        ("He likes reading books.", "He likes reading books."),
+        ("We like this restaurant.", "We like this restaurant."),
+    ],
+    "P005": [
+        ("I have a dog.", "I have a dog."),
+        ("She has two cats.", "She has two cats."),
+        ("I have a question.", "I have a question."),
+        ("He has a big house.", "He has a big house."),
+        ("We have three classes today.", "We have three classes today."),
+    ],
+}
+
+LOCAL_LAYER1_DATA = {
+    "P001": ["I'm tired.", "She's a teacher.", "It's hot today.", "He's my friend.", "We're ready.", "They're late."],
+    "P002": ["This is my bag.", "That's my car.", "This is our school.", "That's a good idea.", "This is her book."],
+    "P003": ["Nice to meet you.", "Nice to meet you too.", "Good to see you.", "Great to meet you.", "Nice to see you again."],
+    "P004": ["I like cats.", "She likes music.", "I like playing soccer.", "He likes reading books.", "We like this restaurant."],
+    "P005": ["I have a dog.", "She has two cats.", "I have a question.", "He has a big house.", "We have three classes today."],
+}
+
+
+def build_local_layer01_tasks(layer_filter=None, pattern_filter=None) -> list[AudioTask]:
+    """ローカルデータから Layer 0/1 の AudioTask を生成"""
+    tasks = []
+
+    # Layer 0
+    if layer_filter is None or layer_filter == 0:
+        for pno, sentences in LOCAL_LAYER0_DATA.items():
+            if pattern_filter and pno != pattern_filter:
+                continue
+            for seq, (slow, natural) in enumerate(sentences, 1):
+                tasks.append(AudioTask(pno, 0, "slow", seq, slow, 0.75, "M"))
+                tasks.append(AudioTask(pno, 0, "natural", seq, natural, 1.0, "M"))
+
+    # Layer 1
+    if layer_filter is None or layer_filter == 1:
+        for pno, sentences in LOCAL_LAYER1_DATA.items():
+            if pattern_filter and pno != pattern_filter:
+                continue
+            for seq, sentence in enumerate(sentences, 1):
+                tasks.append(AudioTask(pno, 1, "match", seq, sentence, 1.0, "F"))
 
     return tasks
 
@@ -259,6 +362,17 @@ async def main():
 
     # タスク生成
     tasks = build_tasks(rows, layer_filter=args.layer)
+
+    # Layer 0/1 が DB にない場合、ローカルデータから補完
+    layers_in_db = set(r["layer"] for r in rows)
+    if 0 not in layers_in_db or 1 not in layers_in_db:
+        local_tasks = build_local_layer01_tasks(
+            layer_filter=args.layer, pattern_filter=args.pattern
+        )
+        if local_tasks:
+            tasks.extend(local_tasks)
+            print(f"   + ローカルデータから {len(local_tasks)} 件追加（Layer 0/1）")
+
     print(f"   {len(tasks)} 件の音声タスクを生成\n")
 
     if args.dry_run:
