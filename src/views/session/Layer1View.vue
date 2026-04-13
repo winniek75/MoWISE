@@ -101,21 +101,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import { playAudio as playMowiseAudio, stopCurrent } from '@/composables/useMowiseAudio'
-import { getLayer1Questions } from '@/data/patternRegistry'
+import { useGameMode } from '@/composables/useGameMode'
 import MowiOrb from '@/components/mowi/MowiOrb.vue'
 import type { Layer1Question, Layer1Choice } from '@/data/layerTypes'
 import type { MowiEmotionState } from '@/stores/session'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
+const gameMode = useGameMode()
 
 // ── パターンID ──
 const patternId = computed(() => sessionStore.currentPattern?.patternId ?? 'P001')
-const questions = computed(() => getLayer1Questions(patternId.value))
+const questions = computed(() => gameMode.layer1Questions.value)
+
+onMounted(() => gameMode.loadPattern(patternId.value))
 
 // ── 問題進行 ──
 const currentIndex = ref(0)

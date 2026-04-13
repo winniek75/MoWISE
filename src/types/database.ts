@@ -87,21 +87,30 @@ export interface PatternRow {
 
 export interface PatternContentRow {
   id: string
-  pattern_id: string
   pattern_no: string
   layer: PatternLayer
-  question_no: number
-  question_type: 'listen_choose' | 'slot_fill' | 'tile_arrange' | 'scene_challenge' | 'listen_repeat'
-  prompt_text: string | null
-  prompt_audio_url: string | null
-  choices: string[] | null        // JSONB
+  question_order: number
+  question_type: 'sound_compare' | 'sound_match' | 'slot_fill' | 'audio_predict' | 'tile_select' | 'keyboard_input' | 'scene_challenge'
+  prompt_ja: string | null
+  prompt_en: string | null
+  display_text: string | null
+  context_text: string | null
+  audio_url_a: string | null      // Layer 0 ゆっくり版
+  audio_url_b: string | null      // Layer 0 ナチュラル版
+  audio_url_main: string | null   // Layer 1〜3 メイン音声
+  choices: unknown | null          // JSONB
   correct_answer: string
-  incorrect_audio_url: string | null
-  hint_text: string | null
-  mowi_reaction_correct: string | null
-  mowi_reaction_wrong: string | null
-  time_limit_seconds: number | null
-  xp_reward: number
+  alternate_answers: string[] | null
+  explanation_ja: string | null
+  mowi_quote_correct: string | null
+  mowi_quote_wrong: string | null
+  time_limit_sec: number | null
+  pass_threshold: number | null
+  tts_text_a: string | null
+  tts_text_b: string | null
+  tts_speed_a: number | null
+  tts_speed_b: number | null
+  tts_voice: string | null
   created_at: string
   updated_at: string
 }
