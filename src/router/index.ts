@@ -67,12 +67,16 @@ router.beforeEach(async (to, _from, next) => {
   // ホーム到達時：朝の時間帯（04:00〜13:59）かつ朝チェックイン未完了なら朝チェックインへ
   // ※ 初回ログイン（練習履歴なし）の場合はスキップ
   if (to.name === 'Home' && auth.isAuthenticated && !isOfflineMode) {
-    const checkin = useCheckinStore()
-    await checkin.fetchTodayCheckins()
-    const hour = new Date().getHours()
-    const hasEverPracticed = !!auth.userRow?.last_practice_at
-    if (hour >= 4 && hour < 14 && !checkin.hasMorningCheckin && hasEverPracticed) {
-      return next({ name: 'CheckinMorning' })
+    try {
+      const checkin = useCheckinStore()
+      await checkin.fetchTodayCheckins()
+      const hour = new Date().getHours()
+      const hasEverPracticed = !!auth.userRow?.last_practice_at
+      if (hour >= 4 && hour < 14 && !checkin.hasMorningCheckin && hasEverPracticed) {
+        return next({ name: 'CheckinMorning' })
+      }
+    } catch (e) {
+      console.warn('[router] checkin fetch failed, skipping:', e)
     }
   }
 

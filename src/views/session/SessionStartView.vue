@@ -150,7 +150,7 @@ async function startSession() {
 }
 
 function goBack() {
-  router.push({ name: 'Home' })
+  router.replace({ name: 'Home' })
 }
 </script>
 
