@@ -84,28 +84,18 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSessionStore, type SessionPattern } from '@/stores/session'
-// import { useMowiStore } from '@/stores/mowi'
-// import MowiOrb from '@/components/mowi/MowiOrb.vue'
+import { useAuthStore } from '@/stores/auth'
+import { supabase, isOfflineMode } from '@/lib/supabase'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
-// const mowiStore = useMowiStore()
+const authStore = useAuthStore()
 
 // ── State ──
 
 const isStarting = ref(false)
-
-// P001 デモパターン（実際はSupabaseから取得 + AI弱点補強で決定）
-const todayPatterns = ref<SessionPattern[]>([
-  {
-    patternId: 'P001',
-    patternLabel: '[代名詞] + be動詞 + [状態/情報]',
-    patternJa: '〜は…です',
-    currentStar: 0,
-    startLayer: 0,
-    isWeakPoint: false,
-  },
-])
+const isLoadingPatterns = ref(true)
+const todayPatterns = ref<SessionPattern[]>([])
 
 // Mowiセリフ（Cheer/Idle からランダム）
 const mowiLines = [
@@ -120,20 +110,102 @@ const mowiLine = ref(mowiLines[Math.floor(Math.random() * mowiLines.length)])
 
 // ── Computed ──
 
-const estimatedMinutes = computed(() => {
-  // Layer 2: 約 2〜3分 / Layer 3: 約 3〜4分 / パターンごと
-  return todayPatterns.value.length * 5
-})
+const estimatedMinutes = computed(() => todayPatterns.value.length * 5)
 
 const mowiPulseClass = computed(() => 'pulse-idle')
 
 // ── Lifecycle ──
 
-onMounted(() => {
-  // TODO: Supabase から今日の練習パターンを取得
-  // const patterns = await fetchTodayPatterns(authStore.user.id)
-  // todayPatterns.value = patterns
+onMounted(async () => {
+  await loadTodayPatterns()
 })
+
+/**
+ * 今日の練習パターンを取得
+ * 1. pattern_progress から未完了 / 弱点パターンを取得
+ * 2. なければ patterns テーブルから次のパターンを選択
+ */
+async function loadTodayPatterns() {
+  isLoadingPatterns.value = true
+
+  if (isOfflineMode || !authStore.userId) {
+    // オフライン / 未ログイン時はP001フォールバック
+    todayPatterns.value = [makeFallbackPattern('P001')]
+    isLoadingPatterns.value = false
+    return
+  }
+
+  try {
+    // ユーザーの進捗を取得
+    const { data: progress } = await supabase
+      .from('pattern_progress')
+      .select('pattern_no, mastery_level, layer0_done, layer1_done, layer2_done, layer3_done')
+      .eq('user_id', authStore.userId)
+      .order('pattern_no')
+
+    // パターンマスターデータを取得
+    const { data: allPatterns } = await supabase
+      .from('patterns')
+      .select('pattern_no, pattern_text, japanese, rarity, area')
+      .eq('is_mvp', true)
+      .order('sort_order')
+
+    if (!allPatterns || allPatterns.length === 0) {
+      todayPatterns.value = [makeFallbackPattern('P001')]
+      isLoadingPatterns.value = false
+      return
+    }
+
+    const progressMap = new Map(
+      (progress ?? []).map(p => [p.pattern_no, p])
+    )
+
+    const selected: SessionPattern[] = []
+
+    for (const p of allPatterns) {
+      if (selected.length >= 4) break // 最大4パターン
+      const prog = progressMap.get(p.pattern_no)
+      const stars = prog?.mastery_level ?? 0
+
+      // まだ始めていない or ★4以下のパターンを候補に
+      if (stars < 5) {
+        const startLayer = !prog?.layer0_done ? 0
+          : !prog?.layer1_done ? 1
+          : !prog?.layer2_done ? 2
+          : 3
+
+        selected.push({
+          patternId: p.pattern_no,
+          patternLabel: p.pattern_text,
+          patternJa: p.japanese,
+          currentStar: stars,
+          startLayer: startLayer as 0 | 1 | 2 | 3,
+          isWeakPoint: false,
+        })
+      }
+    }
+
+    // 候補がなければ P001 フォールバック
+    todayPatterns.value = selected.length > 0 ? selected : [makeFallbackPattern('P001')]
+
+  } catch (e) {
+    console.warn('[SessionStart] pattern load failed:', e)
+    todayPatterns.value = [makeFallbackPattern('P001')]
+  } finally {
+    isLoadingPatterns.value = false
+  }
+}
+
+function makeFallbackPattern(id: string): SessionPattern {
+  return {
+    patternId: id,
+    patternLabel: '[代名詞] + be動詞 + [状態/情報]',
+    patternJa: '〜は…です',
+    currentStar: 0,
+    startLayer: 0,
+    isWeakPoint: false,
+  }
+}
 
 // ── Actions ──
 

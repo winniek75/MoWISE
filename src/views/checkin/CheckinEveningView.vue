@@ -1,11 +1,18 @@
 <script setup lang="ts">
+/**
+ * CheckinEveningView → CheckinNightView へのリダイレクト
+ * ホーム画面の「夜チェックイン」ボタンは CheckinEvening ルートを使うが、
+ * 実装本体は CheckinNightView にある。
+ */
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+
 const router = useRouter()
+
+onMounted(() => {
+  router.replace({ name: 'checkin-night' })
+})
 </script>
 <template>
-  <div class="min-h-screen bg-bg-dark flex flex-col items-center justify-center gap-4 px-6">
-    <div class="w-16 h-16 mowi-orb animate-mowi-pulse" />
-    <p class="font-title text-white/60">CheckinEvening — Step M で実装</p>
-    <button class="btn-outline text-sm" @click="router.back()">← 戻る</button>
-  </div>
+  <div class="min-h-screen bg-bg-dark" />
 </template>

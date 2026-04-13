@@ -4,11 +4,11 @@ import { supabase, isOfflineMode } from '@/lib/supabase'
 
 // デモ用パターンデータ
 const DEMO_PATTERNS = [
-  { pattern_no: 'P001', pattern_text: 'S is ～', area: 'area1' },
-  { pattern_no: 'P002', pattern_text: 'This is ～', area: 'area1' },
-  { pattern_no: 'P003', pattern_text: 'Nice to meet you', area: 'area1' },
-  { pattern_no: 'P004', pattern_text: 'I like ～', area: 'area1' },
-  { pattern_no: 'P005', pattern_text: 'I want ～', area: 'area1' },
+  { pattern_no: 'P001', pattern_text: '[代名詞] + be動詞 + [状態/情報]', japanese: '〜は…です', area: 'area1', rarity: 1 },
+  { pattern_no: 'P002', pattern_text: 'This is [名詞].', japanese: 'これは〜です', area: 'area1', rarity: 1 },
+  { pattern_no: 'P003', pattern_text: 'I like [名詞/動名詞].', japanese: '〜が好きです', area: 'area1', rarity: 1 },
+  { pattern_no: 'P004', pattern_text: 'I want [名詞].', japanese: '〜が欲しいです', area: 'area1', rarity: 1 },
+  { pattern_no: 'P005', pattern_text: 'I have [名詞].', japanese: '〜を持っています', area: 'area1', rarity: 1 },
 ]
 
 export const useZukanStore = defineStore('zukan', () => {
@@ -23,36 +23,91 @@ export const useZukanStore = defineStore('zukan', () => {
       return
     }
     loading.value = true
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-    const [{ data: ps }, { data: pr }] = await Promise.all([
-      supabase.from('patterns').select('*').order('pattern_no'),
-      supabase.from('pattern_progress').select('*').eq('user_id', user!.id),
-    ])
+      const [{ data: ps }, { data: pr }] = await Promise.all([
+        supabase.from('patterns').select('*').order('pattern_no'),
+        user
+          ? supabase.from('pattern_progress').select('*').eq('user_id', user.id)
+          : Promise.resolve({ data: [] }),
+      ])
 
-    patterns.value = ps ?? []
-    progress.value = Object.fromEntries((pr ?? []).map(p => [p.pattern_id, p]))
-    loading.value = false
+      patterns.value = ps ?? []
+      progress.value = Object.fromEntries(
+        (pr ?? []).map((p: any) => [p.pattern_no, p])
+      )
+    } catch (e) {
+      console.warn('[zukan] fetchAll failed:', e)
+      patterns.value = DEMO_PATTERNS
+    } finally {
+      loading.value = false
+    }
   }
 
   async function fetchDetail(patternNo: string) {
-    const { data } = await supabase
-      .from('patterns')
-      .select('*, examples:pattern_content(examples), evolution_to:patterns!evolution_of(*)')
-      .eq('pattern_no', patternNo)
-      .single()
-    return data
+    if (isOfflineMode) {
+      return DEMO_PATTERNS.find(p => p.pattern_no === patternNo) ?? null
+    }
+    try {
+      // パターン基本情報
+      const { data: pattern } = await supabase
+        .from('patterns')
+        .select('*')
+        .eq('pattern_no', patternNo)
+        .single()
+
+      if (!pattern) return null
+
+      // 例文（Layer 3 の correct_answer から取得）
+      const { data: content } = await supabase
+        .from('pattern_content')
+        .select('correct_answer, prompt_ja, audio_url_main')
+        .eq('pattern_no', patternNo)
+        .eq('layer', 3)
+        .order('question_order')
+        .limit(3)
+
+      const examples = (content ?? []).map((c: any) => ({
+        english: c.correct_answer,
+        japanese: c.prompt_ja ?? '',
+        audio_url: c.audio_url_main ?? '',
+      }))
+
+      // 進化形
+      let evolution_to = null
+      if (pattern.evolution_of) {
+        const { data: evo } = await supabase
+          .from('patterns')
+          .select('pattern_no, pattern_text, japanese')
+          .eq('pattern_no', pattern.evolution_of)
+          .single()
+        evolution_to = evo
+      }
+
+      return { ...pattern, examples, evolution_to }
+    } catch (e) {
+      console.warn('[zukan] fetchDetail failed:', e)
+      return null
+    }
   }
 
   async function fetchProgress(patternNo: string) {
-    const { data: { user } } = await supabase.auth.getUser()
-    const { data } = await supabase
-      .from('pattern_progress')
-      .select('*')
-      .eq('user_id', user!.id)
-      .eq('pattern_id', patternNo)
-      .single()
-    return data
+    if (isOfflineMode) return null
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return null
+      const { data } = await supabase
+        .from('pattern_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('pattern_no', patternNo)
+        .maybeSingle()
+      return data
+    } catch (e) {
+      console.warn('[zukan] fetchProgress failed:', e)
+      return null
+    }
   }
 
   function patternsByArea(areaId: string) {
@@ -65,14 +120,16 @@ export const useZukanStore = defineStore('zukan', () => {
         const n = parseInt(p.pattern_no.replace('P', ''))
         return n >= min && n <= max
       })
-      .map(p => ({ ...p, star_level: progress.value[p.pattern_no]?.star_level ?? 0 }))
+      .map(p => ({
+        ...p,
+        star_level: progress.value[p.pattern_no]?.mastery_level ?? 0,
+      }))
   }
 
   function isAreaUnlocked(area: number): boolean {
     if (area === 1) return true
     if (area === 2) {
-      // P020が★3以上で解禁
-      return (progress.value['P020']?.star_level ?? 0) >= 3
+      return (progress.value['P020']?.mastery_level ?? 0) >= 3
     }
     return false
   }

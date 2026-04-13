@@ -164,7 +164,7 @@ export const p001Layer3Questions: Layer3Question[] = [
   },
   {
     id: 'P001-L3-2',
-    promptJa: '「あなたはすごいです。」',
+    promptJa: '「あなたは素敵です。」',
     tiles: [
       { id: 't1', word: "You're",  isDecoy: false },
       { id: 't2', word: 'amazing', isDecoy: false },

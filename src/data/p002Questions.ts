@@ -44,7 +44,7 @@ export const p002Layer2Questions: Layer2Question[] = [
   {
     id: 'P002-L2-3',
     slotPrefix: 'This is',
-    promptJa: '「これ、すごいね！」',
+    promptJa: '「これ、いいね！」',
     fullSentence: 'This is great!',
     correctAudio: 'P002_L2_answer_3.mp3',
     choices: [
@@ -142,7 +142,7 @@ export const p002Layer3Questions: Layer3Question[] = [
   },
   {
     id: 'P002-L3-3',
-    promptJa: '「これ、すごいね！」',
+    promptJa: '「これ、いいね！」',
     tiles: [
       { id: 't1', word: 'This',  isDecoy: false },
       { id: 't2', word: 'is',    isDecoy: false },
