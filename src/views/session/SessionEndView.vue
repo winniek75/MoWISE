@@ -87,10 +87,13 @@ import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
 import { useMowiStore } from '@/stores/mowi'
+import { useAuthStore } from '@/stores/auth'
+import { supabase, isOfflineMode } from '@/lib/supabase'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
 const mowiStore = useMowiStore()
+const authStore = useAuthStore()
 
 // ── Computed ──
 
@@ -193,7 +196,71 @@ onMounted(async () => {
   // セッション正解率でMowi brightnessを更新
   const correctRate = sessionStore.correctCount / Math.max(1, sessionStore.totalQuestions)
   await mowiStore.updateAfterSession(correctRate)
+
+  // pattern_progress に進捗を保存
+  await saveProgress()
 })
+
+async function saveProgress() {
+  if (isOfflineMode || !authStore.userId) return
+  const pattern = sessionStore.currentPattern
+  if (!pattern) return
+
+  try {
+    // 既存の進捗を確認
+    const { data: existing } = await supabase
+      .from('pattern_progress')
+      .select('*')
+      .eq('user_id', authStore.userId)
+      .eq('pattern_no', pattern.patternId)
+      .maybeSingle()
+
+    const correctRate = sessionStore.correctCount / Math.max(1, sessionStore.totalQuestions)
+    const passed = correctRate >= 0.7
+
+    if (existing) {
+      // 既存レコード更新
+      const updates: Record<string, any> = {
+        correct_count: (existing as any).correct_count + sessionStore.correctCount,
+        wrong_count: (existing as any).wrong_count + sessionStore.wrongCount,
+        updated_at: new Date().toISOString(),
+      }
+      // Layer完了フラグを更新（passした場合）
+      if (passed) {
+        if (sessionStore.currentLayer === 0) updates.layer0_done = true
+        if (sessionStore.currentLayer === 1) updates.layer1_done = true
+        if (sessionStore.layer2Cleared) updates.layer2_done = true
+        if (sessionStore.layer3Cleared) updates.layer3_done = true
+        // ★を上げる（最大5）
+        const currentStars = (existing as any).mastery_level ?? 0
+        if (currentStars < 5) {
+          updates.mastery_level = Math.min(currentStars + 1, 5)
+        }
+      }
+      await supabase
+        .from('pattern_progress')
+        .update(updates)
+        .eq('id', (existing as any).id)
+    } else {
+      // 新規レコード作成
+      await supabase
+        .from('pattern_progress')
+        .insert({
+          user_id: authStore.userId,
+          pattern_no: pattern.patternId,
+          mastery_level: passed ? 1 : 0,
+          layer0_done: passed && sessionStore.currentLayer === 0,
+          layer1_done: false,
+          layer2_done: false,
+          layer3_done: false,
+          correct_count: sessionStore.correctCount,
+          wrong_count: sessionStore.wrongCount,
+        })
+    }
+  } catch (e) {
+    console.warn('[SessionEnd] saveProgress failed:', e)
+  }
+}
 </script>
 
 <style scoped>

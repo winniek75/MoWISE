@@ -36,6 +36,7 @@
           :key="pattern.patternId"
           class="pattern-card"
           :class="{ 'weak-point': pattern.isWeakPoint }"
+          @click="startSinglePattern(pattern)"
         >
           <!-- 弱点バッジ -->
           <div v-if="pattern.isWeakPoint" class="weak-badge">⚠ 弱点</div>
@@ -56,6 +57,7 @@
             <p class="pattern-ja">{{ pattern.patternJa }}</p>
             <span class="layer-badge">Layer {{ pattern.startLayer }} から</span>
           </div>
+          <span class="card-arrow">→</span>
         </div>
       </div>
     </div>
@@ -204,7 +206,18 @@ async function startSession() {
   isStarting.value = true
   try {
     await sessionStore.startSession(todayPatterns.value)
-    // Layer 0 から開始（フルフロー: L0→L1→L2→L3）
+    router.push({ name: 'session-layer0' })
+  } catch (e) {
+    console.error('セッション開始エラー:', e)
+    isStarting.value = false
+  }
+}
+
+/** パターンカードをタップして1パターンだけ練習 */
+async function startSinglePattern(pattern: SessionPattern) {
+  isStarting.value = true
+  try {
+    await sessionStore.startSession([pattern])
     router.push({ name: 'session-layer0' })
   } catch (e) {
     console.error('セッション開始エラー:', e)
@@ -344,11 +357,24 @@ function goBack() {
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
 }
 
 .pattern-card:hover {
   border-color: rgba(74,122,255,0.3);
+  background: rgba(74,122,255,0.06);
+}
+
+.pattern-card:active {
+  transform: scale(0.98);
+}
+
+.card-arrow {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.25);
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .pattern-card.weak-point {
