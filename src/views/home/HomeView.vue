@@ -12,24 +12,16 @@ const mowi    = useMowiStore()
 const checkin = useCheckinStore()
 
 /** ホーム表示用Mowiセリフ */
-const homeSerif = computed(() => {
-  if (checkin.hasMorningCheckin && checkin.hasEveningCheckin) {
-    return '今日の分、全部ある。また明日。'
-  }
-  if (checkin.hasMorningCheckin) {
-    return checkin.todayMorning?.mowi_quote_ja ?? '今日も、ここから。'
-  }
-  return '今日も、ここから。'
-})
-
-/** CTA表示状態（4パターン） */
-const ctaState = computed((): 'morning' | 'session' | 'evening' | 'done' => {
-  if (!checkin.hasMorningCheckin) return 'morning'
-  if (checkin.hasFullCheckin) return 'done'
-  const hour = new Date().getHours()
-  if (hour >= 17) return 'evening'  // 17時以降は夜チェックインを優先表示
-  return 'session'
-})
+const mowiLines = [
+  '今日も、ここにいる。',
+  '言葉は、体の中にある。',
+  '使われるのを、待っている。',
+  '少しずつ、遠くに届く。',
+  '始めよう。',
+]
+const homeSerif = computed(() =>
+  mowiLines[Math.floor(Math.random() * mowiLines.length)]
+)
 
 onMounted(async () => {
   await Promise.all([
@@ -64,13 +56,6 @@ onMounted(async () => {
     <!-- Mowi中央エリア -->
     <main class="flex-1 flex flex-col items-center justify-center px-6 gap-8">
 
-      <!-- チェックインバッジ -->
-      <div class="flex gap-3 text-xs font-title">
-        <span :class="checkin.hasMorningCheckin ? 'text-correct' : 'text-white/20'">☀️ 朝</span>
-        <span :class="checkin.hasEveningCheckin ? 'text-correct' : 'text-white/20'">🌙 夜</span>
-        <span v-if="checkin.hasFullCheckin" class="text-yellow-400">🎉 今日完了</span>
-      </div>
-
       <!-- Mowiオーブ -->
       <MowiOrb
         :state="mowi.emotionState"
@@ -85,65 +70,14 @@ onMounted(async () => {
         </p>
       </div>
 
-      <!-- ─── CTA エリア（4パターン） ─── -->
+      <!-- ─── CTA エリア ─── -->
       <div class="w-full max-w-xs space-y-3">
-
-        <!-- ① 朝チェックイン未完了 -->
-        <template v-if="ctaState === 'morning'">
-          <button
-            class="btn-primary w-full text-lg font-title"
-            @click="router.push({ name: 'CheckinMorning' })"
-          >
-            ☀️ 朝チェックイン
-          </button>
-        </template>
-
-        <!-- ② 練習へ -->
-        <template v-else-if="ctaState === 'session'">
-          <button
-            class="btn-primary w-full text-lg font-title"
-            @click="router.push({ name: 'session-start' })"
-          >
-            ▶ デイリー練習を始める
-          </button>
-          <button
-            class="btn-outline w-full font-title text-sm"
-            @click="router.push({ name: 'CheckinEvening' })"
-          >
-            🌙 夜チェックイン
-          </button>
-        </template>
-
-        <!-- ③ 夜チェックイン優先 -->
-        <template v-else-if="ctaState === 'evening'">
-          <button
-            class="btn-primary w-full text-lg font-title"
-            @click="router.push({ name: 'CheckinEvening' })"
-          >
-            🌙 夜チェックインへ
-          </button>
-          <button
-            class="btn-outline w-full font-title text-sm"
-            @click="router.push({ name: 'session-start' })"
-          >
-            ▶ 練習する
-          </button>
-        </template>
-
-        <!-- ④ 全完了 -->
-        <template v-else>
-          <div class="text-center space-y-2">
-            <p class="text-correct font-title text-lg">✓ 今日の記録、完了！</p>
-            <p class="text-white/40 text-sm">また明日。Mowiが待ってる。</p>
-          </div>
-          <button
-            class="btn-outline w-full font-title text-sm"
-            @click="router.push({ name: 'session-start' })"
-          >
-            もう一度練習する
-          </button>
-        </template>
-
+        <button
+          class="btn-primary w-full text-lg font-title"
+          @click="router.push({ name: 'session-start' })"
+        >
+          ▶ 練習を始める
+        </button>
       </div>
     </main>
 

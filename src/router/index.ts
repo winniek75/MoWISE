@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useCheckinStore } from '@/stores/checkin'
 import { useSessionStore } from '@/stores/session'
-import { isOfflineMode } from '@/lib/supabase'
 
 
 const router = createRouter({
@@ -62,22 +60,6 @@ router.beforeEach(async (to, _from, next) => {
   const sessionGuardRoutes = ['session-layer0', 'session-layer1', 'session-layer2', 'session-layer3', 'session-end', 'Layer2SVO', 'Layer3Sprint', 'pattern-master', 'pattern-unlock']
   if (sessionGuardRoutes.includes(to.name as string) && !sessionStore.isActive) {
     return next({ name: 'session-start' })
-  }
-
-  // ホーム到達時：朝の時間帯（04:00〜13:59）かつ朝チェックイン未完了なら朝チェックインへ
-  // ※ 初回ログイン（練習履歴なし）の場合はスキップ
-  if (to.name === 'Home' && auth.isAuthenticated && !isOfflineMode) {
-    try {
-      const checkin = useCheckinStore()
-      await checkin.fetchTodayCheckins()
-      const hour = new Date().getHours()
-      const hasEverPracticed = !!auth.userRow?.last_practice_at
-      if (hour >= 4 && hour < 14 && !checkin.hasMorningCheckin && hasEverPracticed) {
-        return next({ name: 'CheckinMorning' })
-      }
-    } catch (e) {
-      console.warn('[router] checkin fetch failed, skipping:', e)
-    }
   }
 
   next()
