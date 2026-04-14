@@ -38,10 +38,8 @@
       </div>
 
       <!-- ★UP 表示エリア（セッション中に★が上がった場合） -->
-      <div class="star-up-row">
-        <span class="star-change">
-          ★ P001 &nbsp; ★★☆☆☆ → ★★★☆☆
-        </span>
+      <div v-if="starUpText" class="star-up-row">
+        <span class="star-change">{{ starUpText }}</span>
       </div>
     </div>
 
@@ -109,17 +107,35 @@ const orbStyle = computed(() => {
   }
 })
 
+const patternId = computed(() => sessionStore.currentPattern?.patternId ?? 'P001')
+
+/**
+ * ★UP 表示テキスト（動的）
+ */
+const starUpText = computed(() => {
+  const p = sessionStore.currentPattern
+  if (!p) return ''
+  const prev = p.currentStar
+  const correctRate = sessionStore.correctCount / Math.max(1, sessionStore.totalQuestions)
+  if (correctRate < 0.7) return ''
+  const next = Math.min(prev + 1, 5)
+  if (next <= prev) return ''
+  const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n)
+  return `★ ${p.patternId}   ${stars(prev)} → ${stars(next)}`
+})
+
 /**
  * 「終わり際の予告」コピー（H2設計書 ⑦ ロジック準拠）
  */
 const teaserCopy = computed(() => {
+  const pid = patternId.value
   if (sessionStore.maxCombo >= 10) {
-    return 'P001 の Layer 4 まであと少し。次は音声録音に挑戦できる。'
+    return `${pid} の Layer 4 まであと少し。次は音声録音に挑戦できる。`
   }
   if (sessionStore.accuracy >= 80) {
-    return 'P001 が ★3 になった。次のパターンが解禁されるかも。'
+    return `${pid} が ★3 になった。次のパターンが解禁されるかも。`
   }
-  return 'また明日、ここに。P001 が少し深くなった。'
+  return `また明日、ここに。${pid} が少し深くなった。`
 })
 
 /**
@@ -234,7 +250,20 @@ async function saveProgress() {
         // ★を上げる（最大5）
         const currentStars = (existing as any).mastery_level ?? 0
         if (currentStars < 5) {
-          updates.mastery_level = Math.min(currentStars + 1, 5)
+          const newStars = Math.min(currentStars + 1, 5)
+          updates.mastery_level = newStars
+          // ★5到達 → masteredPattern セット
+          if (newStars === 5) {
+            sessionStore.masteredPattern = {
+              patternId: pattern.patternId,
+              patternLabel: pattern.patternLabel,
+              patternJa: pattern.patternJa,
+            }
+          }
+          // ★3到達 → 次パターン解禁チェック
+          if (newStars >= 3 && currentStars < 3) {
+            await checkUnlockNextPattern(pattern.patternId)
+          }
         }
       }
       await supabase
@@ -243,12 +272,13 @@ async function saveProgress() {
         .eq('id', (existing as any).id)
     } else {
       // 新規レコード作成
+      const newStars = passed ? 1 : 0
       await supabase
         .from('pattern_progress')
         .insert({
           user_id: authStore.userId,
           pattern_no: pattern.patternId,
-          mastery_level: passed ? 1 : 0,
+          mastery_level: newStars,
           layer0_done: passed && sessionStore.currentLayer === 0,
           layer1_done: false,
           layer2_done: false,
@@ -259,6 +289,36 @@ async function saveProgress() {
     }
   } catch (e) {
     console.warn('[SessionEnd] saveProgress failed:', e)
+  }
+}
+
+/** 次パターン解禁チェック（★3到達時） */
+async function checkUnlockNextPattern(currentPatternId: string) {
+  try {
+    const num = parseInt(currentPatternId.replace('P', ''), 10)
+    const nextNo = `P${String(num + 1).padStart(3, '0')}`
+    // 次パターンがDB上に存在するか確認
+    const { data: nextPattern } = await supabase
+      .from('patterns')
+      .select('pattern_no, pattern_text, japanese')
+      .eq('pattern_no', nextNo)
+      .maybeSingle()
+    if (!nextPattern) return
+    // 既に進捗がある場合は解禁済み
+    const { data: alreadyExists } = await supabase
+      .from('pattern_progress')
+      .select('id')
+      .eq('user_id', authStore.userId!)
+      .eq('pattern_no', nextNo)
+      .maybeSingle()
+    if (alreadyExists) return
+    sessionStore.unlockedPattern = {
+      patternId: (nextPattern as any).pattern_no,
+      patternLabel: (nextPattern as any).pattern_text,
+      patternJa: (nextPattern as any).japanese,
+    }
+  } catch (e) {
+    console.warn('[SessionEnd] checkUnlockNextPattern failed:', e)
   }
 }
 </script>

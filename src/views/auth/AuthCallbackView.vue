@@ -2,13 +2,16 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const auth = useAuthStore()
 
 onMounted(async () => {
   const { data } = await supabase.auth.getSession()
   if (data.session) {
-    router.replace({ name: 'Home' })
+    await auth.initialize()
+    router.replace(auth.isTeacher ? { name: 'TeacherDashboard' } : { name: 'Home' })
   } else {
     router.replace({ name: 'Onboarding1' })
   }

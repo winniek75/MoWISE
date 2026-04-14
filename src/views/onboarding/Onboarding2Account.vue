@@ -9,6 +9,7 @@ const auth    = useAuthStore()
 const email       = ref('')
 const password    = ref('')
 const displayName = ref('')
+const selectedRole = ref<'student' | 'teacher'>('student')
 const errorMsg    = ref('')
 const isLogin     = ref(false)
 
@@ -23,10 +24,12 @@ async function submit() {
   try {
     if (isLogin.value) {
       await auth.signInWithEmail(email.value, password.value)
-      router.push({ name: 'Home' })
+      // 先生は先生ダッシュボードへ、生徒はホームへ
+      router.push(auth.isTeacher ? { name: 'TeacherDashboard' } : { name: 'Home' })
     } else {
-      await auth.signUpWithEmail(email.value, password.value, displayName.value)
-      router.push({ name: 'Onboarding3' })
+      await auth.signUpWithEmail(email.value, password.value, displayName.value, selectedRole.value)
+      // 先生は直接ダッシュボードへ、生徒はオンボーディング続行
+      router.push(selectedRole.value === 'teacher' ? { name: 'TeacherDashboard' } : { name: 'Onboarding3' })
     }
   } catch (e: unknown) {
     errorMsg.value = (e as Error).message
@@ -50,6 +53,33 @@ async function submit() {
       </h2>
 
       <div class="space-y-4">
+        <!-- ロール選択（新規のみ） -->
+        <div v-if="!isLogin" class="space-y-2">
+          <label class="text-white/60 text-sm font-title">あなたは？</label>
+          <div class="flex gap-3">
+            <button
+              @click="selectedRole = 'student'"
+              :class="selectedRole === 'student'
+                ? 'border-brand-primary bg-brand-primary/10 text-white'
+                : 'border-white/20 text-white/50'"
+              class="flex-1 border rounded-xl px-4 py-3 text-center transition-colors"
+            >
+              <span class="text-2xl block mb-1">📖</span>
+              <span class="text-sm font-title font-semibold">生徒</span>
+            </button>
+            <button
+              @click="selectedRole = 'teacher'"
+              :class="selectedRole === 'teacher'
+                ? 'border-brand-primary bg-brand-primary/10 text-white'
+                : 'border-white/20 text-white/50'"
+              class="flex-1 border rounded-xl px-4 py-3 text-center transition-colors"
+            >
+              <span class="text-2xl block mb-1">👨‍🏫</span>
+              <span class="text-sm font-title font-semibold">講師</span>
+            </button>
+          </div>
+        </div>
+
         <!-- 名前（新規のみ） -->
         <div v-if="!isLogin" class="space-y-1">
           <label class="text-white/60 text-sm font-title">ニックネーム</label>

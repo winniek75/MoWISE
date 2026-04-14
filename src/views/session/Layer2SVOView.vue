@@ -217,13 +217,13 @@ async function finishSession() {
     { user_id: user!.id, pattern_id: currentPatternId.value, layer_2_cleared: true, star_level: 3, last_attempted_at: new Date().toISOString() },
     { onConflict: 'user_id,pattern_id' }
   )
-  router.push('/session/end')
+  router.push({ name: 'session-end' })
 }
 
 function confirmExit() { showExitDialog.value = true }
 async function exitSession() {
   if (sessionLogs.value.length > 0) await supabase.from('flash_output_logs').insert(sessionLogs.value)
-  router.push('/session/end')
+  router.push({ name: 'session-end' })
 }
 
 // SVO色クラス

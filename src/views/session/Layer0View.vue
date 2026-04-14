@@ -339,7 +339,7 @@ function exitSession() {
   cursor: pointer;
   font-family: inherit;
   transition: all 0.2s;
-  min-width: 130px;
+  min-width: min(130px, 40vw);
 }
 
 .audio-btn:hover {

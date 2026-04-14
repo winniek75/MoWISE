@@ -490,7 +490,8 @@ function clearAllTimers() {
 }
 
 function confirmExit() {
-  stopTimer()
+  clearAllTimers()
+  sessionStore.endSession()
   router.push({ name: 'Home' })
 }
 </script>

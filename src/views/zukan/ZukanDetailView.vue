@@ -74,15 +74,23 @@ function playAudio(url: string) {
   if (url) new Audio(url).play()
 }
 
+function calcStartLayer(p: any): 0 | 1 | 2 | 3 {
+  if (!p) return 0
+  if (p.layer3_done || p.layer_3_cleared) return 3
+  if (p.layer2_done || p.layer_2_cleared) return 3
+  if (p.layer1_done) return 2
+  if (p.layer0_done) return 1
+  return 0
+}
+
 function startPractice() {
-  // sessionStore にパターンをセットして練習開始画面へ
   sessionStore.startSession([{
     patternId:    pattern.value.pattern_no,
     patternLabel: pattern.value.pattern_text,
     patternJa:    pattern.value.japanese,
     currentStar:  progressData.value?.star_level ?? 0,
-    startLayer:   2,
+    startLayer:   calcStartLayer(progressData.value),
   }])
-  router.push('/session/start')
+  router.push({ name: 'session-start' })
 }
 </script>

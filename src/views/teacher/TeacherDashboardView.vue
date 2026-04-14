@@ -65,6 +65,53 @@
           </div>
         </div>
       </div>
+      <!-- アクティビティを試す -->
+      <section class="mt-8">
+        <h2 class="text-sm font-semibold text-gray-700 mb-3">🎮 アクティビティを試す</h2>
+        <p class="text-xs text-gray-400 mb-4">レッスンで使うパターンとLayerを選んで、生徒と同じ練習を体験できます。</p>
+
+        <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+          <!-- パターン選択 -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">パターン</label>
+            <select v-model="tryPatternNo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              <option v-for="p in patternList" :key="p.pattern_no" :value="p.pattern_no">
+                {{ p.pattern_no }} — {{ p.pattern_text }}（{{ p.japanese }}）
+              </option>
+            </select>
+          </div>
+
+          <!-- Layer選択 -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Layer</label>
+            <div class="flex gap-2">
+              <button
+                v-for="l in [0, 1, 2, 3]"
+                :key="l"
+                @click="tryLayer = l as 0|1|2|3"
+                :class="tryLayer === l
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                class="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
+              >
+                L{{ l }}
+              </button>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-1">
+              {{ layerDesc[tryLayer] }}
+            </p>
+          </div>
+
+          <!-- 開始ボタン -->
+          <button
+            @click="startTryActivity"
+            :disabled="!tryPatternNo"
+            class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg disabled:opacity-40 transition-colors"
+          >
+            ▶ この設定で練習を開始
+          </button>
+        </div>
+      </section>
     </main>
 
     <!-- クラス作成モーダル -->
@@ -120,16 +167,59 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTeacherStore } from '@/stores/teacher'
+import { useSessionStore } from '@/stores/session'
+import { supabase } from '@/lib/supabase'
 
 const router = useRouter()
 const store  = useTeacherStore()
+const sessionStore = useSessionStore()
 
 const showCreateModal = ref(false)
 const newClassName    = ref('')
 const newClassDesc    = ref('')
 const creating        = ref(false)
 
-onMounted(() => store.fetchMyClasses())
+// アクティビティを試す
+const patternList  = ref<any[]>([])
+const tryPatternNo = ref('P001')
+const tryLayer     = ref<0 | 1 | 2 | 3>(0)
+
+const layerDesc: Record<number, string> = {
+  0: 'Sound Foundation — 音の聴き比べ',
+  1: 'Echo Drill — 聴いて選ぶ',
+  2: 'Pattern Sense — 穴埋め・並べ替え',
+  3: 'Flash Output — 瞬間英作文',
+}
+
+onMounted(async () => {
+  store.fetchMyClasses()
+  // パターン一覧取得
+  const { data } = await supabase
+    .from('patterns')
+    .select('pattern_no, pattern_text, japanese')
+    .order('pattern_no')
+  patternList.value = data ?? []
+  if (data && data.length > 0) tryPatternNo.value = (data[0] as any).pattern_no
+})
+
+function startTryActivity() {
+  const p = patternList.value.find((x: any) => x.pattern_no === tryPatternNo.value)
+  if (!p) return
+  sessionStore.startSession([{
+    patternId:    p.pattern_no,
+    patternLabel: p.pattern_text,
+    patternJa:    p.japanese,
+    currentStar:  0,
+    startLayer:   tryLayer.value,
+  }])
+  const layerRoutes: Record<number, string> = {
+    0: 'session-layer0',
+    1: 'session-layer1',
+    2: 'session-layer2',
+    3: 'session-layer3',
+  }
+  router.push({ name: layerRoutes[tryLayer.value] })
+}
 
 async function handleCreate() {
   if (!newClassName.value.trim()) return

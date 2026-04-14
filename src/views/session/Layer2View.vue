@@ -347,8 +347,8 @@ function clearAllTimers() {
 }
 
 function confirmExit() {
-  // TODO: 確認ダイアログ後に home へ
   clearAllTimers()
+  sessionStore.endSession()
   router.push({ name: 'Home' })
 }
 </script>
@@ -536,7 +536,7 @@ function confirmExit() {
 }
 
 .slot-blank {
-  min-width: 80px;
+  min-width: min(80px, 25vw);
   padding: 0.15rem 0.6rem;
   border-radius: 8px;
   text-align: center;

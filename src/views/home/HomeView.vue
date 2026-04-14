@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useMowiStore } from '@/stores/mowi'
 import { useCheckinStore } from '@/stores/checkin'
+import { supabase, isOfflineMode } from '@/lib/supabase'
 import MowiOrb from '@/components/mowi/MowiOrb.vue'
 
 const router  = useRouter()
 const auth    = useAuthStore()
 const mowi    = useMowiStore()
 const checkin = useCheckinStore()
+
+const unreadFeedbacks = ref<any[]>([])
 
 /** ホーム表示用Mowiセリフ */
 const mowiLines = [
@@ -29,7 +32,26 @@ onMounted(async () => {
     checkin.fetchTodayCheckins(),
     checkin.fetchStreakDays(),
   ])
+  // 未読フィードバック取得
+  if (!isOfflineMode && auth.userId) {
+    const { data } = await supabase
+      .from('teacher_feedback')
+      .select('*')
+      .eq('student_id', auth.userId)
+      .eq('is_read', false)
+      .order('created_at', { ascending: false })
+      .limit(5)
+    unreadFeedbacks.value = data ?? []
+  }
 })
+
+async function markRead(fbId: string) {
+  await supabase
+    .from('teacher_feedback')
+    .update({ is_read: true })
+    .eq('id', fbId)
+  unreadFeedbacks.value = unreadFeedbacks.value.filter(f => f.id !== fbId)
+}
 </script>
 
 <template>
@@ -68,6 +90,26 @@ onMounted(async () => {
         <p class="mowi-quote text-base">
           {{ homeSerif }}
         </p>
+      </div>
+
+      <!-- 先生からのフィードバック -->
+      <div v-if="unreadFeedbacks.length > 0" class="w-full max-w-xs space-y-2">
+        <div
+          v-for="fb in unreadFeedbacks"
+          :key="fb.id"
+          class="bg-bg-card border border-brand-primary/20 rounded-2xl px-4 py-3 flex items-start gap-3"
+        >
+          <span class="text-lg mt-0.5">💬</span>
+          <div class="flex-1 min-w-0">
+            <p class="text-white/80 text-sm leading-relaxed">{{ fb.message }}</p>
+            <p class="text-white/30 text-[10px] mt-1">{{ new Date(fb.created_at).toLocaleDateString('ja-JP', { month: 'short', day: 'numeric' }) }}</p>
+          </div>
+          <button
+            @click="markRead(fb.id)"
+            class="text-white/30 hover:text-white/60 text-xs shrink-0 mt-0.5"
+            title="既読にする"
+          >✕</button>
+        </div>
       </div>
 
       <!-- ─── CTA エリア ─── -->

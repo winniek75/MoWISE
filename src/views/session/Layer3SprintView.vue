@@ -373,7 +373,7 @@ async function finishSession() {
       layer_3_cleared: true,
       last_attempted_at: new Date().toISOString(),
     }, { onConflict: 'user_id,pattern_id' })
-  router.push('/session/end')
+  router.push({ name: 'session-end' })
 }
 
 function logAnswer(isCorrect: boolean, responseMs: number) {
@@ -398,7 +398,7 @@ async function exitSession() {
   if (sessionLogs.value.length > 0) {
     await supabase.from('flash_output_logs').insert(sessionLogs.value)
   }
-  router.push('/session/end')
+  router.push({ name: 'session-end' })
 }
 </script>
 
