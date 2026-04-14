@@ -147,6 +147,20 @@ function transformToLayer3(rows: PatternContentRow[]): Layer3Question[] {
 }
 
 // ─────────────────────────────────────────────
+// Utility
+// ─────────────────────────────────────────────
+
+/** Fisher-Yates シャッフル */
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// ─────────────────────────────────────────────
 // Composable
 // ─────────────────────────────────────────────
 
@@ -182,10 +196,10 @@ export function useGameMode(): UseGameModeReturn {
 
         if (!error && rows && rows.length > 0) {
           const typed = rows as unknown as PatternContentRow[]
-          layer0Questions.value = transformToLayer0(typed.filter(r => r.layer === 0))
-          layer1Questions.value = transformToLayer1(typed.filter(r => r.layer === 1))
-          layer2Questions.value = transformToLayer2(typed.filter(r => r.layer === 2))
-          layer3Questions.value = transformToLayer3(typed.filter(r => r.layer === 3))
+          layer0Questions.value = shuffle(transformToLayer0(typed.filter(r => r.layer === 0)))
+          layer1Questions.value = shuffle(transformToLayer1(typed.filter(r => r.layer === 1)))
+          layer2Questions.value = shuffle(transformToLayer2(typed.filter(r => r.layer === 2)))
+          layer3Questions.value = shuffle(transformToLayer3(typed.filter(r => r.layer === 3)))
 
           // パターン基本情報も取得
           const { data: patternRow } = await supabase
@@ -221,10 +235,10 @@ export function useGameMode(): UseGameModeReturn {
       }
 
       patternInfo.value     = data.info
-      layer0Questions.value = data.layer0Questions
-      layer1Questions.value = data.layer1Questions
-      layer2Questions.value = data.layer2Questions
-      layer3Questions.value = data.layer3Questions
+      layer0Questions.value = shuffle(data.layer0Questions)
+      layer1Questions.value = shuffle(data.layer1Questions)
+      layer2Questions.value = shuffle(data.layer2Questions)
+      layer3Questions.value = shuffle(data.layer3Questions)
 
     } catch (e) {
       // Supabase エラー時もローカルフォールバック
