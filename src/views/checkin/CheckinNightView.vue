@@ -5,6 +5,9 @@
     <Transition name="fade-out">
       <div v-if="phase === 'select'" class="phase-select" @click.stop>
 
+        <!-- あとでやる（B-4-2 dismiss） -->
+        <button class="later-link" @click.stop="dismissAndGoHome">あとでやる</button>
+
         <!-- ヘッダー -->
         <div class="night-header">
           <span class="night-icon">🌙</span>
@@ -70,6 +73,7 @@ import { useRouter } from 'vue-router'
 import { useCheckinStore } from '@/stores/checkin'
 import { useMowiStore } from '@/stores/mowi'
 import { CHECKIN_HEADERS, FALLBACK_MOWI_LINE } from '@/data/checkinOptions'
+import { setCheckinDismissed } from '@/composables/useCheckinGuard'
 
 const router = useRouter()
 const checkinStore = useCheckinStore()
@@ -77,6 +81,11 @@ const mowiStore = useMowiStore()
 
 const headerJa = CHECKIN_HEADERS.evening.ja
 const headerEn = CHECKIN_HEADERS.evening.en
+
+function dismissAndGoHome() {
+  setCheckinDismissed('evening')
+  router.replace({ name: 'Home' })
+}
 
 // ─── 定数（B-4再定義版・5択） ───────────────────────────
 const EVENING_CHOICES = [
@@ -230,7 +239,25 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   gap: 28px;
+  position: relative;
 }
+
+.later-link {
+  position: absolute;
+  top: -8px;
+  right: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  font-family: 'Noto Sans JP', sans-serif;
+  transition: color 0.2s ease;
+  z-index: 10;
+}
+.later-link:hover { color: rgba(255, 255, 255, 0.6); }
 
 .night-header {
   text-align: center;

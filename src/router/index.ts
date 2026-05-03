@@ -1,6 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useSessionStore } from '@/stores/session'
+import { useCheckinStore } from '@/stores/checkin'
+import {
+  getCurrentCheckinSession,
+  isCheckinDismissed,
+  cleanupOldDismissKeys,
+} from '@/composables/useCheckinGuard'
 
 
 const router = createRouter({
@@ -61,6 +67,22 @@ router.beforeEach(async (to, _from, next) => {
   const sessionGuardRoutes = ['session-layer0', 'session-layer1', 'session-layer2', 'session-layer3', 'session-end', 'Layer2SVO', 'Layer3Sprint', 'pattern-master', 'pattern-unlock']
   if (sessionGuardRoutes.includes(to.name as string) && !sessionStore.isActive) {
     return next({ name: 'session-start' })
+  }
+
+  // チェックイン自動誘導（B-4-2）：ホーム到達時のみ、時間帯セッション未完了かつ未dismissなら誘導
+  if (to.name === 'Home' && auth.isAuthenticated) {
+    cleanupOldDismissKeys()
+    const session = getCurrentCheckinSession()
+    if (!isCheckinDismissed(session)) {
+      const checkinStore = useCheckinStore()
+      await checkinStore.fetchTodayCheckins()
+      const isCompleted = session === 'morning'
+        ? checkinStore.hasMorningCheckin
+        : checkinStore.hasEveningCheckin
+      if (!isCompleted) {
+        return next({ name: session === 'morning' ? 'CheckinMorning' : 'checkin-night', replace: true })
+      }
+    }
   }
 
   next()

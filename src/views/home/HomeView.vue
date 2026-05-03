@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useMowiStore } from '@/stores/mowi'
 import { useCheckinStore } from '@/stores/checkin'
 import { supabase, isOfflineMode } from '@/lib/supabase'
+import { getCurrentCheckinSession } from '@/composables/useCheckinGuard'
 import MowiOrb from '@/components/mowi/MowiOrb.vue'
 
 const router  = useRouter()
@@ -25,6 +26,21 @@ const mowiLines = [
 const homeSerif = computed(() =>
   mowiLines[Math.floor(Math.random() * mowiLines.length)]
 )
+
+// ─── チェックインCTA（B-4-2） ─────────────────────────
+const currentSession = computed(() => getCurrentCheckinSession())
+const checkinCompleted = computed(() =>
+  currentSession.value === 'morning' ? checkin.hasMorningCheckin : checkin.hasEveningCheckin
+)
+const checkinCtaLabel = computed(() =>
+  currentSession.value === 'morning' ? '☀️ 朝のチェックイン' : '🌙 夜のチェックイン'
+)
+const checkinDoneLabel = computed(() =>
+  currentSession.value === 'morning' ? '✓ 今日の朝チェックイン 完了' : '✓ 今日の夜チェックイン 完了'
+)
+function goToCheckin() {
+  router.push({ name: currentSession.value === 'morning' ? 'CheckinMorning' : 'checkin-night' })
+}
 
 onMounted(async () => {
   await Promise.all([
@@ -114,6 +130,20 @@ async function markRead(fbId: string) {
 
       <!-- ─── CTA エリア ─── -->
       <div class="w-full max-w-xs space-y-3">
+        <!-- チェックインCTA（B-4-2 招待トーン） -->
+        <button
+          v-if="!checkinCompleted"
+          class="w-full rounded-2xl py-4 px-5 bg-white/8 hover:bg-white/12 border border-white/10 text-left transition-colors"
+          @click="goToCheckin"
+        >
+          <div class="text-white font-title font-semibold">{{ checkinCtaLabel }}</div>
+          <div class="text-white/40 text-xs font-title mt-0.5">4タップで終わる</div>
+        </button>
+        <p
+          v-else
+          class="text-center text-white/40 text-xs font-title"
+        >{{ checkinDoneLabel }}</p>
+
         <button
           class="btn-primary w-full text-lg font-title"
           @click="router.push({ name: 'session-start' })"

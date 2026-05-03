@@ -9,6 +9,9 @@
     <Transition name="fade-up" mode="out-in">
       <div v-if="phase === 'idle'" class="phase-idle" key="idle">
 
+        <!-- あとでやる（B-4-2 dismiss） -->
+        <button class="later-link" @click.stop="dismissAndGoHome">あとでやる</button>
+
         <!-- ヘッダー -->
         <div class="header">
           <div class="date-badge">
@@ -112,9 +115,15 @@ import MowiOrb from '@/components/mowi/MowiOrb.vue'
 import type { MorningFeelingId } from '@/stores/checkin'
 import type { MowiEmotionState } from '@/stores/mowi'
 import { CHECKIN_HEADERS, FALLBACK_MOWI_LINE } from '@/data/checkinOptions'
+import { setCheckinDismissed } from '@/composables/useCheckinGuard'
 
 const headerJa = CHECKIN_HEADERS.morning.ja
 const headerEn = CHECKIN_HEADERS.morning.en
+
+function dismissAndGoHome() {
+  setCheckinDismissed('morning')
+  router.replace({ name: 'Home' })
+}
 
 // ─── Types ────────────────────────────────────────────────────
 interface MorningChoice {
@@ -340,6 +349,22 @@ onMounted(async () => {
   align-items: center;
   gap: 32px;
 }
+
+.later-link {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  right: 20px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  font-family: 'Noto Sans JP', sans-serif;
+  transition: color 0.2s ease;
+}
+.later-link:hover { color: rgba(255, 255, 255, 0.6); }
 
 .header { text-align: center; }
 
