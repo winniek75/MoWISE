@@ -4,7 +4,7 @@
     <!-- ヘッダー -->
     <header class="flex items-center justify-between px-4 pt-safe pt-4 pb-2">
       <button @click="confirmExit" class="text-white/60 text-sm px-2 py-1">× 終了</button>
-      <div class="text-sm font-bold text-white/80">{{ currentPatternId }} Layer 2 SVO</div>
+      <div class="text-sm font-bold text-white/80">{{ currentPatternId }} つくる SVO</div>
       <div class="text-sm text-white/60">{{ currentIndex + 1 }}/{{ questions.length }}問</div>
     </header>
 

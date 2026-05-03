@@ -130,7 +130,7 @@ const starUpText = computed(() => {
 const teaserCopy = computed(() => {
   const pid = patternId.value
   if (sessionStore.maxCombo >= 10) {
-    return `${pid} の Layer 4 まであと少し。次は音声録音に挑戦できる。`
+    return `${pid} の次のステージまであと少し。次は音声録音に挑戦できる。`
   }
   if (sessionStore.accuracy >= 80) {
     return `${pid} が ★3 になった。次のパターンが解禁されるかも。`

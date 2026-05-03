@@ -15,7 +15,7 @@
           <span v-for="n in 5" :key="n" class="text-xl"
             :class="n <= (progressData?.star_level ?? 0) ? 'text-yellow-400' : 'text-gray-200'">★</span>
         </div>
-        <p class="text-xs text-gray-400 mt-1">Layer {{ progressData?.layer_completed ?? 0 }} まで完了</p>
+        <p class="text-xs text-gray-400 mt-1">「{{ layerLabel(progressData?.layer_completed ?? 0) }}」まで完了</p>
       </div>
 
       <!-- 例文 -->
@@ -55,6 +55,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useZukanStore } from '@/stores/zukan'
 import { useSessionStore } from '@/stores/session'
+import { layerLabel } from '@/data/layerLabels'
 
 const route        = useRoute()
 const router       = useRouter()

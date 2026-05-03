@@ -96,8 +96,8 @@
           <div class="px-4 py-3">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-bold text-gray-900">ゲーム化Layer</p>
-                <p class="text-xs text-gray-400">Layer2 SVO・Layer3 Sprint を有効化</p>
+                <p class="text-sm font-bold text-gray-900">ゲーム化ステージ</p>
+                <p class="text-xs text-gray-400">「つくる」SVO・「話す」Sprint を有効化</p>
               </div>
               <button
                 @click="toggleGameMode"

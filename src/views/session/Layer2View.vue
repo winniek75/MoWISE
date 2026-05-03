@@ -4,7 +4,7 @@
     <!-- ヘッダー -->
     <header class="l2-header">
       <button class="btn-exit" @click="confirmExit">← 終了</button>
-      <span class="l2-header__title">{{ gameMode.patternId.value }} &nbsp; Layer 2</span>
+      <span class="l2-header__title">{{ gameMode.patternId.value }} &nbsp; つくる</span>
       <span class="l2-header__progress">{{ currentIndex + 1 }} / {{ questions.length }}問</span>
     </header>
 
