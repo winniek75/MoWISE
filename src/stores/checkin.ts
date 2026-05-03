@@ -2,20 +2,16 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase, isOfflineMode } from '@/lib/supabase'
 import { useAuthStore } from './auth'
+import {
+  MORNING_FEELING_LABELS,
+  EVENING_FEELING_LABELS,
+  type MorningFeelingId,
+  type EveningFeelingId,
+} from '@/data/checkinOptions'
 
 // ─── Types ────────────────────────────────────────────────────
 
-export type MorningFeelingId =
-  | 'morning_confident'
-  | 'morning_okay'
-  | 'morning_anxious'
-  | 'morning_unsure'
-
-export type EveningFeelingId =
-  | 'evening_said_it'
-  | 'evening_fun'
-  | 'evening_hard'
-  | 'evening_not_quite'
+export type { MorningFeelingId, EveningFeelingId }
 
 export interface CheckinRecord {
   id: string
@@ -41,27 +37,9 @@ interface SaveEveningPayload {
   mowiQuoteEn: string
 }
 
-// ─── ラベル（v3.0確定版）────────────────────────────────────────
+// ─── ラベル（B-4 再定義版・src/data/checkinOptions.ts を真実の源とする）──
 
-export const MORNING_FEELING_LABELS: Record<
-  MorningFeelingId,
-  { ja: string; en: string; emoji: string }
-> = {
-  morning_confident: { ja: '自信がある',     en: 'Ready for it',           emoji: '✨' },
-  morning_okay:      { ja: 'まあまあかな',   en: 'Somewhere in the middle', emoji: '😐' },
-  morning_anxious:   { ja: '不安',           en: 'A little heavy',         emoji: '😔' },
-  morning_unsure:    { ja: 'わからない',     en: "Can't tell yet",         emoji: '😶' },
-}
-
-export const EVENING_FEELING_LABELS: Record<
-  EveningFeelingId,
-  { ja: string; en: string; emoji: string }
-> = {
-  evening_said_it:   { ja: '言えた気がした', en: 'Something came out',  emoji: '💬' },
-  evening_fun:       { ja: '楽しかった',     en: 'Actually enjoyed it', emoji: '😊' },
-  evening_hard:      { ja: '難しかった',     en: "Couldn't get there",  emoji: '🤔' },
-  evening_not_quite: { ja: 'ぴんとこない',   en: 'Not quite clicking',  emoji: '😫' },
-}
+export { MORNING_FEELING_LABELS, EVENING_FEELING_LABELS }
 
 // ─── Store ────────────────────────────────────────────────────
 

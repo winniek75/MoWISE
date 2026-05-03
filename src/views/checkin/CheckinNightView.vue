@@ -8,8 +8,8 @@
         <!-- ヘッダー -->
         <div class="night-header">
           <span class="night-icon">🌙</span>
-          <p class="night-label">今日の練習、どうだった？</p>
-          <p class="night-label-en">How did it feel today?</p>
+          <p class="night-label">{{ headerJa }}</p>
+          <p class="night-label-en">{{ headerEn }}</p>
         </div>
 
         <!-- Mowiオーブ（夜版・くすんだ輝き） -->
@@ -69,74 +69,73 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCheckinStore } from '@/stores/checkin'
 import { useMowiStore } from '@/stores/mowi'
+import { CHECKIN_HEADERS, FALLBACK_MOWI_LINE } from '@/data/checkinOptions'
 
 const router = useRouter()
 const checkinStore = useCheckinStore()
 const mowiStore = useMowiStore()
 
-// ─── 定数 ──────────────────────────────────────────────
+const headerJa = CHECKIN_HEADERS.evening.ja
+const headerEn = CHECKIN_HEADERS.evening.en
+
+// ─── 定数（B-4再定義版・5択） ───────────────────────────
 const EVENING_CHOICES = [
   {
-    id: 'evening_said_it',
-    ja: '言えた気がする',
-    en: 'Something came out',
-    emoji: '💬',
+    id: 'evening_done',
+    ja: 'やりきった',
+    en: 'Got it done',
+    emoji: '🎉',
     bgFrom: '#1a1a2e',
     bgTo: '#92400e',
     cardBg: '#fef3c7',
   },
   {
-    id: 'evening_fun',
-    ja: '楽しかった',
-    en: 'Actually enjoyed it',
-    emoji: '😊',
+    id: 'evening_came_out',
+    ja: '出せた感じ',
+    en: 'Something came out',
+    emoji: '💬',
     bgFrom: '#1a1a3e',
     bgTo: '#7c2d12',
     cardBg: '#fff7ed',
   },
   {
-    id: 'evening_hard',
-    ja: '難しかった',
-    en: "Couldn't get there",
-    emoji: '🤔',
+    id: 'evening_normal',
+    ja: 'ふつう',
+    en: 'Just normal',
+    emoji: '😐',
+    bgFrom: '#15151c',
+    bgTo: '#2a2a35',
+    cardBg: '#f3f4f6',
+  },
+  {
+    id: 'evening_drained',
+    ja: '疲れた',
+    en: 'Drained',
+    emoji: '😩',
     bgFrom: '#0f1a2a',
     bgTo: '#1e3a5f',
     cardBg: '#eff6ff',
   },
   {
-    id: 'evening_not_quite',
-    ja: 'しっくりこない',
-    en: 'Not quite clicking',
-    emoji: '🌫',
-    bgFrom: '#1a0f2a',
-    bgTo: '#4c1d95',
-    cardBg: '#f5f3ff',
+    id: 'evening_nope',
+    ja: 'もう無理',
+    en: "Can't anymore",
+    emoji: '🚫',
+    bgFrom: '#1a0a14',
+    bgTo: '#3a0e1a',
+    cardBg: '#fee2e2',
   },
 ] as const
 
 type EveningFeelingId = (typeof EVENING_CHOICES)[number]['id']
 
+// 個別 Mowi セリフは別タスクで本実装。本タスクでは FALLBACK_MOWI_LINE.evening を全IDに適用。
 const EVENING_SERIFS: Record<EveningFeelingId, { ja: string; en: string }[]> = {
-  evening_said_it: [
-    { ja: '言えた。それが今日の全部。', en: "Said it. That's all of today." },
-    { ja: '出た分だけ、本物になった。', en: 'What came out became real.' },
-    { ja: 'また今日も、動いた。', en: 'Moved again today.' },
-  ],
-  evening_fun: [
-    { ja: '楽しいとき、一番速く入る。', en: 'Fun is when it enters fastest.' },
-    { ja: '楽しさが、英語の速さになる。', en: 'Fun becomes the speed of English.' },
-    { ja: '今日みたいな日が、続くといい。', en: 'More days like today.' },
-  ],
-  evening_hard: [
-    { ja: '難しかった分、深く入った。', en: 'Hard means it went deeper.' },
-    { ja: '難しいとき、一番成長してる。', en: 'Hardest times are the biggest growth.' },
-    { ja: 'ぶつかった。それが記憶になる。', en: 'Hit a wall. That becomes memory.' },
-  ],
-  evening_not_quite: [
-    { ja: 'しっくりこない日がある。それも記録。', en: "Not clicking. That's recorded too." },
-    { ja: 'まだ形になってない。でも、来てる。', en: "Not formed yet. But it's coming." },
-    { ja: '正直に感じた。それが一番。', en: 'Felt it honestly. That matters most.' },
-  ],
+  evening_done:     [FALLBACK_MOWI_LINE.evening],
+  evening_came_out: [FALLBACK_MOWI_LINE.evening],
+  evening_normal:   [FALLBACK_MOWI_LINE.evening],
+  evening_drained:  [FALLBACK_MOWI_LINE.evening],
+  evening_nope:     [FALLBACK_MOWI_LINE.evening],
 }
 
 // ─── 状態 ──────────────────────────────────────────────

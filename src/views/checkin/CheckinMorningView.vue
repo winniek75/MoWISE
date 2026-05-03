@@ -14,8 +14,8 @@
           <div class="date-badge">
             <span class="date-text">{{ formattedDate }}</span>
           </div>
-          <h1 class="head-copy-ja">今日の英語、どんな気分？</h1>
-          <p class="head-copy-en">How does English feel today?</p>
+          <h1 class="head-copy-ja">{{ headerJa }}</h1>
+          <p class="head-copy-en">{{ headerEn }}</p>
         </div>
 
         <!-- Mowiオーブ（アイドル） -->
@@ -111,6 +111,10 @@ import { useMowiStore } from '@/stores/mowi'
 import MowiOrb from '@/components/mowi/MowiOrb.vue'
 import type { MorningFeelingId } from '@/stores/checkin'
 import type { MowiEmotionState } from '@/stores/mowi'
+import { CHECKIN_HEADERS, FALLBACK_MOWI_LINE } from '@/data/checkinOptions'
+
+const headerJa = CHECKIN_HEADERS.morning.ja
+const headerEn = CHECKIN_HEADERS.morning.en
 
 // ─── Types ────────────────────────────────────────────────────
 interface MorningChoice {
@@ -131,55 +135,68 @@ const router = useRouter()
 const checkinStore = useCheckinStore()
 const mowiStore = useMowiStore()
 
-// ─── 朝チェックイン選択肢 v3.0 ───────────────────────────────
+// ─── 朝チェックイン選択肢 B-4再定義版（5択） ─────────────────
+// 個別 Mowi セリフは別タスクで本実装。本タスクでは FALLBACK_MOWI_LINE.morning を全カードに適用。
 const morningChoices: MorningChoice[] = [
   {
-    id: 'morning_confident',
-    ja: '自信がある',
-    en: 'Ready for it',
+    id: 'morning_great',
+    ja: 'いい朝',
+    en: 'Feeling good',
     emoji: '✨',
     mowiState: 'joy',
-    mowiQuoteJa: '今日は、出てくる。',
-    mowiQuoteEn: 'Today, it flows.',
+    mowiQuoteJa: FALLBACK_MOWI_LINE.morning.ja,
+    mowiQuoteEn: FALLBACK_MOWI_LINE.morning.en,
     bgColorReaction: 'linear-gradient(160deg, #0d0d1a 0%, #1a1200 50%, #3d2800 100%)',
     bgColorCard: 'linear-gradient(160deg, #0d0d1a 0%, #1a1200 100%)',
     cardBg: 'linear-gradient(135deg, #2d2000 0%, #4a3300 100%)',
   },
   {
-    id: 'morning_okay',
-    ja: 'まあまあかな',
-    en: 'Somewhere in the middle',
-    emoji: '😐',
-    mowiState: 'idle',
-    mowiQuoteJa: 'それでも、やってみよう。',
-    mowiQuoteEn: "That's fine. Let's try.",
-    bgColorReaction: 'linear-gradient(160deg, #0d0d1a 0%, #0a1428 50%, #0d1f3c 100%)',
-    bgColorCard: 'linear-gradient(160deg, #0d0d1a 0%, #0d1f3c 100%)',
-    cardBg: 'linear-gradient(135deg, #0a1428 0%, #0d2040 100%)',
+    id: 'morning_doable',
+    ja: 'いけそう',
+    en: 'Doable',
+    emoji: '🙂',
+    mowiState: 'cheer',
+    mowiQuoteJa: FALLBACK_MOWI_LINE.morning.ja,
+    mowiQuoteEn: FALLBACK_MOWI_LINE.morning.en,
+    bgColorReaction: 'linear-gradient(160deg, #0d0d1a 0%, #1a1410 50%, #3d2c20 100%)',
+    bgColorCard: 'linear-gradient(160deg, #0d0d1a 0%, #1a1410 100%)',
+    cardBg: 'linear-gradient(135deg, #2d2418 0%, #4a3a28 100%)',
   },
   {
-    id: 'morning_anxious',
-    ja: '不安',
-    en: 'A little heavy',
-    emoji: '😔',
+    id: 'morning_normal',
+    ja: 'ふつう',
+    en: 'Just normal',
+    emoji: '😐',
+    mowiState: 'idle',
+    mowiQuoteJa: FALLBACK_MOWI_LINE.morning.ja,
+    mowiQuoteEn: FALLBACK_MOWI_LINE.morning.en,
+    bgColorReaction: 'linear-gradient(160deg, #0d0d1a 0%, #181820 50%, #28282e 100%)',
+    bgColorCard: 'linear-gradient(160deg, #0d0d1a 0%, #181820 100%)',
+    cardBg: 'linear-gradient(135deg, #1c1c24 0%, #2c2c34 100%)',
+  },
+  {
+    id: 'morning_heavy',
+    ja: 'だるい',
+    en: 'A bit heavy',
+    emoji: '😮‍💨',
     mowiState: 'sad',
-    mowiQuoteJa: '不安でも、できるよ。',
-    mowiQuoteEn: 'Anxious is okay. Still doing it.',
+    mowiQuoteJa: FALLBACK_MOWI_LINE.morning.ja,
+    mowiQuoteEn: FALLBACK_MOWI_LINE.morning.en,
     bgColorReaction: 'linear-gradient(160deg, #0d0d1a 0%, #150d24 50%, #200d30 100%)',
     bgColorCard: 'linear-gradient(160deg, #0d0d1a 0%, #200d30 100%)',
     cardBg: 'linear-gradient(135deg, #150d24 0%, #200d30 100%)',
   },
   {
-    id: 'morning_unsure',
-    ja: 'わからない',
-    en: "Can't tell yet",
-    emoji: '😶',
+    id: 'morning_nope',
+    ja: '無理かも',
+    en: 'Not today',
+    emoji: '😵',
     mowiState: 'think',
-    mowiQuoteJa: '始めたら、見えてくる。',
-    mowiQuoteEn: 'Starting will show you.',
-    bgColorReaction: 'linear-gradient(160deg, #0d0d1a 0%, #0d1a1a 50%, #0d2424 100%)',
-    bgColorCard: 'linear-gradient(160deg, #0d0d1a 0%, #0d2424 100%)',
-    cardBg: 'linear-gradient(135deg, #0d1a1a 0%, #0d2828 100%)',
+    mowiQuoteJa: FALLBACK_MOWI_LINE.morning.ja,
+    mowiQuoteEn: FALLBACK_MOWI_LINE.morning.en,
+    bgColorReaction: 'linear-gradient(160deg, #0d0d1a 0%, #0a0a14 50%, #050510 100%)',
+    bgColorCard: 'linear-gradient(160deg, #0d0d1a 0%, #050510 100%)',
+    cardBg: 'linear-gradient(135deg, #0a0a14 0%, #050510 100%)',
   },
 ]
 

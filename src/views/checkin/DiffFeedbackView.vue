@@ -131,17 +131,19 @@ const mowiStore = useMowiStore()
 
 // ─── 定数 ──────────────────────────────────────────────
 const MORNING_MAP = {
-  morning_confident: { ja: '自信ある',     en: 'Ready for it',           emoji: '✨' },
-  morning_okay:      { ja: 'まあまあかな', en: 'Somewhere in the middle', emoji: '😌' },
-  morning_anxious:   { ja: '不安',         en: 'A little heavy',         emoji: '😟' },
-  morning_unsure:    { ja: 'わからない',   en: "Can't tell yet",         emoji: '🌀' },
+  morning_great:  { ja: 'いい朝',     en: 'Feeling good', emoji: '✨' },
+  morning_doable: { ja: 'いけそう',   en: 'Doable',       emoji: '🙂' },
+  morning_normal: { ja: 'ふつう',     en: 'Just normal',  emoji: '😐' },
+  morning_heavy:  { ja: 'だるい',     en: 'A bit heavy',  emoji: '😮‍💨' },
+  morning_nope:   { ja: '無理かも',   en: 'Not today',    emoji: '😵' },
 } as const
 
 const EVENING_MAP = {
-  evening_said_it:   { ja: '言えた気がする', en: 'Something came out',  emoji: '💬' },
-  evening_fun:       { ja: '楽しかった',     en: 'Actually enjoyed it', emoji: '😊' },
-  evening_hard:      { ja: '難しかった',     en: "Couldn't get there",  emoji: '🤔' },
-  evening_not_quite: { ja: 'しっくりこない', en: 'Not quite clicking',  emoji: '🌫' },
+  evening_done:     { ja: 'やりきった',   en: 'Got it done',        emoji: '🎉' },
+  evening_came_out: { ja: '出せた感じ',   en: 'Something came out', emoji: '💬' },
+  evening_normal:   { ja: 'ふつう',       en: 'Just normal',        emoji: '😐' },
+  evening_drained:  { ja: '疲れた',       en: 'Drained',            emoji: '😩' },
+  evening_nope:     { ja: 'もう無理',     en: "Can't anymore",      emoji: '🚫' },
 } as const
 
 // 朝×夜コンボセリフマップ
@@ -211,10 +213,10 @@ const bgStyle = computed(() => ({
 const cardBgGradient = computed(() => {
   const morningId = morningFeeling.value
   const eveningId = eveningFeeling.value
-  if (morningId === 'morning_confident' && eveningId === 'evening_fun') {
+  if (morningId === 'morning_great' && eveningId === 'evening_done') {
     return 'linear-gradient(135deg, #fef3c7, #fde68a)'
   }
-  if (eveningId === 'evening_hard' || eveningId === 'evening_not_quite') {
+  if (eveningId === 'evening_drained' || eveningId === 'evening_nope') {
     return 'linear-gradient(135deg, #eff6ff, #e0e7ff)'
   }
   return 'linear-gradient(135deg, #f0fdf4, #dcfce7)'

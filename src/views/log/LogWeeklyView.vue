@@ -117,7 +117,7 @@ onMounted(async () => {
     const evening = dayCheckins.find((c: any) => c.type === 'evening')
 
     const moodMap: Record<string, string> = {
-      morning_confident: '😊', morning_okay: '🙂', morning_anxious: '😟', morning_unsure: '😐'
+      morning_great: '✨', morning_doable: '🙂', morning_normal: '😐', morning_heavy: '😮‍💨', morning_nope: '😵'
     }
 
     return {

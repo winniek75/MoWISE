@@ -293,15 +293,15 @@ async function sendFeedback() {
 function feelingEmoji(feeling: string | null, result: string | null): string {
   if (feeling) {
     const map: Record<string, string> = {
-      morning_confident: '😊', morning_okay: '🙂',
-      morning_anxious: '😟', morning_unsure: '😐',
+      morning_great: '✨', morning_doable: '🙂', morning_normal: '😐',
+      morning_heavy: '😮‍💨', morning_nope: '😵',
     }
     return map[feeling] ?? '─'
   }
   if (result) {
     const map: Record<string, string> = {
-      evening_said_it: '🎉', evening_fun: '😄',
-      evening_hard: '😤', evening_not_quite: '🤔',
+      evening_done: '🎉', evening_came_out: '💬', evening_normal: '😐',
+      evening_drained: '😩', evening_nope: '🚫',
     }
     return map[result] ?? '─'
   }

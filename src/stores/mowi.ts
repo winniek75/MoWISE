@@ -27,40 +27,57 @@ export type MowiEmotionState =
   | 'cheer'
   | 'tomorrow'
 
-// ─── 朝チェックイン → Mowi感情マップ ──────────────────────────
+// ─── 朝チェックイン → Mowi感情マップ（B-4再定義版・5択） ────
 const MORNING_FEELING_TO_STATE: Record<MorningFeelingId, MowiEmotionState> = {
-  morning_confident: 'joy',
-  morning_okay:      'idle',
-  morning_anxious:   'sad',
-  morning_unsure:    'think',
+  morning_great:  'joy',
+  morning_doable: 'cheer',
+  morning_normal: 'idle',
+  morning_heavy:  'sad',
+  morning_nope:   'think',
 }
 
-// ─── 夜チェックイン → Mowi感情マップ ──────────────────────────
+// ─── 夜チェックイン → Mowi感情マップ（B-4再定義版・5択） ────
 const EVENING_FEELING_TO_STATE: Record<EveningFeelingId, MowiEmotionState> = {
-  evening_said_it:   'joy',
-  evening_fun:       'joy',
-  evening_hard:      'sad',
-  evening_not_quite: 'think',
+  evening_done:     'joy',
+  evening_came_out: 'cheer',
+  evening_normal:   'idle',
+  evening_drained:  'sad',
+  evening_nope:     'sleep',
 }
 
-// ─── 朝×夜の組み合わせによるhappiness変化 ────────────────────
+// ─── 朝×夜の組み合わせによるhappiness変化（25通り）────────────
+// 「逆転演出」を踏襲：朝が低いほど夜のポジ結果で大きく加点
 const COMBO_HAPPINESS_DELTA: Record<string, number> = {
-  'morning_confident-evening_said_it':   +8,
-  'morning_confident-evening_fun':       +10,
-  'morning_confident-evening_hard':      +2,
-  'morning_confident-evening_not_quite': +4,
-  'morning_okay-evening_said_it':        +6,
-  'morning_okay-evening_fun':            +8,
-  'morning_okay-evening_hard':           +1,
-  'morning_okay-evening_not_quite':      +2,
-  'morning_anxious-evening_said_it':     +12, // 不安→言えた：最大逆転演出
-  'morning_anxious-evening_fun':         +10,
-  'morning_anxious-evening_hard':        -2,
-  'morning_anxious-evening_not_quite':   0,
-  'morning_unsure-evening_said_it':      +7,
-  'morning_unsure-evening_fun':          +9,
-  'morning_unsure-evening_hard':         0,
-  'morning_unsure-evening_not_quite':    +1,
+  // evening_done（やりきった: 5）
+  'morning_great-evening_done':   +8,
+  'morning_doable-evening_done':  +8,
+  'morning_normal-evening_done':  +9,
+  'morning_heavy-evening_done':   +10,
+  'morning_nope-evening_done':    +12, // 最大逆転演出（無理かも → やりきった）
+  // evening_came_out（出せた感じ: 4）
+  'morning_great-evening_came_out':   +6,
+  'morning_doable-evening_came_out':  +7,
+  'morning_normal-evening_came_out':  +7,
+  'morning_heavy-evening_came_out':   +8,
+  'morning_nope-evening_came_out':    +10,
+  // evening_normal（ふつう: 3）
+  'morning_great-evening_normal':   +1,
+  'morning_doable-evening_normal':  +2,
+  'morning_normal-evening_normal':  +2,
+  'morning_heavy-evening_normal':   +3,
+  'morning_nope-evening_normal':    +4,
+  // evening_drained（疲れた: 2）
+  'morning_great-evening_drained':   -1,
+  'morning_doable-evening_drained':   0,
+  'morning_normal-evening_drained':   0,
+  'morning_heavy-evening_drained':   +1,
+  'morning_nope-evening_drained':    +2,
+  // evening_nope（もう無理: 1）
+  'morning_great-evening_nope':   -3,
+  'morning_doable-evening_nope':  -2,
+  'morning_normal-evening_nope':  -1,
+  'morning_heavy-evening_nope':    0,
+  'morning_nope-evening_nope':    +1, // 一貫してネガでも、来た事実
 }
 
 // ─── Store ────────────────────────────────────────────────────
@@ -150,9 +167,11 @@ export const useMowiStore = defineStore('mowi', () => {
     todayMorningFeeling.value = feeling
     emotionState.value = MORNING_FEELING_TO_STATE[feeling]
 
-    const delta = feeling === 'morning_confident' ? +3
-      : feeling === 'morning_okay' ? +1
-      : feeling === 'morning_anxious' ? -1
+    const delta = feeling === 'morning_great' ? +3
+      : feeling === 'morning_doable' ? +2
+      : feeling === 'morning_normal' ? +1
+      : feeling === 'morning_heavy' ? -1
+      : feeling === 'morning_nope' ? -2
       : 0
 
     happiness.value = clamp(happiness.value + delta, 0, 100)
@@ -200,16 +219,18 @@ export const useMowiStore = defineStore('mowi', () => {
   /** M4 brightness計算ヘルパー */
   function _computeHomeBrightness(correctRate?: number): number {
     const morningOffset: Record<MorningFeelingId, number> = {
-      morning_confident: +1,
-      morning_okay:       0,
-      morning_anxious:   -1,
-      morning_unsure:     0,
+      morning_great:  +2,
+      morning_doable: +1,
+      morning_normal:  0,
+      morning_heavy:  -1,
+      morning_nope:   -2,
     }
     const eveningOffset: Record<EveningFeelingId, number> = {
-      evening_said_it:   +2,
-      evening_fun:       +2,
-      evening_hard:       0,
-      evening_not_quite: -1,
+      evening_done:     +2,
+      evening_came_out: +2,
+      evening_normal:    0,
+      evening_drained:  -1,
+      evening_nope:     -2,
     }
 
     let score = baseLevel.value
