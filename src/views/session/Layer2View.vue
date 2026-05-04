@@ -57,8 +57,8 @@
       </div>
     </div>
 
-    <!-- 選択肢 -->
-    <div class="choices-grid">
+    <!-- 選択肢（currentQ ロード前のクラッシュ防止のため v-if ガード） -->
+    <div v-if="currentQ" class="choices-grid">
       <button
         v-for="choice in currentQ.choices"
         :key="choice.id"
