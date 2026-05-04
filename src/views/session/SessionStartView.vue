@@ -202,11 +202,33 @@ const FALLBACK_PATTERNS: SessionPattern[] = [
 
 // ── Actions ──
 
+/**
+ * Hotfix-2: MVP では Layer 0/1 をスキップして Layer 2 から開始。
+ * Layer 0/1 の音声未生成のため、起動すると「音を聞いてみよう。」で凍結する問題を回避。
+ * 既存パターン進捗の startLayer (0/1/2/3) を min 2 に clamp する。
+ * Layer 0/1 のコード・ルートは温存（音声生成完了後に解除可能）。
+ */
+/**
+ * Hotfix-2: MVP では Layer 0/1 をスキップして Layer 2 から開始。
+ * Layer 0/1 の音声未生成のため、起動すると「音を聞いてみよう。」で凍結する問題を回避。
+ * 既存パターン進捗の startLayer (0/1/2/3) を min 2 に clamp する。
+ * Layer 0/1 のコード・ルートは温存（音声生成完了後に解除可能）。
+ */
+function clampStartLayer(p: SessionPattern): SessionPattern {
+  const clamped = (p.startLayer >= 3 ? 3 : 2) as 2 | 3
+  return { ...p, startLayer: clamped }
+}
+
+function routeForLayer(layer: 0 | 1 | 2 | 3): 'session-layer2' | 'session-layer3' {
+  return layer >= 3 ? 'session-layer3' : 'session-layer2'
+}
+
 async function startSession() {
   isStarting.value = true
   try {
-    await sessionStore.startSession(todayPatterns.value)
-    router.push({ name: 'session-layer0' })
+    const patterns = todayPatterns.value.map(clampStartLayer)
+    await sessionStore.startSession(patterns)
+    router.push({ name: routeForLayer(patterns[0]?.startLayer ?? 2) })
   } catch (e) {
     console.error('セッション開始エラー:', e)
     isStarting.value = false
@@ -217,8 +239,9 @@ async function startSession() {
 async function startSinglePattern(pattern: SessionPattern) {
   isStarting.value = true
   try {
-    await sessionStore.startSession([pattern])
-    router.push({ name: 'session-layer0' })
+    const clamped = clampStartLayer(pattern)
+    await sessionStore.startSession([clamped])
+    router.push({ name: routeForLayer(clamped.startLayer) })
   } catch (e) {
     console.error('セッション開始エラー:', e)
     isStarting.value = false

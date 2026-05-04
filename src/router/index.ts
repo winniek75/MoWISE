@@ -69,8 +69,8 @@ router.beforeEach(async (to, _from, next) => {
     return next({ name: 'session-start' })
   }
 
-  // チェックイン自動誘導（B-4-2）：ホーム到達時のみ、時間帯セッション未完了かつ未dismissなら誘導
-  if (to.name === 'Home' && auth.isAuthenticated) {
+  // チェックイン自動誘導（B-4-2 / Hotfix-1）：ホーム到達時、student のみ対象。teacher はスキップ。
+  if (to.name === 'Home' && auth.isAuthenticated && !auth.isTeacher) {
     cleanupOldDismissKeys()
     const session = getCurrentCheckinSession()
     if (!isCheckinDismissed(session)) {

@@ -130,19 +130,21 @@ async function markRead(fbId: string) {
 
       <!-- ─── CTA エリア ─── -->
       <div class="w-full max-w-xs space-y-3">
-        <!-- チェックインCTA（B-4-2 招待トーン） -->
-        <button
-          v-if="!checkinCompleted"
-          class="w-full rounded-2xl py-4 px-5 bg-white/8 hover:bg-white/12 border border-white/10 text-left transition-colors"
-          @click="goToCheckin"
-        >
-          <div class="text-white font-title font-semibold">{{ checkinCtaLabel }}</div>
-          <div class="text-white/40 text-xs font-title mt-0.5">4タップで終わる</div>
-        </button>
-        <p
-          v-else
-          class="text-center text-white/40 text-xs font-title"
-        >{{ checkinDoneLabel }}</p>
+        <!-- チェックインCTA（B-4-2 招待トーン / Hotfix-1: 教師は非表示） -->
+        <template v-if="!auth.isTeacher">
+          <button
+            v-if="!checkinCompleted"
+            class="w-full rounded-2xl py-4 px-5 bg-white/8 hover:bg-white/12 border border-white/10 text-left transition-colors"
+            @click="goToCheckin"
+          >
+            <div class="text-white font-title font-semibold">{{ checkinCtaLabel }}</div>
+            <div class="text-white/40 text-xs font-title mt-0.5">4タップで終わる</div>
+          </button>
+          <p
+            v-else
+            class="text-center text-white/40 text-xs font-title"
+          >{{ checkinDoneLabel }}</p>
+        </template>
 
         <button
           class="btn-primary w-full text-lg font-title"
