@@ -1,0 +1,211 @@
+{
+  "scenario_id": "sam_shop_price_v2",
+  "pattern_no": "P024",
+  "npc_id": "sam",
+  "place": "MoWISE Shop",
+  "theme": "値段確認",
+  "difficulty": "jh2",
+  "reward_coins": 60,
+  "reward_friendship": 10,
+  "mowi_message": "言えたな、次は？",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Hi! Looking for something interesting?",
+      "required_keywords": [
+        "notebook",
+        "see"
+      ],
+      "npc_reaction_correct": "Sure, here you go. 📓",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Can I see that notebook?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I look notebook?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"at\" が抜けてる、\"look at\" で見るとき。"
+        },
+        {
+          "option_id": 3,
+          "text": "Show notebook me.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的、\"Can I see\" でお願いしよう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I want notebook see.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が違う、\"to see\" の形で。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "It's a popular one. Anything you want to ask?",
+      "required_keywords": [
+        "price",
+        "ask"
+      ],
+      "npc_reaction_correct": "It's 800 yen. 💰",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Can I ask the price?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I ask price?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"the\" が抜けてる、\"the price\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "How much price?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "二重表現、\"How much is it?\" でOK。"
+        },
+        {
+          "option_id": 4,
+          "text": "Price me, please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文になってない、\"Can I ask\" から。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "Nice, right? We have other colors too.",
+      "required_keywords": [
+        "color",
+        "another"
+      ],
+      "npc_reaction_correct": "We have red and green. ❤️💚",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Can I see another color?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I see other color?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"another color\" を使おう。"
+        },
+        {
+          "option_id": 3,
+          "text": "Other color show me.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的、\"Can I see\" で頼もう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I see another.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Can I\" が必要、許可を求めよう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "Great choice! Cash or card?",
+      "required_keywords": [
+        "pay",
+        "card"
+      ],
+      "npc_reaction_correct": "Card works fine. 💳",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Can I pay by card?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I pay card?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"by\" が抜けてる、\"pay by card\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "Card pay, please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文になってない、\"Can I pay\" から。"
+        },
+        {
+          "option_id": 4,
+          "text": "I pay card.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Can I\" を使って許可を求めよう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "Thanks for shopping!",
+      "required_keywords": [
+        "thank",
+        "good"
+      ],
+      "npc_reaction_correct": "See you next time! 😊",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you. Have a good day!",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Thanks. Good day.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "短すぎ、\"Have a good day\" で。"
+        },
+        {
+          "option_id": 3,
+          "text": "Yes, good day.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "返事が変、\"Thank you\" から始めよう。"
+        },
+        {
+          "option_id": 4,
+          "text": "You good day.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文の形が変、\"Have a\" を入れて。"
+        }
+      ]
+    }
+  ]
+}

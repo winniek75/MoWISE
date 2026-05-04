@@ -1,0 +1,208 @@
+{
+  "scenario_id": "sam_shop_fitting_v1",
+  "pattern_no": "P024",
+  "npc_id": "sam",
+  "place": "MoWISE Shop",
+  "theme": "試着",
+  "difficulty": "jh2",
+  "reward_coins": 60,
+  "reward_friendship": 10,
+  "mowi_message": "言えたな、次は？",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Hey there! Looking for something?",
+      "required_keywords": [
+        "try"
+      ],
+      "npc_reaction_correct": "Sure! The fitting room is right over there. 🚪",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Can I try this on?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I try this?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"on\" が抜けてる、試着は \"try on\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "Try this on me?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が違う、\"Can I\" から始めよう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I want try this.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"to\" が抜けてる、\"want to\" で覚えよう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "What size do you need?",
+      "required_keywords": [
+        "medium"
+      ],
+      "npc_reaction_correct": "Medium, got it. Here you go. 👕",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Can I have a medium, please?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Medium one.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文が足りない、\"Can I have\" を使おう。"
+        },
+        {
+          "option_id": 3,
+          "text": "I'm medium.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "これだと「私は中くらい」、変だね。"
+        },
+        {
+          "option_id": 4,
+          "text": "Give me medium.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的。\"Can I have\" でお願いしよう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "We have blue and red. Which color?",
+      "required_keywords": [
+        "blue"
+      ],
+      "npc_reaction_correct": "Good choice! Blue is popular. 💙",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Can I see the blue one?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "I want blue one.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"the\" が抜けてる、\"the blue one\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "Show blue please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的、\"Can I see\" で頼もう。"
+        },
+        {
+          "option_id": 4,
+          "text": "Blue is mine.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "「青は私の」、意味が違うよ。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "How does it look?",
+      "required_keywords": [
+        "buy",
+        "like"
+      ],
+      "npc_reaction_correct": "Awesome! Let's go to the register. 💳",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I like it. Can I buy it?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Yes, I like.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"like\" の後に \"it\" がいるよ。"
+        },
+        {
+          "option_id": 3,
+          "text": "It's me.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "「これは私」感想になってない。"
+        },
+        {
+          "option_id": 4,
+          "text": "Buy this.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令形すぎ、\"Can I buy it?\" に。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "Come again soon!",
+      "required_keywords": [
+        "thank",
+        "will"
+      ],
+      "npc_reaction_correct": "Take care! 👋",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you. I will!",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Yes, I come.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"I will\" を使おう、また来るね。"
+        },
+        {
+          "option_id": 3,
+          "text": "OK, bye.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "一言短すぎ、\"Thank you\" を付けて。"
+        },
+        {
+          "option_id": 4,
+          "text": "Sure, again.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文になってない、\"I will!\" にしよう。"
+        }
+      ]
+    }
+  ]
+}

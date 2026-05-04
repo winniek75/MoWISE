@@ -1,0 +1,208 @@
+{
+  "scenario_id": "lily_library_search_v1",
+  "pattern_no": "P031",
+  "npc_id": "lily",
+  "place": "MoWISE Library",
+  "theme": "本探し",
+  "difficulty": "jh3",
+  "reward_coins": 75,
+  "reward_friendship": 10,
+  "mowi_message": "届いたよ。少し遠くまでね。",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Hello. May I help you?",
+      "required_keywords": [
+        "help"
+      ],
+      "npc_reaction_correct": "Of course. What kind of book? 📚",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could you help me find a book?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can you help me find a book?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わないけど \"Could\" の方が丁寧。"
+        },
+        {
+          "option_id": 3,
+          "text": "Please find me a book.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的。\"Could you\" で頼もう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I need book help.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文として成立してないね。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "What kind of book?",
+      "required_keywords": [
+        "science"
+      ],
+      "npc_reaction_correct": "Science section, this way. 📚",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I'm looking for a science book.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "I want a science book.",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"looking for\" がより自然。"
+        },
+        {
+          "option_id": 3,
+          "text": "Science book, please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "短すぎ、文で答えたいね。"
+        },
+        {
+          "option_id": 4,
+          "text": "I need to a science book.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"to\" が余計、\"a science book\" が形。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "Do you know where to go?",
+      "required_keywords": [
+        "show",
+        "way",
+        "tell"
+      ],
+      "npc_reaction_correct": "Let me show you. ➡️",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could you show me the way?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Where is it?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"Could you\" の方が丁寧。"
+        },
+        {
+          "option_id": 3,
+          "text": "Tell me the way.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的、\"Could you tell me\" にしよう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I don't know.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "これだと「知らない」、だから聞こう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "Here it is. This is the one I'd recommend.",
+      "required_keywords": [
+        "borrow"
+      ],
+      "npc_reaction_correct": "Of course, here it is. ✓",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could I borrow this?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I borrow this?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"Could\" がより大人っぽい。"
+        },
+        {
+          "option_id": 3,
+          "text": "I want borrow this.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"to\" が抜けてる、\"want to borrow\"。"
+        },
+        {
+          "option_id": 4,
+          "text": "Lend me this.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的、\"Could I\" で頼もう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "Enjoy reading!",
+      "required_keywords": [
+        "thank"
+      ],
+      "npc_reaction_correct": "You're very welcome. 😊",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you so much for your help.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Thank you very much.",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "OK、\"for your help\" まで言うと丁寧。"
+        },
+        {
+          "option_id": 3,
+          "text": "Thanks, bye.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "砕けすぎ、図書館では丁寧めに。"
+        },
+        {
+          "option_id": 4,
+          "text": "Thank for help.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Thank you for the help\" が形。"
+        }
+      ]
+    }
+  ]
+}

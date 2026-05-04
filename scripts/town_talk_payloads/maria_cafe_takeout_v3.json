@@ -1,0 +1,209 @@
+{
+  "scenario_id": "maria_cafe_takeout_v3",
+  "pattern_no": "P021",
+  "npc_id": "maria",
+  "place": "MoWISE Café",
+  "theme": "テイクアウト",
+  "difficulty": "jh1",
+  "reward_coins": 50,
+  "reward_friendship": 10,
+  "mowi_message": "届いたよ。",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Welcome! What can I get you today?",
+      "required_keywords": [
+        "coffees",
+        "two"
+      ],
+      "npc_reaction_correct": "Two coffees, got it. ☕☕",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I'd like two coffees, please.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "I'd like two coffee.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "複数形は \"coffees\"、s をつけよう。"
+        },
+        {
+          "option_id": 3,
+          "text": "I'd like coffee two.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が違う、\"two coffees\" の順。"
+        },
+        {
+          "option_id": 4,
+          "text": "Two coffee me.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文の形が変、\"I'd like\" がいる。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "Sure! What kind would you like?",
+      "required_keywords": [
+        "latte",
+        "cappuccino"
+      ],
+      "npc_reaction_correct": "Great combo. 👍",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "One latte and one cappuccino.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "One latte one cappuccino.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"and\" でつないで、間に入れて。"
+        },
+        {
+          "option_id": 3,
+          "text": "A latte, a cappuccino.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"and\" が必要、リスト読みは変。"
+        },
+        {
+          "option_id": 4,
+          "text": "Latte cappuccino, please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "数を抜いてる、\"One ... and one\"で。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "Anything else?",
+      "required_keywords": [
+        "cookies"
+      ],
+      "npc_reaction_correct": "Perfect for sharing. 🍪🍪",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Yes, I'd like two cookies.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Yes, two cookie.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "複数形は \"cookies\"、s をつけよう。"
+        },
+        {
+          "option_id": 3,
+          "text": "Yes, cookie two.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が違う、\"two cookies\"。"
+        },
+        {
+          "option_id": 4,
+          "text": "Yes, I'm cookies.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"I'm\" は「私は」、変だね。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "Will you eat here?",
+      "required_keywords": [
+        "go"
+      ],
+      "npc_reaction_correct": "All to go. Coming up. 🛍",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "No, I'd like everything to go.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "No, take out.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文として弱い、\"I'd like\" を付けて。"
+        },
+        {
+          "option_id": 3,
+          "text": "Yes, to go.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Yes\" だと店内、返事が逆だね。"
+        },
+        {
+          "option_id": 4,
+          "text": "No, I to go.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "動詞がない、\"I'd like ... to go\"。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "Have a great day with your sister!",
+      "required_keywords": [
+        "thank",
+        "will"
+      ],
+      "npc_reaction_correct": "Take care! 👋✨",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you! We will.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Thanks. I will.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "2人分だから \"We will\" にしよう。"
+        },
+        {
+          "option_id": 3,
+          "text": "Yes, with sister.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "返事が変、\"Thank you\" から。"
+        },
+        {
+          "option_id": 4,
+          "text": "Thank. Bye.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Thank you\" が正しい形。"
+        }
+      ]
+    }
+  ]
+}

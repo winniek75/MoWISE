@@ -1,0 +1,209 @@
+{
+  "scenario_id": "sam_shop_stock_v3",
+  "pattern_no": "P020",
+  "npc_id": "sam",
+  "place": "MoWISE Shop",
+  "theme": "在庫確認",
+  "difficulty": "jh2",
+  "reward_coins": 60,
+  "reward_friendship": 10,
+  "mowi_message": "言えたな、次は？",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Welcome! Looking for anything special?",
+      "required_keywords": [
+        "backpack"
+      ],
+      "npc_reaction_correct": "Yes, plenty of options. 🎒",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Do you have a backpack?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Do you have backpack?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"a\" が抜けてる、\"a backpack\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "You have backpack?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Do\" を付けたい、質問の形に。"
+        },
+        {
+          "option_id": 4,
+          "text": "Backpack, do you?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が変、\"Do you have ...\" で。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "What color do you like?",
+      "required_keywords": [
+        "black",
+        "one"
+      ],
+      "npc_reaction_correct": "Got several blacks. 🖤",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Do you have a black one?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Do you have black?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"one\" が抜けてる、\"a black one\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "Black one is?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文として変、\"Do you have\" から。"
+        },
+        {
+          "option_id": 4,
+          "text": "You black one?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Do\" を付けたい、質問の形で。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "We have small, medium, and large.",
+      "required_keywords": [
+        "medium"
+      ],
+      "npc_reaction_correct": "Medium is right here. 👍",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Do you have it in medium?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Do you have medium?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"it in\" が抜けてる、\"in medium\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "Medium, do you?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が変、\"Do you have\" から。"
+        },
+        {
+          "option_id": 4,
+          "text": "I want medium.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "質問の形にしよう、\"Do you have\" で。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "How many would you like?",
+      "required_keywords": [
+        "two",
+        "stock"
+      ],
+      "npc_reaction_correct": "Yes, two are available. ✓",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Do you have two in stock?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Do you have two stock?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"in\" が抜けてる、\"in stock\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "Two stocks, please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文として変、\"Do you have\" で聞こう。"
+        },
+        {
+          "option_id": 4,
+          "text": "You have two?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Do\" を付けたい、質問の形に。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "Thanks for shopping with us!",
+      "required_keywords": [
+        "thank",
+        "back"
+      ],
+      "npc_reaction_correct": "See you next time! 👋",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you. I'll be back.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Thanks. I come back.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"I'll come back\" にしよう。"
+        },
+        {
+          "option_id": 3,
+          "text": "Yes, back.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "返事が短い、\"Thank you\" から。"
+        },
+        {
+          "option_id": 4,
+          "text": "Thank. See you.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Thank you\" が正しい形。"
+        }
+      ]
+    }
+  ]
+}

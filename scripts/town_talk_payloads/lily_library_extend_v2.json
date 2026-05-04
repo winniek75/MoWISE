@@ -1,0 +1,207 @@
+{
+  "scenario_id": "lily_library_extend_v2",
+  "pattern_no": "P031",
+  "npc_id": "lily",
+  "place": "MoWISE Library",
+  "theme": "貸出延長",
+  "difficulty": "jh3",
+  "reward_coins": 75,
+  "reward_friendship": 10,
+  "mowi_message": "届いたよ。少し遠くまでね。",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Hello again. May I help you?",
+      "required_keywords": [
+        "extend"
+      ],
+      "npc_reaction_correct": "Of course. Let me check. 📅",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could you extend the loan, please?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can you extend the loan?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"Could\" の方が丁寧だよ。"
+        },
+        {
+          "option_id": 3,
+          "text": "Extend, please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "短すぎ、\"Could you\" で頼もう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I want extend.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"to\" が抜けてる、\"want to extend\"。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "How many more days do you need?",
+      "required_keywords": [
+        "week"
+      ],
+      "npc_reaction_correct": "Sure, that's possible. 👍",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could I have one more week?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I have one more week?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"Could\" の方が大人っぽいよ。"
+        },
+        {
+          "option_id": 3,
+          "text": "One week more.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文として弱い、\"Could I have\" で。"
+        },
+        {
+          "option_id": 4,
+          "text": "I need week.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"a\" が抜けてる、\"a week\" にしよう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "May I ask why?",
+      "required_keywords": [
+        "finish",
+        "read"
+      ],
+      "npc_reaction_correct": "I understand. Take your time. 📖",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I haven't finished reading it yet.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "I didn't finish it.",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"haven't finished\" がより自然。"
+        },
+        {
+          "option_id": 3,
+          "text": "No finish reading.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文が壊れてる、\"I haven't\" から始めよう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I'm reading still.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が変、\"I'm still reading\" で。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "Your new due date is next Friday.",
+      "required_keywords": [
+        "write"
+      ],
+      "npc_reaction_correct": "Here's a note for you. 📝",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could you write it down for me?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can you write it down?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"Could\" でより丁寧に。"
+        },
+        {
+          "option_id": 3,
+          "text": "Write it.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的、\"Could you\" を付けて頼もう。"
+        },
+        {
+          "option_id": 4,
+          "text": "Could you write down?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"it\" が抜けてる、\"write it down\"。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "Anything else?",
+      "required_keywords": [
+        "thank"
+      ],
+      "npc_reaction_correct": "You're very welcome. 😊",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you for being so kind.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Thanks a lot.",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "\"for being so kind\" を足すと丁寧。"
+        },
+        {
+          "option_id": 3,
+          "text": "Thanks, see you.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "砕けすぎ、図書館では丁寧めに。"
+        },
+        {
+          "option_id": 4,
+          "text": "Thank for kind.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"for your kindness\" の形にしよう。"
+        }
+      ]
+    }
+  ]
+}

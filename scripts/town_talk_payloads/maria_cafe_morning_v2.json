@@ -1,0 +1,209 @@
+{
+  "scenario_id": "maria_cafe_morning_v2",
+  "pattern_no": "P021",
+  "npc_id": "maria",
+  "place": "MoWISE Café",
+  "theme": "朝のモーニング",
+  "difficulty": "jh1",
+  "reward_coins": 50,
+  "reward_friendship": 10,
+  "mowi_message": "届いたよ。",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Good morning! What can I get for you?",
+      "required_keywords": [
+        "morning",
+        "set"
+      ],
+      "npc_reaction_correct": "Great choice! ☀️🍳",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I'd like the morning set, please.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "I want morning set.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"the\" が抜けてる。\"the morning set\"。"
+        },
+        {
+          "option_id": 3,
+          "text": "Morning set, give me.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的。\"I'd like\" でお願いしよう。"
+        },
+        {
+          "option_id": 4,
+          "text": "Good morning set.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "挨拶と混ざってる。文を分けよう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "It comes with a drink. Coffee, tea, or juice?",
+      "required_keywords": [
+        "juice"
+      ],
+      "npc_reaction_correct": "Fresh juice, coming up. 🍊",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I'd like orange juice, please.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Juice, please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "短すぎ、\"I'd like\" を付けたい。"
+        },
+        {
+          "option_id": 3,
+          "text": "I'd like juice orange.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が違う、\"orange juice\" の順。"
+        },
+        {
+          "option_id": 4,
+          "text": "I'm orange juice.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"I'm\" は「私は」、意味が変だ。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "Would you like extra eggs with that?",
+      "required_keywords": [
+        "eggs",
+        "two"
+      ],
+      "npc_reaction_correct": "Sunny side up coming. 🍳",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Yes, I'd like two eggs.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Yes, two egg.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "複数形は \"eggs\"、s をつけよう。"
+        },
+        {
+          "option_id": 3,
+          "text": "Yes, I'd like egg two.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が違う、\"two eggs\" の順で。"
+        },
+        {
+          "option_id": 4,
+          "text": "No, I'd like eggs.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "ほしいのに \"No\"、逆だね。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "We have window seats. Where would you like to sit?",
+      "required_keywords": [
+        "window",
+        "seat"
+      ],
+      "npc_reaction_correct": "Right this way! 🪟",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I'd like a window seat, please.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Window please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "短すぎ、\"I'd like\" で頼もう。"
+        },
+        {
+          "option_id": 3,
+          "text": "I'd like a window.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"seat\" が抜けてる、\"window seat\"。"
+        },
+        {
+          "option_id": 4,
+          "text": "I'm window seat.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"I'm\" は「私は」、変だね。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "Enjoy your morning!",
+      "required_keywords": [
+        "thank"
+      ],
+      "npc_reaction_correct": "Have a great day at school! 🎒✨",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you! You too.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Thank you. Same.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Same\" は不自然、\"You too\" にしよう。"
+        },
+        {
+          "option_id": 3,
+          "text": "Yes, I enjoy.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "返事になってない、\"Thank you\" で。"
+        },
+        {
+          "option_id": 4,
+          "text": "Enjoy you.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Enjoy\" の使い方が変だね。"
+        }
+      ]
+    }
+  ]
+}

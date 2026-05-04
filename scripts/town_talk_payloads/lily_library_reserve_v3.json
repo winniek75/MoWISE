@@ -1,0 +1,208 @@
+{
+  "scenario_id": "lily_library_reserve_v3",
+  "pattern_no": "P031",
+  "npc_id": "lily",
+  "place": "MoWISE Library",
+  "theme": "本の予約",
+  "difficulty": "jh3",
+  "reward_coins": 75,
+  "reward_friendship": 10,
+  "mowi_message": "届いたよ。少し遠くまでね。",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Hello. How can I help you today?",
+      "required_keywords": [
+        "reserve"
+      ],
+      "npc_reaction_correct": "Of course. Let me check. 📕",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could I reserve this book, please?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I reserve this book?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"Could\" の方が丁寧だよ。"
+        },
+        {
+          "option_id": 3,
+          "text": "Reserve this for me.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的、\"Could I\" で頼もう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I want reserve this.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"to\" が抜けてる、\"want to reserve\"。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "I'm sorry, it's currently checked out.",
+      "required_keywords": [
+        "when",
+        "available"
+      ],
+      "npc_reaction_correct": "Probably next Monday. 📅",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "When will it be available again?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "When does it come back?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"available\" の方が大人っぽい。"
+        },
+        {
+          "option_id": 3,
+          "text": "When return book?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "主語が抜けてる、文を整えよう。"
+        },
+        {
+          "option_id": 4,
+          "text": "It comes when?",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "語順が変、\"When does it\" で。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "Shall I contact you when it returns?",
+      "required_keywords": [
+        "call"
+      ],
+      "npc_reaction_correct": "I'll call you. 📞",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could you call me when it's ready?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can you call me?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "違わない、\"when it's ready\" まで丁寧。"
+        },
+        {
+          "option_id": 3,
+          "text": "Call me ready.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文が壊れてる、\"when it's\" で。"
+        },
+        {
+          "option_id": 4,
+          "text": "I want call.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"you to\" が抜けてる、形を整えよう。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "Where would you like to pick it up?",
+      "required_keywords": [
+        "pick",
+        "up"
+      ],
+      "npc_reaction_correct": "This counter, then. ✓",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Could I pick it up at this counter?",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Can I pick up here?",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "\"pick it up\" の \"it\" を忘れずに。"
+        },
+        {
+          "option_id": 3,
+          "text": "Pick up here.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令的、\"Could I\" で頼もう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I pick up.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"it\" が入れたい、\"pick it up\" で。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "All set. We'll let you know.",
+      "required_keywords": [
+        "thank"
+      ],
+      "npc_reaction_correct": "You're very welcome. 😊",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you for your help.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Thank you so much.",
+          "is_correct": false,
+          "is_acceptable": true,
+          "explanation": "OK、\"for your help\" を付けると丁寧。"
+        },
+        {
+          "option_id": 3,
+          "text": "Thanks, OK.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "砕けすぎ、図書館では丁寧めに。"
+        },
+        {
+          "option_id": 4,
+          "text": "Thank for help.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Thank you for the help\" が形。"
+        }
+      ]
+    }
+  ]
+}

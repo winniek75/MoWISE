@@ -1,0 +1,206 @@
+{
+  "scenario_id": "maria_cafe_order_v1",
+  "pattern_no": "P021",
+  "npc_id": "maria",
+  "place": "MoWISE Café",
+  "theme": "ラテ注文",
+  "difficulty": "jh1",
+  "reward_coins": 50,
+  "reward_friendship": 10,
+  "mowi_message": "届いたよ。",
+  "total_turns": 5,
+  "version": 1,
+  "created_at": "2026-05-04T00:00:00Z",
+  "turns": [
+    {
+      "turn_no": 1,
+      "npc_audio": "Welcome to MoWISE Café! What would you like?",
+      "required_keywords": [
+        "latte"
+      ],
+      "npc_reaction_correct": "Sure! One latte, coming up. ☕",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I'd like a latte, please.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "I want latte.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "「a」が抜けてる。\"a latte\" にしよう。"
+        },
+        {
+          "option_id": 3,
+          "text": "I'm a latte.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"I'm\" は「私は」だ。意味が変だね。"
+        },
+        {
+          "option_id": 4,
+          "text": "Please latte.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文の形になってない。\"I'd like\" だね。"
+        }
+      ]
+    },
+    {
+      "turn_no": 2,
+      "npc_audio": "Anything else?",
+      "required_keywords": [
+        "muffin"
+      ],
+      "npc_reaction_correct": "Great choice! 🍪",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I'd like a muffin, too.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Yes, I'd like muffin.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "「a」が抜けてる。\"a muffin\" にしよう。"
+        },
+        {
+          "option_id": 3,
+          "text": "Muffin too.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "文になってない。\"I'd like\" を付けて。"
+        },
+        {
+          "option_id": 4,
+          "text": "I have a muffin.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"have\" は「持ってる」、注文と違う。"
+        }
+      ]
+    },
+    {
+      "turn_no": 3,
+      "npc_audio": "Hot or iced?",
+      "required_keywords": [
+        "hot"
+      ],
+      "npc_reaction_correct": "One hot latte. Got it. 🔥",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "I'd like it hot, please.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "I'd like hot.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"it\" を指して何が hot か必要だ。"
+        },
+        {
+          "option_id": 3,
+          "text": "Hot, give me.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "命令形すぎ。\"I'd like\" でお願いしよう。"
+        },
+        {
+          "option_id": 4,
+          "text": "I'd like a hot.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"hot\" は形容詞。後に名詞がいるよ。"
+        }
+      ]
+    },
+    {
+      "turn_no": 4,
+      "npc_audio": "For here or to go?",
+      "required_keywords": [
+        "go"
+      ],
+      "npc_reaction_correct": "Perfect! I'll prepare it now. ⏱",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "To go, please.",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "I to go.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "動詞がないよ。\"To go, please\" でOK。"
+        },
+        {
+          "option_id": 3,
+          "text": "Going, please.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"going\" は「行く」って意味、違う。"
+        },
+        {
+          "option_id": 4,
+          "text": "Yes, go.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "Yes/Noじゃ答えにならないよ。"
+        }
+      ]
+    },
+    {
+      "turn_no": 5,
+      "npc_audio": "Have a great day!",
+      "required_keywords": [
+        "thank"
+      ],
+      "npc_reaction_correct": "See you next time! 👋✨",
+      "options": [
+        {
+          "option_id": 1,
+          "text": "Thank you. You too!",
+          "is_correct": true,
+          "is_acceptable": true,
+          "explanation": null
+        },
+        {
+          "option_id": 2,
+          "text": "Yes, thank you.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "相手にも返そう、\"You too!\" を付けて。"
+        },
+        {
+          "option_id": 3,
+          "text": "Thank you. Me too.",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "\"Me too\" は「私も」、ここは \"You too\"。"
+        },
+        {
+          "option_id": 4,
+          "text": "Thanks!",
+          "is_correct": false,
+          "is_acceptable": false,
+          "explanation": "短すぎ。\"You too!\" を付けたい。"
+        }
+      ]
+    }
+  ]
+}
