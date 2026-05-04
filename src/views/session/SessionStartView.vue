@@ -55,7 +55,7 @@
           <div class="card-right">
             <p class="pattern-label">{{ pattern.patternLabel }}</p>
             <p class="pattern-ja">{{ pattern.patternJa }}</p>
-            <span class="layer-badge">Layer {{ pattern.startLayer }} から</span>
+            <span class="layer-badge">「{{ layerLabel(Math.max(pattern.startLayer, 2)) }}」から</span>
           </div>
           <span class="card-arrow">→</span>
         </div>
@@ -88,6 +88,7 @@ import { useRouter } from 'vue-router'
 import { useSessionStore, type SessionPattern } from '@/stores/session'
 import { useAuthStore } from '@/stores/auth'
 import { supabase, isOfflineMode } from '@/lib/supabase'
+import { layerLabel } from '@/data/layerLabels'
 
 const router = useRouter()
 const sessionStore = useSessionStore()
