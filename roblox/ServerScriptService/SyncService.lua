@@ -27,6 +27,7 @@ function SyncService.new(player)
     self.linked       = false
     self.localCache   = {}
     self.boosts       = { coin_multiplier = 1.0, premium_materials = false }
+    self.mowiseUserId = nil  -- C-1.2 Phase 3：Town Talk 用、TEST_MODE 時は外部から代入
 
     -- DataStore から保存済みトークンを読み込み
     task.spawn(function()
@@ -256,6 +257,88 @@ end
 
 function SyncService:getLocalCache()
     return self.localCache
+end
+
+------------------------------------------------------------------------
+-- C-1.2 Phase 3 / Town Talk 用：Bearer 認証メソッド
+-- ★ 既存 X-MoWISE-API-Key 系（roblox-* Edge Function）とは別系統
+-- ★ Authorization: Bearer 方式は world-talk-* Edge Function 専用（C-1.3 確定）
+------------------------------------------------------------------------
+
+local function makeBearerHeaders()
+    return {
+        ["Authorization"] = "Bearer " .. API_KEY,
+        ["Content-Type"]  = "application/json",
+    }
+end
+
+-- HttpService:RequestAsync で Bearer 認証 + リトライ（5xx は1回再試行）
+function SyncService:_makeBearerRequest(method, endpoint, body)
+    local url      = API_BASE .. endpoint
+    local jsonBody = body and HttpService:JSONEncode(body) or nil
+
+    local maxRetry = 1
+    for attempt = 0, maxRetry do
+        local ok, response = pcall(function()
+            return HttpService:RequestAsync({
+                Url     = url,
+                Method  = method,
+                Headers = makeBearerHeaders(),
+                Body    = jsonBody,
+            })
+        end)
+
+        if not ok then
+            warn("[TownTalk] HTTP error (network): " .. tostring(response))
+            return false, nil, 0
+        end
+
+        if response.Success then
+            local decodeOk, decoded = pcall(function()
+                return HttpService:JSONDecode(response.Body)
+            end)
+            if decodeOk then
+                return true, decoded, response.StatusCode
+            else
+                warn("[TownTalk] JSON decode error: " .. tostring(response.Body))
+                return false, nil, response.StatusCode
+            end
+        end
+
+        -- response.Success == false（4xx or 5xx）
+        if response.StatusCode >= 500 and attempt < maxRetry then
+            warn(("[TownTalk] HTTP %d, retrying..."):format(response.StatusCode))
+            task.wait(1)
+            -- 次のループに自然と進む
+        else
+            warn(("[TownTalk] HTTP %s: %s"):format(
+                tostring(response.StatusCode), tostring(response.Body)))
+            return false, nil, response.StatusCode
+        end
+    end
+
+    return false, nil, 0
+end
+
+-- world-talk-scenario-fetch 呼出
+-- 戻り値：ok, response (= { scenario_id, scenario, selection_reason }), statusCode
+function SyncService:fetchTownTalkScenario(npcId)
+    if not self.mowiseUserId then
+        warn("[TownTalk] fetchTownTalkScenario: mowiseUserId not set (link required)")
+        return false, nil, 0
+    end
+    return self:_makeBearerRequest("POST", "/world-talk-scenario-fetch", {
+        user_id  = self.mowiseUserId,
+        npc_id   = npcId,
+        platform = "roblox",
+    })
+end
+
+-- world-talk-submit 呼出
+-- payload: { user_id, scenario_id, selections, audio_urls, duration_sec, platform }
+-- 戻り値：ok, response (= { log_id, approval_status, rewards, next_review_at }), statusCode
+function SyncService:submitTownTalkResult(payload)
+    return self:_makeBearerRequest("POST", "/world-talk-submit", payload)
 end
 
 return SyncService

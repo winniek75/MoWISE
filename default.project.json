@@ -1,0 +1,27 @@
+{
+  "name": "MoWISE-Roblox",
+  "tree": {
+    "$className": "DataModel",
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "$path": "roblox/ServerScriptService"
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "$path": "roblox/StarterPlayerScripts"
+      }
+    },
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage"
+    },
+
+    "Workspace": {
+      "$className": "Workspace"
+    }
+  }
+}

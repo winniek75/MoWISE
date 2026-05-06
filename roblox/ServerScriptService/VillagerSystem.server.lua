@@ -446,6 +446,59 @@ local function walkNPCTo(npcModel, targetPos)
 end
 
 ------------------------------------------------------------------------
+-- C-1.2 Phase 4 / Town Talk Prompt 統合（Zone 2 移住完了 NPC のみ対象）
+-- 既存 TalkPrompt（話しかける）/ prompt2（おはなしする）には触れず、
+-- 第2 Prompt として「英会話する」を並列追加する。
+--
+-- vData.id → C-1.3 シナリオ DB の npc_id マッピング：
+--   barista_maria → maria
+--   merchant_sam  → sam
+--   agent_lily    → lily   ※実装ガイド §4-4 では traveler_lily と記載があるが、
+--                            既存 ZONE2_VILLAGER_DATA の id が agent_lily のため実コードに合わせる
+------------------------------------------------------------------------
+local TOWN_TALK_NPC_ID_MAP = {
+    barista_maria = "maria",
+    merchant_sam  = "sam",
+    agent_lily    = "lily",
+}
+
+local function getTownTalkNpcId(villagerId)
+    return TOWN_TALK_NPC_ID_MAP[villagerId]
+end
+
+local function attachTownTalkPrompt(npcModel, vData)
+    if not npcModel then return end
+    local npcId = getTownTalkNpcId(vData.id)
+    if not npcId then return end  -- マッピング無いなら no-op（Zone 1 全員 + 想定外 Zone 2 用）
+
+    local head = npcModel:FindFirstChild("Head")
+    if not head then return end
+
+    -- 二重生成防止
+    if head:FindFirstChild("TownTalkPrompt") then return end
+
+    local ttPrompt = Instance.new("ProximityPrompt")
+    ttPrompt.Name                  = "TownTalkPrompt"
+    ttPrompt.ActionText            = "英会話する"
+    ttPrompt.ObjectText            = vData.role  -- "☕ バリスタ" 等
+    ttPrompt.HoldDuration          = 0
+    ttPrompt.MaxActivationDistance = 8
+    ttPrompt.RequiresLineOfSight   = false
+    ttPrompt.UIOffset              = Vector2.new(0, -50)  -- 既存 prompt2 の上に並ぶ
+    ttPrompt.Parent                = head
+
+    ttPrompt.Triggered:Connect(function(player)
+        if _G.TownTalkService then
+            _G.TownTalkService:startSession(player, npcId)
+        else
+            warn("[VillagerSystem] _G.TownTalkService not ready (Phase 3 script load 失敗?)")
+        end
+    end)
+
+    print(("[VillagerSystem] TownTalk prompt attached: %s → %s"):format(vData.id, npcId))
+end
+
+------------------------------------------------------------------------
 -- Zone 2 NPC 召喚（Zone 2のスポーン位置を使用）
 ------------------------------------------------------------------------
 local function spawnZone2Villager(player, vData)
@@ -631,6 +684,10 @@ dialogueAnswer.OnServerEvent:Connect(function(player, choiceIndex)
                 prompt2.MaxActivationDistance = 8
                 prompt2.Parent = head
             end
+
+            -- C-1.2 Phase 4：Zone 2 villager 移住完了時に Town Talk Prompt を並列追加
+            -- Zone 1 villager は getTownTalkNpcId が nil を返すため自動 no-op
+            attachTownTalkPrompt(activeSession.npcModel, vData)
 
             villagerMoved:FireClient(player, vData.name, vData.role, activeSession.correctCount)
             if mowiReaction then mowiReaction:Fire(player, "correct") end

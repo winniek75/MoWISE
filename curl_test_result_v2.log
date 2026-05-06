@@ -1,0 +1,964 @@
+
+┌────────────────────────────────────────────────────────┐
+│ Town Talk cURL test (C-1.3 Phase 6)                    │
+│ Target: https://yytxgxlhgotscwztlsqj.supabase.co       │
+│ Student: 0c871272-0391-4b82-8e69-6493f06377f9          │
+│ Classroom: ef554a61-4773-4140-b4b1-076bf4559ae5        │
+└────────────────────────────────────────────────────────┘
+
+=== Case 1: fetch maria first_play ===
+HTTP: 200
+Body:
+{
+  "scenario_id": "maria_cafe_morning_v2",
+  "scenario": {
+    "place": "MoWISE Café",
+    "theme": "朝のモーニング",
+    "turns": [
+      {
+        "options": [
+          {
+            "text": "I'd like the morning set, please.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "I want morning set.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "\"the\" が抜けてる。\"the morning set\"。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Morning set, give me.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "命令的。\"I'd like\" でお願いしよう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Good morning set.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "挨拶と混ざってる。文を分けよう。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 1,
+        "npc_audio": "Good morning! What can I get for you?",
+        "required_keywords": [
+          "morning",
+          "set"
+        ],
+        "npc_reaction_correct": "Great choice! ☀️🍳"
+      },
+      {
+        "options": [
+          {
+            "text": "I'd like orange juice, please.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Juice, please.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "短すぎ、\"I'd like\" を付けたい。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I'd like juice orange.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "語順が違う、\"orange juice\" の順。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I'm orange juice.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"I'm\" は「私は」、意味が変だ。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 2,
+        "npc_audio": "It comes with a drink. Coffee, tea, or juice?",
+        "required_keywords": [
+          "juice"
+        ],
+        "npc_reaction_correct": "Fresh juice, coming up. 🍊"
+      },
+      {
+        "options": [
+          {
+            "text": "Yes, I'd like two eggs.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Yes, two egg.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "複数形は \"eggs\"、s をつけよう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Yes, I'd like egg two.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "語順が違う、\"two eggs\" の順で。",
+            "is_acceptable": false
+          },
+          {
+            "text": "No, I'd like eggs.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "ほしいのに \"No\"、逆だね。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 3,
+        "npc_audio": "Would you like extra eggs with that?",
+        "required_keywords": [
+          "eggs",
+          "two"
+        ],
+        "npc_reaction_correct": "Sunny side up coming. 🍳"
+      },
+      {
+        "options": [
+          {
+            "text": "I'd like a window seat, please.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Window please.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "短すぎ、\"I'd like\" で頼もう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I'd like a window.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "\"seat\" が抜けてる、\"window seat\"。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I'm window seat.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"I'm\" は「私は」、変だね。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 4,
+        "npc_audio": "We have window seats. Where would you like to sit?",
+        "required_keywords": [
+          "window",
+          "seat"
+        ],
+        "npc_reaction_correct": "Right this way! 🪟"
+      },
+      {
+        "options": [
+          {
+            "text": "Thank you! You too.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Thank you. Same.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "\"Same\" は不自然、\"You too\" にしよう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Yes, I enjoy.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "返事になってない、\"Thank you\" で。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Enjoy you.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"Enjoy\" の使い方が変だね。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 5,
+        "npc_audio": "Enjoy your morning!",
+        "required_keywords": [
+          "thank"
+        ],
+        "npc_reaction_correct": "Have a great day at school! 🎒✨"
+      }
+    ],
+    "npc_id": "maria",
+    "version": 1,
+    "created_at": "2026-05-04T00:00:00Z",
+    "difficulty": "jh1",
+    "pattern_no": "P021",
+    "scenario_id": "maria_cafe_morning_v2",
+    "total_turns": 5,
+    "mowi_message": "届いたよ。",
+    "reward_coins": 50,
+    "reward_friendship": 10
+  },
+  "selection_reason": "first_play"
+}
+  ✓ PASS
+
+=== Case 2: fetch sam first_play ===
+HTTP: 200
+Body:
+{
+  "scenario_id": "sam_shop_fitting_v1",
+  "scenario": {
+    "place": "MoWISE Shop",
+    "theme": "試着",
+    "turns": [
+      {
+        "options": [
+          {
+            "text": "Can I try this on?",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Can I try this?",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "\"on\" が抜けてる、試着は \"try on\"。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Try this on me?",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "語順が違う、\"Can I\" から始めよう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I want try this.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"to\" が抜けてる、\"want to\" で覚えよう。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 1,
+        "npc_audio": "Hey there! Looking for something?",
+        "required_keywords": [
+          "try"
+        ],
+        "npc_reaction_correct": "Sure! The fitting room is right over there. 🚪"
+      },
+      {
+        "options": [
+          {
+            "text": "Can I have a medium, please?",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Medium one.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "文が足りない、\"Can I have\" を使おう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I'm medium.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "これだと「私は中くらい」、変だね。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Give me medium.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "命令的。\"Can I have\" でお願いしよう。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 2,
+        "npc_audio": "What size do you need?",
+        "required_keywords": [
+          "medium"
+        ],
+        "npc_reaction_correct": "Medium, got it. Here you go. 👕"
+      },
+      {
+        "options": [
+          {
+            "text": "Can I see the blue one?",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "I want blue one.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "\"the\" が抜けてる、\"the blue one\"。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Show blue please.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "命令的、\"Can I see\" で頼もう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Blue is mine.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "「青は私の」、意味が違うよ。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 3,
+        "npc_audio": "We have blue and red. Which color?",
+        "required_keywords": [
+          "blue"
+        ],
+        "npc_reaction_correct": "Good choice! Blue is popular. 💙"
+      },
+      {
+        "options": [
+          {
+            "text": "I like it. Can I buy it?",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Yes, I like.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "\"like\" の後に \"it\" がいるよ。",
+            "is_acceptable": false
+          },
+          {
+            "text": "It's me.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "「これは私」感想になってない。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Buy this.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "命令形すぎ、\"Can I buy it?\" に。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 4,
+        "npc_audio": "How does it look?",
+        "required_keywords": [
+          "buy",
+          "like"
+        ],
+        "npc_reaction_correct": "Awesome! Let's go to the register. 💳"
+      },
+      {
+        "options": [
+          {
+            "text": "Thank you. I will!",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Yes, I come.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "\"I will\" を使おう、また来るね。",
+            "is_acceptable": false
+          },
+          {
+            "text": "OK, bye.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "一言短すぎ、\"Thank you\" を付けて。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Sure, again.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "文になってない、\"I will!\" にしよう。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 5,
+        "npc_audio": "Come again soon!",
+        "required_keywords": [
+          "thank",
+          "will"
+        ],
+        "npc_reaction_correct": "Take care! 👋"
+      }
+    ],
+    "npc_id": "sam",
+    "version": 1,
+    "created_at": "2026-05-04T00:00:00Z",
+    "difficulty": "jh2",
+    "pattern_no": "P024",
+    "scenario_id": "sam_shop_fitting_v1",
+    "total_turns": 5,
+    "mowi_message": "言えたな、次は？",
+    "reward_coins": 60,
+    "reward_friendship": 10
+  },
+  "selection_reason": "first_play"
+}
+  ✓ PASS
+
+=== Case 3: fetch lily first_play ===
+HTTP: 200
+Body:
+{
+  "scenario_id": "lily_library_extend_v2",
+  "scenario": {
+    "place": "MoWISE Library",
+    "theme": "貸出延長",
+    "turns": [
+      {
+        "options": [
+          {
+            "text": "Could you extend the loan, please?",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Can you extend the loan?",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "違わない、\"Could\" の方が丁寧だよ。",
+            "is_acceptable": true
+          },
+          {
+            "text": "Extend, please.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "短すぎ、\"Could you\" で頼もう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I want extend.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"to\" が抜けてる、\"want to extend\"。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 1,
+        "npc_audio": "Hello again. May I help you?",
+        "required_keywords": [
+          "extend"
+        ],
+        "npc_reaction_correct": "Of course. Let me check. 📅"
+      },
+      {
+        "options": [
+          {
+            "text": "Could I have one more week?",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Can I have one more week?",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "違わない、\"Could\" の方が大人っぽいよ。",
+            "is_acceptable": true
+          },
+          {
+            "text": "One week more.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "文として弱い、\"Could I have\" で。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I need week.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"a\" が抜けてる、\"a week\" にしよう。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 2,
+        "npc_audio": "How many more days do you need?",
+        "required_keywords": [
+          "week"
+        ],
+        "npc_reaction_correct": "Sure, that's possible. 👍"
+      },
+      {
+        "options": [
+          {
+            "text": "I haven't finished reading it yet.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "I didn't finish it.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "違わない、\"haven't finished\" がより自然。",
+            "is_acceptable": true
+          },
+          {
+            "text": "No finish reading.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "文が壊れてる、\"I haven't\" から始めよう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I'm reading still.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "語順が変、\"I'm still reading\" で。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 3,
+        "npc_audio": "May I ask why?",
+        "required_keywords": [
+          "finish",
+          "read"
+        ],
+        "npc_reaction_correct": "I understand. Take your time. 📖"
+      },
+      {
+        "options": [
+          {
+            "text": "Could you write it down for me?",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Can you write it down?",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "違わない、\"Could\" でより丁寧に。",
+            "is_acceptable": true
+          },
+          {
+            "text": "Write it.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "命令的、\"Could you\" を付けて頼もう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Could you write down?",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"it\" が抜けてる、\"write it down\"。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 4,
+        "npc_audio": "Your new due date is next Friday.",
+        "required_keywords": [
+          "write"
+        ],
+        "npc_reaction_correct": "Here's a note for you. 📝"
+      },
+      {
+        "options": [
+          {
+            "text": "Thank you for being so kind.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Thanks a lot.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "\"for being so kind\" を足すと丁寧。",
+            "is_acceptable": true
+          },
+          {
+            "text": "Thanks, see you.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "砕けすぎ、図書館では丁寧めに。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Thank for kind.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"for your kindness\" の形にしよう。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 5,
+        "npc_audio": "Anything else?",
+        "required_keywords": [
+          "thank"
+        ],
+        "npc_reaction_correct": "You're very welcome. 😊"
+      }
+    ],
+    "npc_id": "lily",
+    "version": 1,
+    "created_at": "2026-05-04T00:00:00Z",
+    "difficulty": "jh3",
+    "pattern_no": "P031",
+    "scenario_id": "lily_library_extend_v2",
+    "total_turns": 5,
+    "mowi_message": "届いたよ。少し遠くまでね。",
+    "reward_coins": 75,
+    "reward_friendship": 10
+  },
+  "selection_reason": "first_play"
+}
+  ✓ PASS
+
+=== Case 4: submit all-correct (maria_cafe_order_v1) ===
+HTTP: 200
+Body:
+{
+  "log_id": "ce9c5d49-be79-438b-abaa-cec49e5917c8",
+  "approval_status": "auto_passed",
+  "rewards": {
+    "coins_granted": 50,
+    "friendship_delta": 10,
+    "mowi_message": "届いたよ。"
+  },
+  "next_review_at": "2026-05-06T08:51:28.252Z"
+}
+  ✓ PASS
+
+=== Case 5: submit 3-fails (maria_cafe_morning_v2) → pending_review ===
+HTTP: 200
+Body:
+{
+  "log_id": "e90e40f1-058f-47b0-98f1-dccc7b9d12fa",
+  "approval_status": "pending_review",
+  "rewards": {
+    "coins_granted": 50,
+    "friendship_delta": 10,
+    "mowi_message": "届いたよ。"
+  },
+  "next_review_at": "2026-05-05T08:51:28.981Z"
+}
+  ✓ PASS
+
+=== Case 6: alert-check teacher self-class ===
+HTTP: 200
+Body:
+{
+  "alerts": [
+    {
+      "user_id": "0c871272-0391-4b82-8e69-6493f06377f9",
+      "student_name": "sample",
+      "alert_type": "first_completion",
+      "details": "maria_cafe_order_v1 を初めてクリア",
+      "last_played_at": "2026-05-04T08:51:28.252+00:00"
+    }
+  ]
+}
+  ✓ PASS
+
+=== Case 7: fetch maria re-call (skip already-played) ===
+HTTP: 200
+Body:
+{
+  "scenario_id": "maria_cafe_takeout_v3",
+  "scenario": {
+    "place": "MoWISE Café",
+    "theme": "テイクアウト",
+    "turns": [
+      {
+        "options": [
+          {
+            "text": "I'd like two coffees, please.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "I'd like two coffee.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "複数形は \"coffees\"、s をつけよう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "I'd like coffee two.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "語順が違う、\"two coffees\" の順。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Two coffee me.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "文の形が変、\"I'd like\" がいる。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 1,
+        "npc_audio": "Welcome! What can I get you today?",
+        "required_keywords": [
+          "coffees",
+          "two"
+        ],
+        "npc_reaction_correct": "Two coffees, got it. ☕☕"
+      },
+      {
+        "options": [
+          {
+            "text": "One latte and one cappuccino.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "One latte one cappuccino.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "\"and\" でつないで、間に入れて。",
+            "is_acceptable": false
+          },
+          {
+            "text": "A latte, a cappuccino.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "\"and\" が必要、リスト読みは変。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Latte cappuccino, please.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "数を抜いてる、\"One ... and one\"で。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 2,
+        "npc_audio": "Sure! What kind would you like?",
+        "required_keywords": [
+          "latte",
+          "cappuccino"
+        ],
+        "npc_reaction_correct": "Great combo. 👍"
+      },
+      {
+        "options": [
+          {
+            "text": "Yes, I'd like two cookies.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Yes, two cookie.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "複数形は \"cookies\"、s をつけよう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Yes, cookie two.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "語順が違う、\"two cookies\"。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Yes, I'm cookies.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"I'm\" は「私は」、変だね。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 3,
+        "npc_audio": "Anything else?",
+        "required_keywords": [
+          "cookies"
+        ],
+        "npc_reaction_correct": "Perfect for sharing. 🍪🍪"
+      },
+      {
+        "options": [
+          {
+            "text": "No, I'd like everything to go.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "No, take out.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "文として弱い、\"I'd like\" を付けて。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Yes, to go.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "\"Yes\" だと店内、返事が逆だね。",
+            "is_acceptable": false
+          },
+          {
+            "text": "No, I to go.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "動詞がない、\"I'd like ... to go\"。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 4,
+        "npc_audio": "Will you eat here?",
+        "required_keywords": [
+          "go"
+        ],
+        "npc_reaction_correct": "All to go. Coming up. 🛍"
+      },
+      {
+        "options": [
+          {
+            "text": "Thank you! We will.",
+            "option_id": 1,
+            "is_correct": true,
+            "explanation": null,
+            "is_acceptable": true
+          },
+          {
+            "text": "Thanks. I will.",
+            "option_id": 2,
+            "is_correct": false,
+            "explanation": "2人分だから \"We will\" にしよう。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Yes, with sister.",
+            "option_id": 3,
+            "is_correct": false,
+            "explanation": "返事が変、\"Thank you\" から。",
+            "is_acceptable": false
+          },
+          {
+            "text": "Thank. Bye.",
+            "option_id": 4,
+            "is_correct": false,
+            "explanation": "\"Thank you\" が正しい形。",
+            "is_acceptable": false
+          }
+        ],
+        "turn_no": 5,
+        "npc_audio": "Have a great day with your sister!",
+        "required_keywords": [
+          "thank",
+          "will"
+        ],
+        "npc_reaction_correct": "Take care! 👋✨"
+      }
+    ],
+    "npc_id": "maria",
+    "version": 1,
+    "created_at": "2026-05-04T00:00:00Z",
+    "difficulty": "jh1",
+    "pattern_no": "P021",
+    "scenario_id": "maria_cafe_takeout_v3",
+    "total_turns": 5,
+    "mowi_message": "届いたよ。",
+    "reward_coins": 50,
+    "reward_friendship": 10
+  },
+  "selection_reason": "first_play"
+}
+  ✓ PASS
+
+=== Case 8: fetch without auth → 401 ===
+HTTP: 401
+Body:
+{
+  "error": "unauthorized"
+}
+  ✓ PASS
+
+=== Case 9: fetch invalid npc_id → 400 ===
+HTTP: 400
+Body:
+{
+  "error": "invalid_npc_id"
+}
+  ✓ PASS
+
+=== Case 10: alert-check other classroom → 403 forbidden ===
+HTTP: 403
+Body:
+{
+  "error": "forbidden"
+}
+  ✓ PASS
+
+┌────────────────────────────────────────────────────────┐
+│ Test Summary                                           │
+└────────────────────────────────────────────────────────┘
+  ✓ Case 1: fetch maria first_play
+  ✓ Case 2: fetch sam first_play
+  ✓ Case 3: fetch lily first_play
+  ✓ Case 4: submit all-correct (maria_cafe_order_v1)
+  ✓ Case 5: submit 3-fails (maria_cafe_morning_v2) → pending_review
+  ✓ Case 6: alert-check teacher self-class
+  ✓ Case 7: fetch maria re-call (skip already-played)
+  ✓ Case 8: fetch without auth → 401
+  ✓ Case 9: fetch invalid npc_id → 400
+  ✓ Case 10: alert-check other classroom → 403 forbidden
+
+Total: 10 / Passed: 10 / Failed: 0
+
+→ All cases passed. ✓

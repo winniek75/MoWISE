@@ -614,6 +614,8 @@ onAnswered.OnServerEvent:Connect(function(player, selectedTiles)
         session.score = session.score + 1
         if giveMaterial then
             giveMaterial:Fire(player, "Wood", 3)
+            giveMaterial:Fire(player, "Flower", 1)
+            giveMaterial:Fire(player, "Seed", 1)
         end
         if enableClearance then
             enableClearance:Fire(player)
