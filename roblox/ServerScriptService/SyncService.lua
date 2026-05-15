@@ -134,10 +134,12 @@ end
 
 ------------------------------------------------------------------------
 -- Heartbeat（60秒ごとに呼ぶ）
+-- パイロット準備6 修正: 未連携状態でも呼出可能にする
+--   旧版は self.linked=false で early return していたため、Web で連携完了しても
+--   Roblox 側が永遠に linked=true を検知できない問題があった（C-1.4 §4-1 申送）。
+--   サーバー応答 data.linked で連携状態を判定する形に変更。
 ------------------------------------------------------------------------
 function SyncService:heartbeat(currentState)
-    if not self.linked then return nil end
-
     local ok, data = self:makeRequest("POST", "/roblox-heartbeat", {
         roblox_user_id     = self.robloxUserId,
         current_zone       = currentState.current_zone or 1,
@@ -181,8 +183,10 @@ function SyncService:heartbeat(currentState)
         end
         -- ===== C-1.4 ここまで =====
 
-        -- 連携解除検知
-        if data.linked == false then
+        -- 連携状態の同期：未連携→連携済 or 連携済→未連携 への遷移を反映
+        if data.linked == true and not self.linked then
+            self.linked = true
+        elseif data.linked == false and self.linked then
             self:unlink()
         end
         return data
