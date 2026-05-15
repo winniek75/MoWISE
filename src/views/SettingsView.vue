@@ -114,6 +114,44 @@
         </div>
       </section>
 
+      <!-- Roblox 連携 -->
+      <section v-if="!isDemoMode">
+        <p class="text-xs font-bold text-gray-400 mb-2 px-1">Roblox 連携</p>
+
+        <!-- 未連携時 -->
+        <button
+          v-if="!linkLoading && !linkStatus.isLinked"
+          @click="router.push({ name: 'RobloxLink' })"
+          class="w-full bg-white rounded-2xl shadow-sm px-4 py-4 flex items-center justify-between active:scale-[0.99] transition-transform"
+        >
+          <div class="text-left">
+            <p class="text-sm font-bold text-gray-900">🎮 Roblox と連携する</p>
+            <p class="text-xs text-gray-400 mt-0.5">Word Coins が 1.5 倍になる</p>
+          </div>
+          <span class="text-gray-400">▶︎</span>
+        </button>
+
+        <!-- 連携済時 -->
+        <div v-else-if="!linkLoading && linkStatus.isLinked" class="bg-white rounded-2xl shadow-sm px-4 py-4">
+          <p class="text-sm font-bold text-green-600">✅ Roblox 連携中</p>
+          <p class="text-sm text-gray-900 mt-1">
+            {{ linkStatus.robloxDisplayName ?? '(表示名未取得)' }}
+            <span class="text-xs text-gray-400 ml-1">（連携日：{{ formatDate(linkStatus.linkedAt) }}）</span>
+          </p>
+          <button
+            @click="showUnlinkModal = true"
+            class="mt-3 w-full py-2 text-sm font-bold text-red-500 border border-red-200 rounded-xl active:bg-red-50 transition-colors"
+          >
+            連携を解除
+          </button>
+        </div>
+
+        <!-- ロード中 -->
+        <div v-else class="bg-white rounded-2xl shadow-sm px-4 py-4">
+          <p class="text-xs text-gray-400">確認中...</p>
+        </div>
+      </section>
+
       <!-- デモモード切替（オフライン時のみ） -->
       <section v-if="isDemoMode">
         <p class="text-xs font-bold text-gray-400 mb-2 px-1">デモモード</p>
@@ -144,6 +182,37 @@
       </section>
 
     </main>
+
+    <!-- 連携解除確認モーダル -->
+    <div
+      v-if="showUnlinkModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6"
+      @click.self="showUnlinkModal = false"
+    >
+      <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5">
+        <h2 class="text-base font-bold text-gray-900">Roblox 連携を解除</h2>
+        <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+          解除すると Word Coins ブーストが無効になります。<br />
+          Roblox 側のプレイデータは保持されます。
+        </p>
+        <div class="mt-5 flex gap-3">
+          <button
+            class="flex-1 py-2.5 text-sm font-bold text-gray-700 bg-gray-100 rounded-xl active:bg-gray-200"
+            :disabled="unlinking"
+            @click="showUnlinkModal = false"
+          >
+            キャンセル
+          </button>
+          <button
+            class="flex-1 py-2.5 text-sm font-bold text-white bg-red-500 rounded-xl active:bg-red-600 disabled:opacity-50"
+            :disabled="unlinking"
+            @click="handleUnlink"
+          >
+            {{ unlinking ? '解除中...' : '解除する' }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -152,6 +221,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase, isOfflineMode } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
+import { useRobloxLink } from '@/composables/useRobloxLink'
+import type { RobloxLinkStatus } from '@/composables/useRobloxLink'
 
 const router    = useRouter()
 const authStore = useAuthStore()
@@ -166,22 +237,69 @@ const settings = ref({
   game_mode_enabled:   true,
 })
 
+// ── Roblox 連携状態 ───────────────────────────────────────
+const { fetchLinkStatus, unlink } = useRobloxLink()
+const linkLoading = ref(true)
+const linkStatus = ref<RobloxLinkStatus>({
+  isLinked: false,
+  robloxDisplayName: null,
+  linkedAt: null,
+  status: null,
+})
+const showUnlinkModal = ref(false)
+const unlinking = ref(false)
+
+async function loadLinkStatus() {
+  if (isOfflineMode) {
+    linkLoading.value = false
+    return
+  }
+  linkLoading.value = true
+  linkStatus.value = await fetchLinkStatus()
+  linkLoading.value = false
+}
+
+async function handleUnlink() {
+  if (unlinking.value) return
+  unlinking.value = true
+  const { error } = await unlink()
+  unlinking.value = false
+  if (error) {
+    alert('連携解除に失敗しました。もう一度お試しください。')
+    return
+  }
+  showUnlinkModal.value = false
+  await loadLinkStatus()
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '-'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '-'
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 onMounted(async () => {
   if (isOfflineMode) {
     user.value = authStore.userRow
+    await loadLinkStatus()
     return
   }
   const { data: { user: u } } = await supabase.auth.getUser()
   const { data } = await supabase.from('users').select('*').eq('id', u!.id).single()
   user.value = data
   if (data) {
-    settings.value.notify_morning      = data.notify_morning      ?? true
-    settings.value.notify_evening      = data.notify_evening      ?? true
-    settings.value.notify_practice     = data.notify_practice     ?? true
-    settings.value.notify_morning_time = data.notify_morning_time ?? '07:30'
-    settings.value.notify_evening_time = data.notify_evening_time ?? '20:00'
-    settings.value.game_mode_enabled   = data.game_mode_enabled   ?? true
+    settings.value.notify_morning      = (data as any).notify_morning      ?? true
+    settings.value.notify_evening      = (data as any).notify_evening      ?? true
+    settings.value.notify_practice     = (data as any).notify_practice     ?? true
+    settings.value.notify_morning_time = (data as any).notify_morning_time ?? '07:30'
+    settings.value.notify_evening_time = (data as any).notify_evening_time ?? '20:00'
+    settings.value.game_mode_enabled   = (data as any).game_mode_enabled   ?? true
   }
+  await loadLinkStatus()
 })
 
 async function save() {

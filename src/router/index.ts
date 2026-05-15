@@ -48,6 +48,7 @@ const router = createRouter({
     { path: '/log/weekly', name: 'LogWeekly', component: () => import('@/views/log/LogWeeklyView.vue'), meta: { requiresAuth: true } },
     // ──── 設定 ────
     { path: '/settings', name: 'Settings', component: () => import('@/views/SettingsView.vue'), meta: { requiresAuth: true } },
+    { path: '/settings/roblox-link', name: 'RobloxLink', component: () => import('@/views/settings/RobloxLinkView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
     // ──── ゲーム化Layer ────
     { path: '/session/layer/2/svo', name: 'Layer2SVO', component: () => import('@/views/session/Layer2SVOView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
     { path: '/session/layer/3/sprint', name: 'Layer3Sprint', component: () => import('@/views/session/Layer3SprintView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
