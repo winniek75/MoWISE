@@ -1,30 +1,48 @@
 // supabase/functions/roblox-heartbeat/index.ts
 // Roblox側から60秒ごとの接続確認 + ブースト状態取得
+// v8: パイロット準備6 拡張
+//     X-MoWISE-Link-Token 不在でも X-Roblox-User-Id 単独で連携状態を判定する
+//     シナリオ：Webで初回連携完了後、Roblox サーバーが linkToken をまだ保有していないタイミングでも
+//     heartbeat が linked=true を返せるようにする。API キー認証は維持、roblox_links は service_role で読む
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const ROBLOX_API_KEY = Deno.env.get("ROBLOX_API_KEY") ?? "";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "Content-Type, X-MoWISE-API-Key, X-MoWISE-Link-Token, X-Roblox-User-Id",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
+
+function respond(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), { status, headers: CORS_HEADERS });
+}
+
+function unlinkedBody() {
+  return {
+    linked: false,
+    user_id: null,
+    boost_active: false,
+    coin_multiplier: 1.0,
+    teacher_message: null,
+    web_pattern_updates: [],
+    server_time: new Date().toISOString(),
+    daily_login_bonus_available: false,
+  };
+}
+
 Deno.serve(async (req) => {
-  // CORS
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers":
-          "Content-Type, X-MoWISE-API-Key, X-MoWISE-Link-Token, X-Roblox-User-Id",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-      },
-    });
+    return new Response(null, { headers: CORS_HEADERS });
   }
 
   // API Key 検証
   const apiKey = req.headers.get("X-MoWISE-API-Key");
   if (apiKey !== ROBLOX_API_KEY) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    return respond({ error: "Unauthorized" }, 401);
   }
 
   try {
@@ -38,62 +56,36 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // 連携未済（トークンなし）の場合
-    if (!linkToken || !robloxUserId) {
-      return new Response(
-        JSON.stringify({
-          linked: false,
-          user_id: null,
-          boost_active: false,
-          coin_multiplier: 1.0,
-          teacher_message: null,
-          web_pattern_updates: [],
-          server_time: new Date().toISOString(),
-          daily_login_bonus_available: false,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
+    // robloxUserId も不在なら unlinked
+    if (!robloxUserId) {
+      return respond(unlinkedBody(), 200);
     }
 
-    // Link Token + Roblox User ID の検証
-    const { data: link, error: linkError } = await supabase
+    const robloxUserIdNum = parseInt(robloxUserId);
+
+    // 連携行検索：linkToken ありなら token + roblox_user_id 、なければ roblox_user_id だけで active 行を追跡
+    let linkQuery = supabase
       .from("roblox_links")
       .select("*")
-      .eq("link_token", linkToken)
-      .eq("roblox_user_id", parseInt(robloxUserId))
-      .eq("status", "active")
-      .maybeSingle();
+      .eq("roblox_user_id", robloxUserIdNum)
+      .eq("status", "active");
+
+    if (linkToken) {
+      linkQuery = linkQuery.eq("link_token", linkToken);
+    }
+
+    const { data: link, error: linkError } = await linkQuery.maybeSingle();
 
     if (linkError || !link) {
-      return new Response(
-        JSON.stringify({
-          linked: false,
-          user_id: null,
-          boost_active: false,
-          coin_multiplier: 1.0,
-          teacher_message: null,
-          web_pattern_updates: [],
-          server_time: new Date().toISOString(),
-          daily_login_bonus_available: false,
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
+      return respond(unlinkedBody(), 200);
     }
 
     // トークン有効期限チェック
     if (new Date(link.token_expires_at) < new Date()) {
-      return new Response(
-        JSON.stringify({
-          linked: false,
-          user_id: null,
-          boost_active: false,
-          coin_multiplier: 1.0,
-          teacher_message: null,
-          error: "TOKEN_EXPIRED",
-          server_time: new Date().toISOString(),
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
+      return respond({
+        ...unlinkedBody(),
+        error: "TOKEN_EXPIRED",
+      }, 200);
     }
 
     // 最終同期時刻を更新
@@ -111,32 +103,20 @@ Deno.serve(async (req) => {
       .update({ roblox_last_played_at: new Date().toISOString() })
       .eq("id", link.user_id);
 
-    // 先生メッセージの取得（将来拡張）
-    // TODO: teacher_messages テーブルから未読メッセージを取得
-
-    // 日替わりログインボーナスチェック
-    // TODO: 本日分のボーナス受取済みかチェック
-
-    return new Response(
-      JSON.stringify({
-        linked: true,
-        user_id: link.user_id ?? null,
-        boost_active: true,
-        coin_multiplier: 1.5,
-        teacher_message: null,
-        web_pattern_updates: [],
-        server_time: new Date().toISOString(),
-        daily_login_bonus_available: false,
-        // 連携成功直後のポーリング用：link_token を返す
-        link_token: linkToken,
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return respond({
+      linked: true,
+      user_id: link.user_id ?? null,
+      boost_active: true,
+      coin_multiplier: 1.5,
+      teacher_message: null,
+      web_pattern_updates: [],
+      server_time: new Date().toISOString(),
+      daily_login_bonus_available: false,
+      // Roblox 側に最新 linkToken を返す（初回連携検知時に保存可能）
+      link_token: link.link_token,
+    }, 200);
   } catch (err) {
     console.error("Heartbeat error:", err);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return respond({ error: "Internal server error" }, 500);
   }
 });
