@@ -1,6 +1,10 @@
 // supabase/functions/roblox-link-verify/index.ts
 // Webアプリ側から6桁コードを照合してアカウント連携を確立
-// v7: 全レスポンスに CORS ヘッダ統一（ブラウザからの fetch hang を解消）
+// v7: 全レスポンスに CORS ヘッダ統一付与
+// v8: UNIQUE(user_id) 衝突修正
+//     - 同じ user が解除後に再連携した際、既存行を status='active' に戻す UPDATE で処理
+//     - 同じ user が別 Roblox アカウントに切り替えるケースも UPDATE で対応
+//     - 他人が同じ Roblox を active 占有している場合は ALREADY_LINKED 409
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -64,30 +68,47 @@ Deno.serve(async (req) => {
       return respond({ error: "CODE_EXPIRED" }, 410);
     }
 
-    const { data: existingLink } = await supabase
+    // 他人がこの Roblox アカウントを active 占有していないかチェック
+    const { data: otherUserLink } = await supabase
       .from("roblox_links")
       .select("id, user_id")
       .eq("roblox_user_id", linkCode.roblox_user_id)
       .eq("status", "active")
+      .neq("user_id", user.id)
       .maybeSingle();
 
-    if (existingLink && existingLink.user_id !== user.id) {
+    if (otherUserLink) {
       return respond({ error: "ALREADY_LINKED" }, 409);
     }
+
+    // 自分の既存行（status 問わず）を探す
+    const { data: ownLink } = await supabase
+      .from("roblox_links")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
     const linkToken = "mwl_" + crypto.randomUUID().replace(/-/g, "");
     const tokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-    if (existingLink) {
-      await supabase
+    if (ownLink) {
+      // 既存行 UPDATE：Roblox 切り替え・解除後の再連携もカバー
+      const { error: updateError } = await supabase
         .from("roblox_links")
         .update({
+          roblox_user_id: linkCode.roblox_user_id,
+          roblox_display_name: linkCode.roblox_display_name,
           link_token: linkToken,
           status: "active",
           token_expires_at: tokenExpiresAt.toISOString(),
           updated_at: new Date().toISOString(),
         })
-        .eq("id", existingLink.id);
+        .eq("id", ownLink.id);
+
+      if (updateError) {
+        console.error("Link update error:", updateError);
+        return respond({ error: "Failed to update link" }, 500);
+      }
     } else {
       const { error: linkError } = await supabase
         .from("roblox_links")
