@@ -1,58 +1,50 @@
 // supabase/functions/roblox-link-verify/index.ts
 // Webアプリ側から6桁コードを照合してアカウント連携を確立
+// v7: 全レスポンスに CORS ヘッダ統一（ブラウザからの fetch hang を解消）
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
+
+function respond(body: unknown, status: number): Response {
+  return new Response(JSON.stringify(body), { status, headers: CORS_HEADERS });
+}
+
 Deno.serve(async (req) => {
-  // CORS
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-      },
-    });
+    return new Response(null, { headers: CORS_HEADERS });
   }
 
   try {
-    // Supabase JWT からユーザーIDを取得
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Authorization required" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
+      return respond({ error: "Authorization required" }, 401);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // ユーザー認証用クライアント
     const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
     const { data: { user }, error: userError } = await supabaseAuth.auth.getUser();
 
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
+      return respond({ error: "Invalid token" }, 401);
     }
 
-    // サービスロールクライアント（DB操作用）
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
     const { code } = await req.json();
     if (!code || code.length !== 6) {
-      return new Response(
-        JSON.stringify({ error: "Invalid code format" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
+      return respond({ error: "Invalid code format" }, 400);
     }
 
-    // コード照合
     const { data: linkCode, error: findError } = await supabase
       .from("roblox_link_codes")
       .select("*")
@@ -61,26 +53,17 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (findError || !linkCode) {
-      return new Response(
-        JSON.stringify({ error: "CODE_NOT_FOUND" }),
-        { status: 404, headers: { "Content-Type": "application/json" } }
-      );
+      return respond({ error: "CODE_NOT_FOUND" }, 404);
     }
 
-    // 有効期限チェック
     if (new Date(linkCode.expires_at) < new Date()) {
       await supabase
         .from("roblox_link_codes")
         .update({ status: "expired" })
         .eq("id", linkCode.id);
-
-      return new Response(
-        JSON.stringify({ error: "CODE_EXPIRED" }),
-        { status: 410, headers: { "Content-Type": "application/json" } }
-      );
+      return respond({ error: "CODE_EXPIRED" }, 410);
     }
 
-    // 既存の連携チェック（同じRoblox IDが別ユーザーと連携済み）
     const { data: existingLink } = await supabase
       .from("roblox_links")
       .select("id, user_id")
@@ -89,19 +72,13 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (existingLink && existingLink.user_id !== user.id) {
-      return new Response(
-        JSON.stringify({ error: "ALREADY_LINKED" }),
-        { status: 409, headers: { "Content-Type": "application/json" } }
-      );
+      return respond({ error: "ALREADY_LINKED" }, 409);
     }
 
-    // Link Token 生成
     const linkToken = "mwl_" + crypto.randomUUID().replace(/-/g, "");
-    const tokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30日
+    const tokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-    // 既存の連携があれば更新、なければ新規作成
     if (existingLink) {
-      // 同じユーザーが再連携
       await supabase
         .from("roblox_links")
         .update({
@@ -125,14 +102,10 @@ Deno.serve(async (req) => {
 
       if (linkError) {
         console.error("Link insert error:", linkError);
-        return new Response(
-          JSON.stringify({ error: "Failed to create link" }),
-          { status: 500, headers: { "Content-Type": "application/json" } }
-        );
+        return respond({ error: "Failed to create link" }, 500);
       }
     }
 
-    // コードを使用済みにする
     await supabase
       .from("roblox_link_codes")
       .update({
@@ -142,7 +115,6 @@ Deno.serve(async (req) => {
       })
       .eq("id", linkCode.id);
 
-    // users テーブルのフラグ更新
     await supabase
       .from("users")
       .update({
@@ -151,23 +123,17 @@ Deno.serve(async (req) => {
       })
       .eq("id", user.id);
 
-    return new Response(
-      JSON.stringify({
-        linked: true,
-        roblox_display_name: linkCode.roblox_display_name,
-        link_token: linkToken,
-        boosts: {
-          coin_multiplier: 1.5,
-          premium_materials: true,
-        },
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
+    return respond({
+      linked: true,
+      roblox_display_name: linkCode.roblox_display_name,
+      link_token: linkToken,
+      boosts: {
+        coin_multiplier: 1.5,
+        premium_materials: true,
+      },
+    }, 200);
   } catch (err) {
     console.error("Unexpected error:", err);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return respond({ error: "Internal server error" }, 500);
   }
 });
