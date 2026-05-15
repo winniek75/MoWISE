@@ -352,13 +352,21 @@ _G.setMoWISEUserId = function(player, userId)
         warn("[TownTalk] _G.setMoWISEUserId: invalid args")
         return
     end
-    local sync = getSyncService(player)
-    if not sync then
-        warn(("[TownTalk] _G.setMoWISEUserId: no SyncService for %s"):format(player.Name))
+    -- BindableFunction:Invoke はテーブルをコピーで返すため、PlayerJoinHandler が
+    -- 公開する SetMoWISEUserIdOnSync Bindable 経由で activeSyncs[userId] を直接書き換える
+    local setBF = remotes:FindFirstChild("SetMoWISEUserIdOnSync")
+    if not setBF then
+        warn("[TownTalk] _G.setMoWISEUserId: SetMoWISEUserIdOnSync Bindable not found")
         return
     end
-    sync.mowiseUserId = userId
-    print(("[TownTalk] mowiseUserId set: %s -> %s"):format(player.Name, userId))
+    local ok, success = pcall(function()
+        return setBF:Invoke(player.UserId, userId)
+    end)
+    if ok and success then
+        print(("[TownTalk] mowiseUserId set: %s -> %s"):format(player.Name, userId))
+    else
+        warn(("[TownTalk] _G.setMoWISEUserId: no SyncService for %s"):format(player.Name))
+    end
 end
 
 print(("[TownTalk] TownTalkService ready (TEST_MODE=%s)"):format(tostring(TEST_MODE)))

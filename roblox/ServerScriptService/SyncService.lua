@@ -50,7 +50,8 @@ end
 function SyncService:makeRequest(method, endpoint, body)
     local url = API_BASE .. endpoint
     local headers = {
-        ["Content-Type"]     = "application/json",
+        -- Content-Type は HttpService:PostAsync の第3引数 Enum.HttpContentType.ApplicationJson が自動付与する
+        -- ここで重複指定すると Roblox が "Header Content-Type is not allowed!" でリクエスト拒否する
         ["X-MoWISE-API-Key"] = API_KEY,
         ["X-Roblox-User-Id"] = tostring(self.robloxUserId),
     }
@@ -153,6 +154,33 @@ function SyncService:heartbeat(currentState)
             self.boosts.coin_multiplier    = 1.0
             self.boosts.premium_materials  = false
         end
+
+        -- ===== C-1.4: mowiseUserId 自動設定 =====
+        -- linked == true かつ user_id が string で返ってきた場合のみ処理
+        if data.linked == true and type(data.user_id) == "string" then
+            local prevUserId = self.mowiseUserId
+            self.mowiseUserId = data.user_id  -- 毎回上書き（論点 4-A）
+
+            -- LinkSystem(syncServices) と PlayerJoinHandler(activeSyncs) が別々に保持する
+            -- sync インスタンスが存在するため、TeacherRoleService / TownTalkService が
+            -- 参照する activeSyncs 側にも伝搬させる必要がある
+            if _G.setMoWISEUserId then
+                _G.setMoWISEUserId(self.player, data.user_id)
+            end
+
+            -- 新規設定（nil → UUID）の場合のみロール再判定発火（論点 5-A）
+            if prevUserId == nil then
+                print(("[C-1.4] mowiseUserId auto-set: %s -> %s"):format(
+                    self.player.Name, data.user_id))
+                if _G.checkTeacherRole then
+                    _G.checkTeacherRole(self.player)
+                else
+                    warn("[C-1.4] _G.checkTeacherRole is not defined")
+                end
+            end
+        end
+        -- ===== C-1.4 ここまで =====
+
         -- 連携解除検知
         if data.linked == false then
             self:unlink()

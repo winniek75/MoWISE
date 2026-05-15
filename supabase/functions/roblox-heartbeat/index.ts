@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           linked: false,
+          user_id: null,
           boost_active: false,
           coin_multiplier: 1.0,
           teacher_message: null,
@@ -67,6 +68,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           linked: false,
+          user_id: null,
           boost_active: false,
           coin_multiplier: 1.0,
           teacher_message: null,
@@ -83,6 +85,7 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({
           linked: false,
+          user_id: null,
           boost_active: false,
           coin_multiplier: 1.0,
           teacher_message: null,
@@ -117,6 +120,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         linked: true,
+        user_id: link.user_id ?? null,
         boost_active: true,
         coin_multiplier: 1.5,
         teacher_message: null,

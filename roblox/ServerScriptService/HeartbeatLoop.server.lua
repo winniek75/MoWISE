@@ -4,6 +4,10 @@
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- BindableFunction:Invoke 経由で取得した sync は metatable が剥がれる Roblox 仕様のため、
+-- メソッド呼出を行う前に SyncService の metatable を再接続する必要がある
+local SyncService = require(script.Parent:WaitForChild("SyncService"))
+
 local remotes = ReplicatedStorage:WaitForChild("MoWISERemotes", 30)
 if not remotes then
     warn("[HeartbeatLoop] MoWISERemotes not found")
@@ -45,7 +49,16 @@ local function startHeartbeat(player)
             return getSyncService:Invoke(player.UserId)
         end)
 
-        if not ok or not sync or not sync.isLinked or not sync:isLinked() then
+        if not ok or not sync then
+            continue
+        end
+
+        -- Bindable で剥がれた metatable を再接続（メソッド呼出を可能にする）
+        if getmetatable(sync) == nil then
+            setmetatable(sync, SyncService)
+        end
+
+        if not sync:isLinked() then
             continue
         end
 

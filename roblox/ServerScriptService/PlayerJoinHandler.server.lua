@@ -27,6 +27,19 @@ getSyncBF.OnInvoke = function(userId)
     return activeSyncs[userId]
 end
 
+-- activeSyncs[userId].mowiseUserId を直接書き換えるための BindableFunction
+-- BindableFunction:Invoke 経由で取得した sync table はコピーが返るため、
+-- 単純な sync.mowiseUserId = value では永続化されない。OnInvoke は
+-- このスクリプトのコンテキストで実行されるため、ここで直接 mutate する必要がある。
+local setMoWISEUserIdBF = Instance.new("BindableFunction", remotes)
+setMoWISEUserIdBF.Name  = "SetMoWISEUserIdOnSync"
+setMoWISEUserIdBF.OnInvoke = function(userId, value)
+    local sync = activeSyncs[userId]
+    if not sync then return false end
+    sync.mowiseUserId = value
+    return true
+end
+
 -- patternUpdates を蓄積するための BindableEvent
 local addPatternUpdateBE = Instance.new("BindableEvent", remotes)
 addPatternUpdateBE.Name  = "AddPatternUpdate"
