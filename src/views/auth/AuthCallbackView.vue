@@ -11,9 +11,9 @@ onMounted(async () => {
   const { data } = await supabase.auth.getSession()
   if (data.session) {
     await auth.initialize()
-    router.replace(auth.isTeacher ? { name: 'TeacherDashboard' } : { name: 'Home' })
+    router.replace(auth.isTeacher ? { name: 'TeacherDashboard' } : { name: 'StudentHome' })
   } else {
-    router.replace({ name: 'Onboarding1' })
+    router.replace({ name: 'Login' })
   }
 })
 </script>

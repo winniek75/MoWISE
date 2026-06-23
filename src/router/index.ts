@@ -1,93 +1,46 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useSessionStore } from '@/stores/session'
-import { useCheckinStore } from '@/stores/checkin'
-import {
-  getCurrentCheckinSession,
-  isCheckinDismissed,
-  cleanupOldDismissKeys,
-} from '@/composables/useCheckinGuard'
-
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // ──── Auth ────
     { path: '/auth/callback', name: 'AuthCallback', component: () => import('@/views/auth/AuthCallbackView.vue') },
-    {
-      path: '/onboarding',
-      name: 'Onboarding',
-      component: () => import('@/views/onboarding/OnboardingView.vue'),
-      children: [
-        { path: '1', name: 'Onboarding1', component: () => import('@/views/onboarding/Onboarding1Splash.vue'), meta: { requiresGuest: true } },
-        { path: '2', name: 'Onboarding2', component: () => import('@/views/onboarding/Onboarding2Account.vue'), meta: { requiresGuest: true } },
-        { path: '3', name: 'Onboarding3', component: () => import('@/views/onboarding/Onboarding3ClassCode.vue') },
-        { path: '4', name: 'Onboarding4', component: () => import('@/views/onboarding/Onboarding4MowiMeet.vue') },
-        { path: '5', name: 'Onboarding5', component: () => import('@/views/onboarding/Onboarding5FirstQuestion.vue') },
-      ],
-    },
-    { path: '/', name: 'Home', component: () => import('@/views/home/HomeView.vue'), meta: { requiresAuth: true } },
-    { path: '/checkin/morning', name: 'CheckinMorning', component: () => import('@/views/checkin/CheckinMorningView.vue'), meta: { requiresAuth: true } },
-    { path: '/checkin/evening', name: 'CheckinEvening', component: () => import('@/views/checkin/CheckinEveningView.vue'), meta: { requiresAuth: true } },
-    { path: '/session/start', name: 'session-start', component: () => import('@/views/session/SessionStartView.vue'), meta: { requiresAuth: true } },
-    { path: '/session/layer0', name: 'session-layer0', component: () => import('@/views/session/Layer0View.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    { path: '/session/layer1', name: 'session-layer1', component: () => import('@/views/session/Layer1View.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    { path: '/session/layer2', name: 'session-layer2', component: () => import('@/views/session/Layer2View.vue'), meta: { requiresAuth: true } },
-    { path: '/session/layer3', name: 'session-layer3', component: () => import('@/views/session/Layer3View.vue'), meta: { requiresAuth: true } },
-    { path: '/session/production-gate', name: 'production-gate', component: () => import('@/views/session/ProductionGateView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    { path: '/session/end', name: 'session-end', component: () => import('@/views/session/SessionEndView.vue'), meta: { requiresAuth: true } },
-    { path: '/session/pattern-master', name: 'pattern-master', component: () => import('@/views/session/PatternMasterView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    { path: '/session/pattern-unlock', name: 'pattern-unlock', component: () => import('@/views/session/PatternUnlockView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    { path: '/checkin/night', name: 'checkin-night', component: () => import('@/views/checkin/CheckinNightView.vue'), meta: { requiresAuth: true } },
-    { path: '/checkin/diff',  name: 'checkin-diff',  component: () => import('@/views/checkin/DiffFeedbackView.vue'),  meta: { requiresAuth: true } },
-    { path: '/teacher', name: 'TeacherDashboard', component: () => import('@/views/teacher/TeacherDashboardView.vue'), meta: { requiresAuth: true, requiresTeacher: true, hideBottomNav: true } },
-    { path: '/teacher/:classId', name: 'TeacherClass', component: () => import('@/views/teacher/TeacherClassView.vue'), meta: { requiresAuth: true, requiresTeacher: true, hideBottomNav: true } },
-    { path: '/teacher/:classId/student/:studentId', name: 'TeacherStudent', component: () => import('@/views/teacher/TeacherStudentView.vue'), meta: { requiresAuth: true, requiresTeacher: true, hideBottomNav: true } },
-    // ──── Word Tower ────
-    { path: '/game/word-tower', name: 'WordTower', component: () => import('@/views/game/WordTowerView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    // ──── 図鑑 ────
-    { path: '/zukan', name: 'Zukan', component: () => import('@/views/zukan/ZukanView.vue'), meta: { requiresAuth: true } },
-    { path: '/zukan/:id', name: 'ZukanDetail', component: () => import('@/views/zukan/ZukanDetailView.vue'), meta: { requiresAuth: true }, props: true },
-    // ──── 記録 ────
-    { path: '/log/weekly', name: 'LogWeekly', component: () => import('@/views/log/LogWeeklyView.vue'), meta: { requiresAuth: true } },
-    // ──── 設定 ────
+    { path: '/login', name: 'Login', component: () => import('@/views/auth/LoginView.vue'), meta: { requiresGuest: true } },
+    { path: '/signup', name: 'Signup', component: () => import('@/views/auth/SignupView.vue'), meta: { requiresGuest: true } },
+
+    // ──── Student ────
+    { path: '/', name: 'StudentHome', component: () => import('@/views/student/StudentHomeView.vue'), meta: { requiresAuth: true, requiresStudent: true } },
+    { path: '/games', name: 'StudentGames', component: () => import('@/views/student/StudentGamesView.vue'), meta: { requiresAuth: true, requiresStudent: true } },
+    { path: '/games/:gameId', name: 'StudentGamePlay', component: () => import('@/views/student/StudentGamePlayView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
+    { path: '/ranking', name: 'StudentRanking', component: () => import('@/views/student/StudentRankingView.vue'), meta: { requiresAuth: true, requiresStudent: true } },
+    { path: '/join', name: 'StudentJoinClass', component: () => import('@/views/student/StudentJoinClassView.vue'), meta: { requiresAuth: true } },
+
+    // ──── Teacher ────
+    { path: '/teacher', name: 'TeacherDashboard', component: () => import('@/views/teacher/TeacherDashboardView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
+    { path: '/teacher/games', name: 'TeacherGames', component: () => import('@/views/teacher/TeacherGamesView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
+    { path: '/teacher/subscription', name: 'TeacherSubscription', component: () => import('@/views/teacher/TeacherSubscriptionView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
+    { path: '/teacher/:classId', name: 'TeacherClass', component: () => import('@/views/teacher/TeacherClassView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
+    { path: '/teacher/:classId/student/:studentId', name: 'TeacherStudent', component: () => import('@/views/teacher/TeacherStudentView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
+
+    // ──── Settings ────
     { path: '/settings', name: 'Settings', component: () => import('@/views/SettingsView.vue'), meta: { requiresAuth: true } },
-    { path: '/settings/roblox-link', name: 'RobloxLink', component: () => import('@/views/settings/RobloxLinkView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    // ──── ゲーム化Layer ────
-    { path: '/session/layer/2/svo', name: 'Layer2SVO', component: () => import('@/views/session/Layer2SVOView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    { path: '/session/layer/3/sprint', name: 'Layer3Sprint', component: () => import('@/views/session/Layer3SprintView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
-    { path: '/:pathMatch(.*)*', redirect: '/onboarding/1' },
+
+    // ──── Fallback ────
+    { path: '/:pathMatch(.*)*', redirect: '/login' },
   ],
 })
 
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
   if (auth.loading) await auth.initialize()
-  if (to.meta.requiresAuth && !auth.isAuthenticated) return next({ name: 'Onboarding1' })
-  if (to.meta.requiresGuest && auth.isAuthenticated) return next({ name: 'Home' })
-  if (to.meta.requiresTeacher && !auth.isTeacher) return next({ name: 'Home' })
 
-  // セッション中断ガード：セッションが未開始なのにlayer2以降へ直接アクセスされた場合
-  const sessionStore = useSessionStore()
-  const sessionGuardRoutes = ['session-layer0', 'session-layer1', 'session-layer2', 'session-layer3', 'session-end', 'production-gate', 'Layer2SVO', 'Layer3Sprint', 'pattern-master', 'pattern-unlock']
-  if (sessionGuardRoutes.includes(to.name as string) && !sessionStore.isActive) {
-    return next({ name: 'session-start' })
+  if (to.meta.requiresAuth && !auth.isAuthenticated) return next({ name: 'Login' })
+  if (to.meta.requiresGuest && auth.isAuthenticated) {
+    return next(auth.isTeacher ? { name: 'TeacherDashboard' } : { name: 'StudentHome' })
   }
-
-  // チェックイン自動誘導（B-4-2 / Hotfix-1）：ホーム到達時、student のみ対象。teacher はスキップ。
-  if (to.name === 'Home' && auth.isAuthenticated && !auth.isTeacher) {
-    cleanupOldDismissKeys()
-    const session = getCurrentCheckinSession()
-    if (!isCheckinDismissed(session)) {
-      const checkinStore = useCheckinStore()
-      await checkinStore.fetchTodayCheckins()
-      const isCompleted = session === 'morning'
-        ? checkinStore.hasMorningCheckin
-        : checkinStore.hasEveningCheckin
-      if (!isCompleted) {
-        return next({ name: session === 'morning' ? 'CheckinMorning' : 'checkin-night', replace: true })
-      }
-    }
-  }
+  if (to.meta.requiresTeacher && !auth.isTeacher) return next({ name: 'StudentHome' })
+  if (to.meta.requiresStudent && auth.isTeacher) return next({ name: 'TeacherDashboard' })
 
   next()
 })

@@ -1,51 +1,79 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- ヘッダー -->
-    <header class="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <button @click="router.push({ name: 'Home' })" class="text-gray-500 text-sm font-bold">← 戻る</button>
+  <div class="min-h-screen bg-gray-50 pb-24">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 px-6 py-4">
+      <div class="max-w-5xl mx-auto flex items-center justify-between">
         <div>
-          <p class="text-xs text-gray-400 font-medium tracking-widest uppercase">MoWISE</p>
-          <h1 class="text-xl font-bold text-gray-900">チャートマスター ダッシュボード</h1>
+          <p class="text-xs text-indigo-500 font-semibold tracking-widest uppercase">MoWISE for Teachers</p>
+          <h1 class="text-xl font-bold text-gray-900 mt-0.5">ダッシュボード</h1>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-gray-500">{{ auth.displayName }}</span>
+          <button
+            @click="showCreateModal = true"
+            class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            + クラスを作成
+          </button>
         </div>
       </div>
-      <button
-        @click="showCreateModal = true"
-        class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-      >
-        <span class="text-base">＋</span> クラスを作成
-      </button>
     </header>
 
-    <!-- メインコンテンツ -->
-    <main class="max-w-4xl mx-auto px-6 py-8">
+    <main class="max-w-5xl mx-auto px-6 py-6">
+      <!-- Plan banner -->
+      <div v-if="subStore.currentPlan === 'free'" class="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-4 mb-6 flex items-center justify-between">
+        <div>
+          <p class="text-white font-semibold">Free プラン</p>
+          <p class="text-white/70 text-sm">1クラス5人まで・ゲーム3種類 →アップグレードで全機能解放</p>
+        </div>
+        <button
+          @click="router.push({ name: 'TeacherSubscription' })"
+          class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-gray-100"
+        >
+          アップグレード
+        </button>
+      </div>
 
-      <!-- ローディング -->
-      <div v-if="store.loading" class="flex justify-center py-20">
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <p class="text-sm text-gray-500">クラス数</p>
+          <p class="text-2xl font-bold text-gray-900">{{ teacherStore.classes.length }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <p class="text-sm text-gray-500">総生徒数</p>
+          <p class="text-2xl font-bold text-gray-900">{{ totalStudents }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <p class="text-sm text-gray-500">今週のゲーム数</p>
+          <p class="text-2xl font-bold text-gray-900">{{ weeklyGames }}</p>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div v-if="teacherStore.loading" class="flex justify-center py-20">
         <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
 
-      <!-- クラスなし -->
-      <div v-else-if="store.classes.length === 0" class="text-center py-20">
+      <!-- Classes list -->
+      <div v-else-if="teacherStore.classes.length === 0" class="text-center py-20">
         <p class="text-4xl mb-4">📚</p>
-        <p class="text-gray-500">まだクラスがありません。</p>
-        <p class="text-gray-400 text-sm mt-1">「クラスを作成」から始めましょう。</p>
+        <p class="text-gray-500">まだクラスがありません</p>
+        <p class="text-gray-400 text-sm mt-1">「クラスを作成」から始めましょう</p>
       </div>
 
-      <!-- クラス一覧 -->
-      <div v-else class="grid gap-4">
+      <div v-else class="space-y-4">
         <div
-          v-for="cls in store.classes"
+          v-for="cls in teacherStore.classes"
           :key="cls.id"
           class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
-          @click="router.push(`/teacher/${cls.id}`)"
+          @click="router.push({ name: 'TeacherClass', params: { classId: cls.id } })"
         >
           <div class="flex items-start justify-between">
             <div>
               <h2 class="text-lg font-bold text-gray-900">{{ cls.class_name }}</h2>
               <p v-if="cls.description" class="text-sm text-gray-500 mt-0.5">{{ cls.description }}</p>
             </div>
-            <!-- クラスコードバッジ -->
             <div class="text-right">
               <p class="text-xs text-gray-400 mb-1">クラスコード</p>
               <span class="font-mono text-lg font-bold tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">
@@ -54,67 +82,16 @@
             </div>
           </div>
           <div class="flex items-center gap-4 mt-4 text-sm text-gray-500">
-            <span>
-              ステータス：
-              <span :class="cls.status === 'active' ? 'text-green-600 font-medium' : 'text-gray-400'">
-                {{ cls.status === 'active' ? '🟢 アクティブ' : '🔴 アーカイブ済み' }}
-              </span>
+            <span :class="cls.status === 'active' ? 'text-green-600' : 'text-gray-400'">
+              {{ cls.status === 'active' ? 'Active' : 'Archived' }}
             </span>
-            <span>最大 {{ cls.max_students }} 名</span>
-            <span class="ml-auto text-indigo-500 font-medium">詳細を見る →</span>
+            <span class="ml-auto text-indigo-500 font-medium">管理 →</span>
           </div>
         </div>
       </div>
-      <!-- アクティビティを試す -->
-      <section class="mt-8">
-        <h2 class="text-sm font-semibold text-gray-700 mb-3">🎮 アクティビティを試す</h2>
-        <p class="text-xs text-gray-400 mb-4">レッスンで使うパターンとLayerを選んで、生徒と同じ練習を体験できます。</p>
-
-        <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-          <!-- パターン選択 -->
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">パターン</label>
-            <select v-model="tryPatternNo" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-              <option v-for="p in patternList" :key="p.pattern_no" :value="p.pattern_no">
-                {{ p.pattern_no }} — {{ p.pattern_text }}（{{ p.japanese }}）
-              </option>
-            </select>
-          </div>
-
-          <!-- Layer選択 -->
-          <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Layer</label>
-            <div class="flex gap-2">
-              <button
-                v-for="l in [0, 1, 2, 3]"
-                :key="l"
-                @click="tryLayer = l as 0|1|2|3"
-                :class="tryLayer === l
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-                class="flex-1 py-2 rounded-lg text-sm font-semibold transition-colors"
-              >
-                L{{ l }}
-              </button>
-            </div>
-            <p class="text-[10px] text-gray-400 mt-1">
-              {{ layerDesc[tryLayer] }}
-            </p>
-          </div>
-
-          <!-- 開始ボタン -->
-          <button
-            @click="startTryActivity"
-            :disabled="!tryPatternNo"
-            class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg disabled:opacity-40 transition-colors"
-          >
-            ▶ この設定で練習を開始
-          </button>
-        </div>
-      </section>
     </main>
 
-    <!-- クラス作成モーダル -->
+    <!-- Create class modal -->
     <div
       v-if="showCreateModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
@@ -122,7 +99,6 @@
     >
       <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
         <h2 class="text-lg font-bold text-gray-900 mb-4">新しいクラスを作成</h2>
-
         <label class="block text-sm font-medium text-gray-700 mb-1">クラス名 <span class="text-red-500">*</span></label>
         <input
           v-model="newClassName"
@@ -130,7 +106,6 @@
           placeholder="例：中学2年A組"
           class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
         />
-
         <label class="block text-sm font-medium text-gray-700 mt-4 mb-1">メモ（任意）</label>
         <input
           v-model="newClassDesc"
@@ -138,99 +113,63 @@
           placeholder="例：2026年度 春学期"
           class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
         />
-
-        <p class="text-xs text-gray-400 mt-3">
-          ※ クラスコードは自動生成されます。生徒はコードを入力してクラスに参加します。
-        </p>
-
+        <p class="text-xs text-gray-400 mt-3">クラスコードは自動生成されます</p>
         <div class="flex gap-3 mt-6">
           <button
             @click="showCreateModal = false"
             class="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
-          >
-            キャンセル
-          </button>
+          >キャンセル</button>
           <button
             @click="handleCreate"
             :disabled="!newClassName.trim() || creating"
-            class="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {{ creating ? '作成中...' : '作成する' }}
-          </button>
+            class="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-40"
+          >{{ creating ? '作成中...' : '作成する' }}</button>
         </div>
       </div>
     </div>
+
+    <BottomNav />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { useTeacherStore } from '@/stores/teacher'
-import { useSessionStore } from '@/stores/session'
-import { supabase } from '@/lib/supabase'
+import { useSubscriptionStore } from '@/stores/subscription'
+import BottomNav from '@/components/common/BottomNav.vue'
 
 const router = useRouter()
-const store  = useTeacherStore()
-const sessionStore = useSessionStore()
+const auth = useAuthStore()
+const teacherStore = useTeacherStore()
+const subStore = useSubscriptionStore()
 
 const showCreateModal = ref(false)
-const newClassName    = ref('')
-const newClassDesc    = ref('')
-const creating        = ref(false)
+const newClassName = ref('')
+const newClassDesc = ref('')
+const creating = ref(false)
 
-// アクティビティを試す
-const patternList  = ref<any[]>([])
-const tryPatternNo = ref('P001')
-const tryLayer     = ref<0 | 1 | 2 | 3>(0)
-
-const layerDesc: Record<number, string> = {
-  0: 'Sound Foundation — 音の聴き比べ',
-  1: 'Echo Drill — 聴いて選ぶ',
-  2: 'Pattern Sense — 穴埋め・並べ替え',
-  3: 'Flash Output — 瞬間英作文',
-}
+const totalStudents = ref(0)
+const weeklyGames = ref(0)
 
 onMounted(async () => {
-  store.fetchMyClasses()
-  // パターン一覧取得
-  const { data } = await supabase
-    .from('patterns')
-    .select('pattern_no, pattern_text, japanese')
-    .order('pattern_no')
-  patternList.value = data ?? []
-  if (data && data.length > 0) tryPatternNo.value = (data[0] as any).pattern_no
-})
-
-function startTryActivity() {
-  const p = patternList.value.find((x: any) => x.pattern_no === tryPatternNo.value)
-  if (!p) return
-  sessionStore.startSession([{
-    patternId:    p.pattern_no,
-    patternLabel: p.pattern_text,
-    patternJa:    p.japanese,
-    currentStar:  0,
-    startLayer:   tryLayer.value,
-  }])
-  const layerRoutes: Record<number, string> = {
-    0: 'session-layer0',
-    1: 'session-layer1',
-    2: 'session-layer2',
-    3: 'session-layer3',
+  await teacherStore.fetchMyClasses()
+  if (auth.userId) {
+    await subStore.fetchSubscription(auth.userId)
   }
-  router.push({ name: layerRoutes[tryLayer.value] })
-}
+})
 
 async function handleCreate() {
   if (!newClassName.value.trim()) return
   creating.value = true
-  await store.createClass({
-    class_name:  newClassName.value.trim(),
+  await teacherStore.createClass({
+    class_name: newClassName.value.trim(),
     description: newClassDesc.value.trim() || undefined,
   })
-  creating.value    = false
+  creating.value = false
   showCreateModal.value = false
-  newClassName.value    = ''
-  newClassDesc.value    = ''
+  newClassName.value = ''
+  newClassDesc.value = ''
 }
 </script>
