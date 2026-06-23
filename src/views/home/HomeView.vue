@@ -152,6 +152,19 @@ async function markRead(fbId: string) {
         >
           ▶ 練習を始める
         </button>
+
+        <button
+          class="w-full rounded-2xl py-3.5 px-5 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 hover:border-yellow-500/50 text-left transition-all active:scale-[0.98]"
+          @click="router.push({ name: 'WordTower' })"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🗼</span>
+            <div>
+              <div class="text-white font-title font-semibold text-sm">Word Tower</div>
+              <div class="text-white/40 text-xs font-title">画像で覚える英単語ゲーム</div>
+            </div>
+          </div>
+        </button>
       </div>
     </main>
 

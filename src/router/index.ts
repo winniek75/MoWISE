@@ -42,6 +42,8 @@ const router = createRouter({
     { path: '/teacher', name: 'TeacherDashboard', component: () => import('@/views/teacher/TeacherDashboardView.vue'), meta: { requiresAuth: true, requiresTeacher: true, hideBottomNav: true } },
     { path: '/teacher/:classId', name: 'TeacherClass', component: () => import('@/views/teacher/TeacherClassView.vue'), meta: { requiresAuth: true, requiresTeacher: true, hideBottomNav: true } },
     { path: '/teacher/:classId/student/:studentId', name: 'TeacherStudent', component: () => import('@/views/teacher/TeacherStudentView.vue'), meta: { requiresAuth: true, requiresTeacher: true, hideBottomNav: true } },
+    // ──── Word Tower ────
+    { path: '/game/word-tower', name: 'WordTower', component: () => import('@/views/game/WordTowerView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
     // ──── 図鑑 ────
     { path: '/zukan', name: 'Zukan', component: () => import('@/views/zukan/ZukanView.vue'), meta: { requiresAuth: true } },
     { path: '/zukan/:id', name: 'ZukanDetail', component: () => import('@/views/zukan/ZukanDetailView.vue'), meta: { requiresAuth: true }, props: true },

@@ -70,6 +70,16 @@
       <span class="milestone-arrow">→</span>
     </div>
 
+    <!-- ボーナスゲーム誘導 -->
+    <div class="bonus-game-cta" @click="goWordTower">
+      <span class="bonus-icon">🗼</span>
+      <div class="bonus-text">
+        <span class="bonus-title">Word Tower で遊ぶ</span>
+        <span class="bonus-sub">今日のパターンの単語で挑戦</span>
+      </div>
+      <span class="bonus-arrow">→</span>
+    </div>
+
     <!-- アクションボタン（チェックイン強制導線） -->
     <div class="action-btns">
       <button class="btn-night-checkin" @click="goNightCheckin">
@@ -227,6 +237,11 @@ function goPatternUnlock() {
       patternJa: u.patternJa,
     },
   })
+}
+
+function goWordTower() {
+  sessionStore.endSession()
+  router.push({ name: 'WordTower' })
 }
 
 function goNightCheckin() {
@@ -499,6 +514,26 @@ async function checkUnlockNextPattern(currentPatternId: string) {
   text-align: center;
   letter-spacing: 0.03em;
 }
+
+.bonus-game-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: linear-gradient(135deg, rgba(245,158,11,0.1), rgba(249,115,22,0.1));
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.1s;
+}
+.bonus-game-cta:hover { border-color: rgba(245,158,11,0.5); }
+.bonus-game-cta:active { transform: scale(0.98); }
+.bonus-icon { font-size: 1.5rem; }
+.bonus-text { flex: 1; display: flex; flex-direction: column; }
+.bonus-title { font-size: 0.9rem; font-weight: 700; color: #f0f0ff; }
+.bonus-sub { font-size: 0.7rem; color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
+.bonus-arrow { font-size: 0.9rem; color: rgba(255,255,255,0.3); }
 
 /* Mowiセリフ */
 .mowi-end-dialogue {
