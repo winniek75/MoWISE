@@ -152,7 +152,7 @@ async function loadTodayPatterns() {
     if (authStore.userId && !isOfflineMode) {
       const { data: progress } = await supabase
         .from('pattern_progress')
-        .select('pattern_no, mastery_level, layer0_done, layer1_done, layer2_done, layer3_done')
+        .select('pattern_no, mastery_level, layer0_done, layer1_done, layer2_done, layer3_done, correct_count, wrong_count, last_practiced_at')
         .eq('user_id', authStore.userId)
 
       for (const p of (progress ?? []) as any[]) {
@@ -160,27 +160,70 @@ async function loadTodayPatterns() {
       }
     }
 
-    // パターンを選択（未完了を優先、最大4つ）
-    const selected: SessionPattern[] = []
+    // ── 復習エンジン：弱点・復習時期のパターンを優先選出 ──
+    const now = new Date()
+    const reviewDue: SessionPattern[] = []   // 復習期限が来たパターン
+    const weakPoints: SessionPattern[] = []  // 正答率60%未満
+    const newPatterns: SessionPattern[] = [] // 未習得・進行中
+
     for (const p of allPatterns) {
-      if (selected.length >= 4) break
       const prog = progressMap.get(p.pattern_no)
       const stars = prog?.mastery_level ?? 0
-      if (stars >= 5) continue // マスター済みはスキップ
+      if (stars >= 5) continue
 
       const startLayer = !prog?.layer0_done ? 0
         : !prog?.layer1_done ? 1
         : !prog?.layer2_done ? 2
         : 3
 
-      selected.push({
+      const sp: SessionPattern = {
         patternId: p.pattern_no,
         patternLabel: p.pattern_text,
         patternJa: p.japanese,
         currentStar: stars,
         startLayer: startLayer as 0 | 1 | 2 | 3,
         isWeakPoint: false,
-      })
+      }
+
+      // 復習判定：last_practiced_at から簡易間隔で復習時期を計算
+      if (prog && stars >= 1) {
+        const lastPracticed = prog.last_practiced_at ? new Date(prog.last_practiced_at) : null
+        const correctRate = prog.correct_count / Math.max(1, (prog.correct_count ?? 0) + (prog.wrong_count ?? 0))
+
+        // 弱点パターン（正答率60%未満）
+        if (correctRate < 0.6 && (prog.correct_count + (prog.wrong_count ?? 0)) >= 3) {
+          sp.isWeakPoint = true
+          weakPoints.push(sp)
+          continue
+        }
+
+        // 復習時期判定（簡易間隔: ★1=1日, ★2=2日, ★3=4日, ★4=7日）
+        if (lastPracticed) {
+          const intervalDays = [0, 1, 2, 4, 7][Math.min(stars, 4)]
+          const reviewDate = new Date(lastPracticed)
+          reviewDate.setDate(reviewDate.getDate() + intervalDays)
+          if (now >= reviewDate) {
+            reviewDue.push(sp)
+            continue
+          }
+        }
+      }
+
+      newPatterns.push(sp)
+    }
+
+    // 優先順: 弱点(1枠) → 復習期限(1枠) → 新規(残り)
+    const selected: SessionPattern[] = []
+    if (weakPoints.length > 0) selected.push(weakPoints[0])
+    if (reviewDue.length > 0 && selected.length < 2) selected.push(reviewDue[0])
+    for (const p of newPatterns) {
+      if (selected.length >= 4) break
+      selected.push(p)
+    }
+    // まだ足りなければ復習・弱点から補充
+    for (const p of [...reviewDue.slice(1), ...weakPoints.slice(1)]) {
+      if (selected.length >= 4) break
+      selected.push(p)
     }
 
     todayPatterns.value = selected.length > 0 ? selected : FALLBACK_PATTERNS

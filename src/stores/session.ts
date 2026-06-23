@@ -62,6 +62,8 @@ export const useSessionStore = defineStore('session', () => {
   const masteredPattern = ref<{ patternId: string; patternLabel: string; patternJa: string; evolutionId?: string; evolutionText?: string } | null>(null)
   /** セッション中に新たに解禁されたパターン（null = なし） */
   const unlockedPattern = ref<{ patternId: string; patternLabel: string; patternJa: string } | null>(null)
+  /** 自己産出ゲートをpassした（★3→4）。SessionEndView表示用 */
+  const productionGatePassed = ref(false)
 
   // ─────────────────────────────────────────────
   // Computed
@@ -271,6 +273,7 @@ export const useSessionStore = defineStore('session', () => {
     layer3Cleared.value = false
     masteredPattern.value = null
     unlockedPattern.value = null
+    productionGatePassed.value = false
     isActive.value = false
     mowiEmotionState.value = 'idle'
     mowiDialogue.value = ''
@@ -295,6 +298,7 @@ export const useSessionStore = defineStore('session', () => {
     layer3Cleared,
     masteredPattern,
     unlockedPattern,
+    productionGatePassed,
     // computed
     accuracy,
     currentPattern,

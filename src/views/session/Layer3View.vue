@@ -446,7 +446,13 @@ function nextQuestion() {
  */
 function finishLayer3() {
   sessionStore.completeLayer3()
-  router.push({ name: 'session-end' })
+  // ★3以下の場合は自己産出ゲートへ（★4到達には自分の言葉で文を作る必要がある）
+  const currentStar = sessionStore.currentPattern?.currentStar ?? 0
+  if (currentStar <= 3) {
+    router.push({ name: 'production-gate' })
+  } else {
+    router.push({ name: 'session-end' })
+  }
 }
 
 // ─────────────────────────────────────────────

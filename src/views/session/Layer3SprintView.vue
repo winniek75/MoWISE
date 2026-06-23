@@ -364,16 +364,23 @@ async function finishSession() {
   if (sessionLogs.value.length > 0) {
     await supabase.from('flash_output_logs').insert(sessionLogs.value)
   }
-  // pattern_progress 更新
+  // pattern_progress 更新（★3まで。★4は自己産出ゲート経由のみ）
   await supabase.from('pattern_progress')
     .upsert({
       user_id: (await supabase.auth.getUser()).data.user!.id,
       pattern_id: currentPatternId.value,
-      star_level: 4, // Layer3完了で★4
+      star_level: 3,
       layer_3_cleared: true,
       last_attempted_at: new Date().toISOString(),
     }, { onConflict: 'user_id,pattern_id' })
-  router.push({ name: 'session-end' })
+
+  // ★3の場合は自己産出ゲートへ遷移（★4到達には自分の言葉で文を作る必要がある）
+  const currentStar = sessionStore.currentPattern?.currentStar ?? 0
+  if (currentStar <= 3) {
+    router.push({ name: 'production-gate' })
+  } else {
+    router.push({ name: 'session-end' })
+  }
 }
 
 function logAnswer(isCorrect: boolean, responseMs: number) {

@@ -43,10 +43,13 @@
       </div>
     </div>
 
-    <!-- 明日のお楽しみ -->
+    <!-- 明日のお楽しみ（翌日予告演出） -->
     <div class="teaser-block">
       <p class="teaser-label">── 明日のお楽しみ ──</p>
       <p class="teaser-text">{{ teaserCopy }}</p>
+      <p v-if="nextUnlockPreview" class="teaser-unlock">
+        {{ nextUnlockPreview }}
+      </p>
     </div>
 
     <!-- Mowiセリフ -->
@@ -67,14 +70,12 @@
       <span class="milestone-arrow">→</span>
     </div>
 
-    <!-- アクションボタン -->
+    <!-- アクションボタン（チェックイン強制導線） -->
     <div class="action-btns">
       <button class="btn-night-checkin" @click="goNightCheckin">
-        🌙 夜のチェックインへ
+        🌙 今日の振り返りへ
       </button>
-      <button class="btn-home" @click="goHome">
-        ホームに戻る
-      </button>
+      <p class="checkin-hint">練習の後に振り返ると、定着率が上がるよ</p>
     </div>
 
   </div>
@@ -115,12 +116,20 @@ const patternId = computed(() => sessionStore.currentPattern?.patternId ?? 'P001
 const starUpText = computed(() => {
   const p = sessionStore.currentPattern
   if (!p) return ''
+  const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n)
+
+  // 自己産出ゲートpass → ★3→4
+  if (sessionStore.productionGatePassed) {
+    return `★ ${p.patternId}   ${stars(3)} → ${stars(4)}`
+  }
+
   const prev = p.currentStar
   const correctRate = sessionStore.correctCount / Math.max(1, sessionStore.totalQuestions)
   if (correctRate < 0.7) return ''
+  // ★3→4はproductionGate経由のみ
+  if (prev === 3) return ''
   const next = Math.min(prev + 1, 5)
   if (next <= prev) return ''
-  const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n)
   return `★ ${p.patternId}   ${stars(prev)} → ${stars(next)}`
 })
 
@@ -129,13 +138,35 @@ const starUpText = computed(() => {
  */
 const teaserCopy = computed(() => {
   const pid = patternId.value
+  if (sessionStore.productionGatePassed) {
+    return `${pid} で自分の言葉が作れた。明日は新しいパターンが待ってる。`
+  }
   if (sessionStore.maxCombo >= 10) {
-    return `${pid} の次のステージまであと少し。次は音声録音に挑戦できる。`
+    return `${pid} の次のステージまであと少し。`
   }
   if (sessionStore.accuracy >= 80) {
-    return `${pid} が ★3 になった。次のパターンが解禁されるかも。`
+    return `${pid} の形が体に入ってきた。次のパターンが近い。`
   }
   return `また明日、ここに。${pid} が少し深くなった。`
+})
+
+/**
+ * 翌日予告：次に解禁されるパターンの予告表示
+ */
+const nextUnlockPreview = computed(() => {
+  const p = sessionStore.currentPattern
+  if (!p) return ''
+  const num = parseInt(p.patternId.replace('P', ''), 10)
+  if (isNaN(num) || num >= 35) return '' // P035が上限
+  const nextNo = `P${String(num + 1).padStart(3, '0')}`
+  // 次パターンが解禁済みなら予告不要
+  if (sessionStore.unlockedPattern?.patternId === nextNo) return ''
+  const star = p.currentStar
+  if (star < 3) {
+    const remaining = 3 - star
+    return `あと★${remaining}つで ${nextNo} が解禁される。`
+  }
+  return ''
 })
 
 /**
@@ -203,11 +234,6 @@ function goNightCheckin() {
   router.push({ name: 'checkin-night' })
 }
 
-function goHome() {
-  sessionStore.endSession()
-  router.push({ name: 'Home' })
-}
-
 onMounted(async () => {
   // セッション正解率でMowi brightnessを更新
   const correctRate = sessionStore.correctCount / Math.max(1, sessionStore.totalQuestions)
@@ -240,6 +266,7 @@ async function saveProgress() {
         correct_count: (existing as any).correct_count + sessionStore.correctCount,
         wrong_count: (existing as any).wrong_count + sessionStore.wrongCount,
         updated_at: new Date().toISOString(),
+        last_practiced_at: new Date().toISOString(),
       }
       // Layer完了フラグを更新（passした場合）
       if (passed) {
@@ -247,9 +274,10 @@ async function saveProgress() {
         if (sessionStore.currentLayer === 1) updates.layer1_done = true
         if (sessionStore.layer2Cleared) updates.layer2_done = true
         if (sessionStore.layer3Cleared) updates.layer3_done = true
-        // ★を上げる（最大5）
+        // ★を上げる（最大5、ただし★3→4は自己産出ゲート経由のみ）
         const currentStars = (existing as any).mastery_level ?? 0
-        if (currentStars < 5) {
+        if (currentStars < 5 && currentStars !== 3) {
+          // ★3→4はProductionGateViewで処理するためスキップ
           const newStars = Math.min(currentStars + 1, 5)
           updates.mastery_level = newStars
           // ★5到達 → masteredPattern セット
@@ -453,6 +481,22 @@ async function checkUnlockNextPattern(currentPatternId: string) {
   color: rgba(255,255,255,0.6);
   text-align: center;
   line-height: 1.7;
+  letter-spacing: 0.03em;
+}
+
+.teaser-unlock {
+  font-size: 0.85rem;
+  color: #FFD700;
+  text-align: center;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.checkin-hint {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
   letter-spacing: 0.03em;
 }
 
