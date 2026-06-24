@@ -47,12 +47,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     try {
-      const { data } = await supabase.auth.getSession()
-      session.value  = data.session
-      authUser.value = data.session?.user ?? null
-      if (authUser.value) await fetchUserRow(authUser.value.id)
+      const { data, error: sessionErr } = await supabase.auth.getSession()
+      if (sessionErr) {
+        console.warn('[auth] session restore failed, signing out:', sessionErr.message)
+        await supabase.auth.signOut()
+      } else {
+        session.value  = data.session
+        authUser.value = data.session?.user ?? null
+        if (authUser.value) await fetchUserRow(authUser.value.id)
+      }
     } catch (e) {
       console.error('[auth] initialize error:', e)
+      await supabase.auth.signOut().catch(() => {})
     } finally {
       loading.value = false
     }
@@ -75,8 +81,24 @@ export const useAuthStore = defineStore('auth', () => {
       .from('users')
       .select('*')
       .eq('id', uid)
-      .single()
+      .maybeSingle()
     if (err) { console.error('[auth] fetchUserRow:', err); return }
+    if (!data) {
+      // User row doesn't exist yet (trigger may not have fired). Create it from auth metadata.
+      const meta = authUser.value?.user_metadata
+      const { data: newRow } = await supabase
+        .from('users')
+        .insert({
+          id: uid,
+          email: authUser.value?.email ?? '',
+          display_name: meta?.display_name ?? '',
+          role: meta?.role ?? 'student',
+        })
+        .select()
+        .single()
+      userRow.value = newRow
+      return
+    }
     userRow.value = data
   }
 
