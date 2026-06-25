@@ -6,6 +6,7 @@ import { useTeacherStore } from '@/stores/teacher'
 import { useAuthStore } from '@/stores/auth'
 import { supabase } from '@/lib/supabase'
 import BottomNav from '@/components/common/BottomNav.vue'
+import GameIcon from '@/components/game/GameIcon.vue'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -90,7 +91,7 @@ function previewGame(url: string) {
             class="neo-card hover:shadow-neo-md transition-all duration-200"
           >
             <div class="flex items-start gap-3">
-              <div class="game-icon" :class="`cat-${category}`">{{ game.icon }}</div>
+              <GameIcon :game-id="game.id" :category="game.category" />
               <div class="flex-1">
                 <p class="font-title font-bold text-white text-sm">{{ game.title_ja }}</p>
                 <p class="text-xs text-white/30 mt-0.5">{{ game.description_ja || '' }}</p>

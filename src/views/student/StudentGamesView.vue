@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useGameStore } from '@/stores/game'
 import { useSubscriptionStore } from '@/stores/subscription'
 import BottomNav from '@/components/common/BottomNav.vue'
+import GameIcon from '@/components/game/GameIcon.vue'
 
 const router = useRouter()
 const gameStore = useGameStore()
@@ -64,7 +65,7 @@ onMounted(() => {
         class="neo-card cursor-pointer active:scale-[0.97] transition-all duration-150 hover:shadow-neo-md animate-pop-in"
         @click="playGame(game.id)"
       >
-        <div class="game-icon mb-3" :class="`cat-${game.category}`">{{ game.icon }}</div>
+        <GameIcon :game-id="game.id" :category="game.category" class="mb-3" />
         <p class="text-white font-title font-semibold text-sm leading-tight">{{ game.title_ja }}</p>
         <p class="text-white/25 text-[10px] font-title mt-1">{{ gameStore.categoryLabels[game.category] }}</p>
         <div v-if="!game.is_free && subStore.currentPlan === 'free'" class="mt-2">
