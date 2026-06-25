@@ -89,7 +89,7 @@ onMounted(async () => {
             @click="router.push({ name: 'StudentGamePlay', params: { gameId: a.game_id }, query: { assignmentId: a.id, classId: a.class_id } })"
           >
             <div class="flex items-center gap-3">
-              <span class="text-2xl">{{ a.game_icon || '🎮' }}</span>
+              <div class="game-icon !w-10 !h-10 !text-xl !rounded-xl cat-mixed">{{ a.game_icon || '🎮' }}</div>
               <div class="flex-1 min-w-0">
                 <p class="text-white font-title font-semibold text-sm truncate">
                   {{ a.title || a.game_title_ja || a.game_id }}
@@ -118,7 +118,7 @@ onMounted(async () => {
             :key="a.id"
             class="neo-card !py-3 !px-4 flex items-center gap-3 opacity-60"
           >
-            <span class="text-lg">{{ a.game_icon || '🎮' }}</span>
+            <div class="game-icon !w-8 !h-8 !text-base !rounded-lg cat-mixed">{{ a.game_icon || '🎮' }}</div>
             <div class="flex-1 min-w-0">
               <p class="text-white/50 font-title text-sm truncate">{{ a.title || a.game_title_ja }}</p>
             </div>

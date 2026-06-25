@@ -90,7 +90,7 @@ function previewGame(url: string) {
             class="neo-card hover:shadow-neo-md transition-all duration-200"
           >
             <div class="flex items-start gap-3">
-              <span class="text-3xl">{{ game.icon }}</span>
+              <div class="game-icon" :class="`cat-${category}`">{{ game.icon }}</div>
               <div class="flex-1">
                 <p class="font-title font-bold text-white text-sm">{{ game.title_ja }}</p>
                 <p class="text-xs text-white/30 mt-0.5">{{ game.description_ja || '' }}</p>

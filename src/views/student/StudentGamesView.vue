@@ -64,7 +64,7 @@ onMounted(() => {
         class="neo-card cursor-pointer active:scale-[0.97] transition-all duration-150 hover:shadow-neo-md animate-pop-in"
         @click="playGame(game.id)"
       >
-        <div class="text-3xl mb-2">{{ game.icon }}</div>
+        <div class="game-icon mb-3" :class="`cat-${game.category}`">{{ game.icon }}</div>
         <p class="text-white font-title font-semibold text-sm leading-tight">{{ game.title_ja }}</p>
         <p class="text-white/25 text-[10px] font-title mt-1">{{ gameStore.categoryLabels[game.category] }}</p>
         <div v-if="!game.is_free && subStore.currentPlan === 'free'" class="mt-2">
