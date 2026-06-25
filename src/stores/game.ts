@@ -37,10 +37,24 @@ export interface GameScore {
   played_at: string
 }
 
+export interface BadgeDefinition {
+  id: string
+  title: string
+  title_ja: string
+  icon: string
+  category: string
+}
+
+export interface NewBadgeEvent {
+  badge: BadgeDefinition
+}
+
 export const useGameStore = defineStore('game', () => {
   const catalog = ref<GameCatalogItem[]>([])
   const recentScores = ref<GameScore[]>([])
   const loading = ref(false)
+  const newlyEarnedBadges = ref<BadgeDefinition[]>([])
+  const userBadgeIds = ref<Set<string>>(new Set())
 
   const gamesByCategory = computed(() => {
     const map: Record<string, GameCatalogItem[]> = {}
@@ -80,6 +94,31 @@ export const useGameStore = defineStore('game', () => {
     recentScores.value = data ?? []
   }
 
+  async function fetchUserBadges(userId: string) {
+    const { data } = await supabase
+      .from('user_badges')
+      .select('badge_id')
+      .eq('user_id', userId)
+    userBadgeIds.value = new Set((data ?? []).map(b => b.badge_id))
+  }
+
+  async function checkNewBadges(userId: string): Promise<BadgeDefinition[]> {
+    const { data } = await supabase
+      .from('user_badges')
+      .select('badge_id, badge_definitions(id, title, title_ja, icon, category)')
+      .eq('user_id', userId)
+    if (!data) return []
+
+    const earned: BadgeDefinition[] = []
+    for (const row of data as any[]) {
+      if (!userBadgeIds.value.has(row.badge_id) && row.badge_definitions) {
+        earned.push(row.badge_definitions as BadgeDefinition)
+        userBadgeIds.value.add(row.badge_id)
+      }
+    }
+    return earned
+  }
+
   async function saveScore(payload: GameScorePayload & { userId: string; assignmentId?: string; classId?: string }) {
     const { data, error } = await supabase
       .from('game_scores')
@@ -101,6 +140,13 @@ export const useGameStore = defineStore('game', () => {
       .single()
     if (error) { console.error('[game] saveScore:', error); return null }
     recentScores.value.unshift(data)
+
+    // Check for newly earned badges (trigger fires on INSERT)
+    const newBadges = await checkNewBadges(payload.userId)
+    if (newBadges.length > 0) {
+      newlyEarnedBadges.value.push(...newBadges)
+    }
+
     return data
   }
 
@@ -108,9 +154,15 @@ export const useGameStore = defineStore('game', () => {
     return catalog.value.find(g => g.id === id)
   }
 
+  function clearNewBadges() {
+    newlyEarnedBadges.value = []
+  }
+
   return {
     catalog, recentScores, loading,
     gamesByCategory, categoryLabels,
+    newlyEarnedBadges, userBadgeIds,
     fetchCatalog, fetchRecentScores, saveScore, getGameById,
+    fetchUserBadges, checkNewBadges, clearNewBadges,
   }
 })

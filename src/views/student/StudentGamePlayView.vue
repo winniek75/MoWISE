@@ -19,9 +19,12 @@ const game = computed(() => gameStore.getGameById(gameId))
 const showResult = ref(false)
 const lastScore = ref<GameScorePayload | null>(null)
 
-onMounted(() => {
+onMounted(async () => {
   if (gameStore.catalog.length === 0) {
-    gameStore.fetchCatalog()
+    await gameStore.fetchCatalog()
+  }
+  if (auth.userId) {
+    await gameStore.fetchUserBadges(auth.userId)
   }
 })
 
@@ -48,11 +51,13 @@ async function handleComplete(payload: GameScorePayload) {
 }
 
 function handleExit() {
+  gameStore.clearNewBadges()
   router.back()
 }
 
 function closeResult() {
   showResult.value = false
+  gameStore.clearNewBadges()
   router.back()
 }
 </script>
@@ -61,7 +66,7 @@ function closeResult() {
   <div class="fixed inset-0 bg-black z-50 flex flex-col">
     <!-- Top bar -->
     <div class="flex items-center justify-between px-4 py-2 bg-bg-surface">
-      <button @click="handleExit" class="text-white/60 text-sm font-title">← 戻る</button>
+      <button @click="handleExit" class="text-white/40 text-sm font-title hover:text-white/60 transition-colors">← 戻る</button>
       <p class="text-white font-title font-semibold text-sm">{{ game?.title_ja || gameId }}</p>
       <div class="w-12"></div>
     </div>
@@ -78,8 +83,8 @@ function closeResult() {
         @complete="handleComplete"
         @exit="handleExit"
       />
-      <div v-else class="flex items-center justify-center h-full text-white/50">
-        Loading...
+      <div v-else class="flex items-center justify-center h-full">
+        <div class="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
       </div>
     </div>
 
@@ -87,31 +92,50 @@ function closeResult() {
     <div
       v-if="showResult && lastScore"
       class="absolute inset-0 bg-black/80 flex items-center justify-center z-60"
+      style="backdrop-filter: blur(8px)"
     >
-      <div class="bg-bg-card rounded-3xl p-8 mx-6 max-w-sm w-full text-center">
-        <p class="text-5xl mb-4">🎉</p>
+      <div class="neo-modal !max-w-sm mx-6 text-center">
+        <p class="text-5xl mb-3">🎉</p>
         <h2 class="text-white font-title font-bold text-2xl mb-2">ゲーム完了！</h2>
-        <div class="grid grid-cols-2 gap-4 mt-6">
-          <div class="bg-bg-surface rounded-xl p-3">
-            <p class="text-white/50 text-xs font-title">スコア</p>
+        <div class="grid grid-cols-2 gap-3 mt-5">
+          <div class="neo-card !p-3 text-center">
+            <p class="text-white/30 text-[11px] font-title">スコア</p>
             <p class="text-white font-title font-bold text-2xl">{{ lastScore.score }}</p>
           </div>
-          <div class="bg-bg-surface rounded-xl p-3">
-            <p class="text-white/50 text-xs font-title">正答率</p>
+          <div class="neo-card !p-3 text-center">
+            <p class="text-white/30 text-[11px] font-title">正答率</p>
             <p class="text-white font-title font-bold text-2xl">{{ lastScore.accuracy ?? '-' }}%</p>
           </div>
-          <div class="bg-bg-surface rounded-xl p-3">
-            <p class="text-white/50 text-xs font-title">XP</p>
-            <p class="text-brand-primary font-title font-bold text-xl">+{{ lastScore.xpEarned ?? 0 }}</p>
+          <div class="neo-card !p-3 text-center">
+            <p class="text-white/30 text-[11px] font-title">XP</p>
+            <p class="text-neo-gradient font-title font-bold text-xl">+{{ lastScore.xpEarned ?? 0 }}</p>
           </div>
-          <div class="bg-bg-surface rounded-xl p-3">
-            <p class="text-white/50 text-xs font-title">時間</p>
+          <div class="neo-card !p-3 text-center">
+            <p class="text-white/30 text-[11px] font-title">時間</p>
             <p class="text-white font-title font-bold text-xl">{{ lastScore.timeSpent ?? '-' }}s</p>
           </div>
         </div>
+
+        <!-- New badges -->
+        <div v-if="gameStore.newlyEarnedBadges.length > 0" class="mt-5 pt-4 border-t border-white/[0.06]">
+          <p class="text-neon-yellow text-xs font-title font-bold uppercase tracking-wider mb-3">バッジ獲得！</p>
+          <div class="flex justify-center gap-3">
+            <div
+              v-for="badge in gameStore.newlyEarnedBadges"
+              :key="badge.id"
+              class="flex flex-col items-center gap-1 animate-pop-in"
+            >
+              <div class="w-12 h-12 rounded-full bg-neon-yellow/10 flex items-center justify-center text-2xl border border-neon-yellow/20 shadow-neo-sm">
+                {{ badge.icon }}
+              </div>
+              <span class="text-[10px] text-neon-yellow font-title font-semibold">{{ badge.title_ja }}</span>
+            </div>
+          </div>
+        </div>
+
         <button
           @click="closeResult"
-          class="mt-6 w-full bg-brand-primary text-white font-title font-bold py-3 rounded-xl"
+          class="btn-neo w-full mt-6"
         >
           完了
         </button>
