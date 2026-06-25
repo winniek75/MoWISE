@@ -35,54 +35,57 @@ async function handleGoogle() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-bg-dark flex flex-col items-center justify-center px-6">
-    <div class="w-full max-w-sm">
+  <div class="min-h-screen bg-bg-dark flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <!-- Background glow effects -->
+    <div class="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-brand-primary/10 blur-[120px] animate-glow-pulse" />
+    <div class="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] rounded-full bg-brand-secondary/10 blur-[100px] animate-glow-pulse" style="animation-delay: 1s" />
+
+    <div class="w-full max-w-sm relative z-10">
       <!-- Logo -->
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-title font-bold text-white">MoWISE</h1>
-        <p class="text-white/40 text-sm font-title mt-1">for Teachers & Students</p>
+      <div class="text-center mb-10">
+        <div class="w-16 h-16 mowi-orb glow-mid mx-auto mb-4 animate-float" />
+        <h1 class="text-4xl font-title font-bold text-neo-gradient">MoWISE</h1>
+        <p class="text-white/30 text-sm font-title mt-2">for Teachers & Students</p>
       </div>
 
       <!-- Form -->
-      <div class="space-y-4">
+      <div class="space-y-4 animate-slide-up">
         <div>
-          <label class="block text-white/60 text-xs font-title mb-1">メールアドレス</label>
+          <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">メールアドレス</label>
           <input
             v-model="email"
             type="email"
             placeholder="email@example.com"
-            class="w-full bg-bg-card text-white px-4 py-3 rounded-xl border border-white/10 focus:border-brand-primary focus:outline-none text-sm"
+            class="neo-input"
           />
         </div>
         <div>
-          <label class="block text-white/60 text-xs font-title mb-1">パスワード</label>
+          <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">パスワード</label>
           <input
             v-model="password"
             type="password"
             placeholder="********"
-            class="w-full bg-bg-card text-white px-4 py-3 rounded-xl border border-white/10 focus:border-brand-primary focus:outline-none text-sm"
+            class="neo-input"
           />
         </div>
 
-        <p v-if="error" class="text-red-400 text-sm text-center">{{ error }}</p>
+        <p v-if="error" class="text-neon-pink text-sm text-center py-1">{{ error }}</p>
 
         <button
           @click="handleLogin"
           :disabled="loading || !email || !password"
-          class="w-full bg-brand-primary text-white font-title font-bold py-3.5 rounded-xl disabled:opacity-40 transition-opacity"
+          class="btn-neo w-full"
         >
           {{ loading ? 'ログイン中...' : 'ログイン' }}
         </button>
 
-        <div class="flex items-center gap-3 my-2">
-          <div class="flex-1 h-px bg-white/10"></div>
-          <span class="text-white/30 text-xs">or</span>
-          <div class="flex-1 h-px bg-white/10"></div>
+        <div class="neo-divider">
+          <span class="text-white/20 text-xs font-title">or</span>
         </div>
 
         <button
           @click="handleGoogle"
-          class="w-full bg-white text-gray-800 font-semibold py-3 rounded-xl text-sm flex items-center justify-center gap-2"
+          class="w-full bg-white/95 text-gray-800 font-semibold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-neo-sm"
         >
           <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Googleでログイン
@@ -90,9 +93,9 @@ async function handleGoogle() {
       </div>
 
       <!-- Sign up link -->
-      <p class="text-center text-white/40 text-sm mt-6">
+      <p class="text-center text-white/30 text-sm mt-8">
         アカウントをお持ちでない方は
-        <button @click="router.push({ name: 'Signup' })" class="text-brand-primary font-semibold">新規登録</button>
+        <button @click="router.push({ name: 'Signup' })" class="text-brand-secondary font-semibold hover:underline">新規登録</button>
       </p>
     </div>
   </div>

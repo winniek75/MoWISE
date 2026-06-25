@@ -69,42 +69,41 @@ function previewGame(url: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 pb-24">
-    <header class="bg-white border-b border-gray-200 px-6 py-4">
+  <div class="min-h-screen bg-bg-dark pb-28">
+    <header class="neo-header">
       <div class="max-w-5xl mx-auto">
-        <p class="text-xs text-indigo-500 font-semibold tracking-widest uppercase">MoWISE for Teachers</p>
-        <h1 class="text-xl font-bold text-gray-900 mt-0.5">ゲームライブラリ</h1>
-        <p class="text-sm text-gray-500 mt-1">ゲームを選んでクラスに割り当て</p>
+        <p class="text-brand-secondary text-[11px] font-title font-bold tracking-[0.2em] uppercase">MoWISE for Teachers</p>
+        <h1 class="text-xl font-title font-bold text-white mt-0.5">ゲームライブラリ</h1>
+        <p class="text-sm text-white/30 mt-1">ゲームを選んでクラスに割り当て</p>
       </div>
     </header>
 
-    <main class="max-w-5xl mx-auto px-6 py-6">
-      <!-- Games by category -->
+    <main class="max-w-5xl mx-auto px-5 py-6">
       <div v-for="(games, category) in gameStore.gamesByCategory" :key="category" class="mb-8">
-        <h2 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+        <h2 class="neo-section-title">
           {{ gameStore.categoryLabels[category] || category }}
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           <div
             v-for="game in games"
             :key="game.id"
-            class="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow"
+            class="neo-card hover:shadow-neo-md transition-all duration-200"
           >
             <div class="flex items-start gap-3">
               <span class="text-3xl">{{ game.icon }}</span>
               <div class="flex-1">
-                <p class="font-bold text-gray-900 text-sm">{{ game.title_ja }}</p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ game.description_ja || '' }}</p>
+                <p class="font-title font-bold text-white text-sm">{{ game.title_ja }}</p>
+                <p class="text-xs text-white/30 mt-0.5">{{ game.description_ja || '' }}</p>
                 <div class="flex gap-2 mt-3">
                   <button
                     @click="openAssign(game.id)"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                    class="btn-neo !py-1.5 !px-3 !text-xs !rounded-xl"
                   >
                     クラスに割り当て
                   </button>
                   <button
                     @click="previewGame(game.url)"
-                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                    class="btn-ghost !text-xs border border-white/10 !rounded-xl"
                   >
                     プレビュー
                   </button>
@@ -119,56 +118,58 @@ function previewGame(url: string) {
     <!-- Assign modal -->
     <div
       v-if="showAssignModal"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      class="neo-overlay"
       @click.self="showAssignModal = false"
     >
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-        <div v-if="assignSuccess" class="text-center py-4">
-          <p class="text-4xl mb-2">✅</p>
-          <p class="font-bold text-gray-900">割り当て完了！</p>
+      <div class="neo-modal">
+        <div v-if="assignSuccess" class="text-center py-6">
+          <div class="w-14 h-14 rounded-full bg-correct/20 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-correct" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <p class="font-title font-bold text-white">割り当て完了！</p>
         </div>
         <template v-else>
-          <h2 class="text-lg font-bold text-gray-900 mb-4">ゲームを割り当て</h2>
+          <h2 class="text-lg font-title font-bold text-white mb-5">ゲームを割り当て</h2>
 
-          <label class="block text-sm font-medium text-gray-700 mb-1">クラス</label>
-          <select v-model="selectedClassId" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3">
+          <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">クラス</label>
+          <select v-model="selectedClassId" class="neo-input mb-3 appearance-none">
             <option v-for="cls in teacherStore.classes" :key="cls.id" :value="cls.id">
               {{ cls.class_name }}
             </option>
           </select>
 
-          <label class="block text-sm font-medium text-gray-700 mb-1">タイトル（任意）</label>
+          <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">タイトル（任意）</label>
           <input
             v-model="assignTitle"
             type="text"
             placeholder="例：今週の宿題"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3"
+            class="neo-input mb-3"
           />
 
-          <label class="block text-sm font-medium text-gray-700 mb-1">指示（任意）</label>
+          <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">指示（任意）</label>
           <textarea
             v-model="assignInstructions"
             placeholder="例：Grade 3を選んで10問やってみよう"
             rows="2"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3"
+            class="neo-input mb-3 resize-none"
           />
 
-          <label class="block text-sm font-medium text-gray-700 mb-1">期限（任意）</label>
+          <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">期限（任意）</label>
           <input
             v-model="assignDueDate"
             type="datetime-local"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4"
+            class="neo-input mb-4"
           />
 
           <div class="flex gap-3">
             <button
               @click="showAssignModal = false"
-              class="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg"
+              class="btn-ghost flex-1 py-2.5 border border-white/10 rounded-2xl"
             >キャンセル</button>
             <button
               @click="handleAssign"
               :disabled="!selectedClassId || assigning"
-              class="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg disabled:opacity-40"
+              class="btn-neo flex-1"
             >{{ assigning ? '割り当て中...' : '割り当てる' }}</button>
           </div>
         </template>

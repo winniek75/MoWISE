@@ -1,27 +1,26 @@
 /* ============================================================
-   MoWISE Global Styles
+   MoWISE Global Styles — NEO POP Theme
    ============================================================ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Base ─────────────────────────────────────────────────── */
+/* --- Base --------------------------------------------------- */
 @layer base {
   :root {
-    --color-brand-primary:   #4A7AFF;
-    --color-brand-secondary: #9B5CF6;
-    --color-bg-dark:         #0d0d1a;
-    --color-bg-surface:      #141428;
-    --color-bg-card:         #1e1e3a;
-    --color-correct:         #4CAF50;
-    --color-wrong:           #F44336;
-    --color-star-active:     #FFD700;
-    --color-combo-low:       #64B5F6;
-    --color-combo-mid:       #9C27B0;
-    --color-combo-high:      #FF9800;
-
-    --text-pattern: 22px;
-    --text-mowi:    16px;
+    --color-brand-primary:   #6C5CE7;
+    --color-brand-secondary: #00CECE;
+    --color-brand-accent:    #FF6B9D;
+    --color-bg-dark:         #0B0B1A;
+    --color-bg-surface:      #12122B;
+    --color-bg-card:         #1A1A3E;
+    --color-bg-elevated:     #222255;
+    --color-correct:         #34D399;
+    --color-wrong:           #F87171;
+    --color-star-active:     #FACC15;
+    --color-neon-purple:     #A78BFA;
+    --color-neon-cyan:       #22D3EE;
+    --color-neon-pink:       #F472B6;
   }
 
   html, body {
@@ -29,7 +28,6 @@
     font-family: 'Noto Sans JP', sans-serif;
     -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
-    /* iOS Safari セーフエリア対応 */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -38,102 +36,209 @@
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* Custom scrollbar for neo theme */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(108, 92, 231, 0.3); border-radius: 2px; }
 }
 
-/* ─── Components ────────────────────────────────────────────── */
+/* --- Components --------------------------------------------- */
 @layer components {
-  /* Mowi オーブ */
+  /* Mowi orb */
   .mowi-orb {
     @apply rounded-full relative;
     background: radial-gradient(circle at 35% 35%, #c8b8ff, #6040c0 60%, #1a0a4a);
   }
+  .mowi-orb.grayscale { filter: grayscale(100%) brightness(0.6); }
+  .mowi-orb.glow-low  { box-shadow: 0 0 20px 4px rgba(108, 92, 231, 0.4); }
+  .mowi-orb.glow-mid  { box-shadow: 0 0 30px 8px rgba(167, 139, 250, 0.6); }
+  .mowi-orb.glow-high { box-shadow: 0 0 40px 12px rgba(0, 206, 206, 0.7); }
+  .mowi-orb.glow-rainbow { animation: rainbowGlow 1s linear infinite; }
 
-  .mowi-orb.grayscale {
-    filter: grayscale(100%) brightness(0.6);
+  /* Neo card — glassmorphism-inspired */
+  .neo-card {
+    @apply rounded-3xl p-5 border border-white/[0.08] relative overflow-hidden;
+    background: linear-gradient(145deg, rgba(26,26,62,0.9) 0%, rgba(34,34,85,0.6) 100%);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 24px rgba(108, 92, 231, 0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .neo-card:hover {
+    border-color: rgba(108, 92, 231, 0.3);
+    box-shadow: 0 0 32px rgba(108, 92, 231, 0.15), inset 0 1px 0 rgba(255,255,255,0.08);
   }
 
-  .mowi-orb.glow-low {
-    box-shadow: 0 0 20px 4px rgba(74, 122, 255, 0.4);
+  /* Legacy card alias */
+  .mowisse-card { @apply neo-card; }
+
+  /* Neo stat card */
+  .neo-stat {
+    @apply neo-card text-center;
+  }
+  .neo-stat .stat-value {
+    @apply text-2xl font-bold font-title bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #A78BFA, #22D3EE);
+  }
+  .neo-stat .stat-label {
+    @apply text-white/40 text-xs font-title mt-1;
   }
 
-  .mowi-orb.glow-mid {
-    box-shadow: 0 0 30px 8px rgba(155, 92, 246, 0.6);
+  /* Buttons */
+  .btn-neo {
+    @apply font-title font-bold rounded-2xl px-6 py-3.5 text-sm
+           active:scale-95 transition-all duration-150 relative overflow-hidden;
+    background: linear-gradient(135deg, #6C5CE7, #00CECE);
+    color: white;
+    box-shadow: 0 4px 20px rgba(108, 92, 231, 0.35);
+  }
+  .btn-neo:hover {
+    box-shadow: 0 4px 30px rgba(108, 92, 231, 0.5);
+  }
+  .btn-neo:disabled {
+    opacity: 0.4;
+    box-shadow: none;
   }
 
-  .mowi-orb.glow-high {
-    box-shadow: 0 0 40px 12px rgba(255, 152, 0, 0.7);
-  }
-
-  .mowi-orb.glow-rainbow {
-    animation: rainbowGlow 1s linear infinite;
-  }
-
-  /* カード */
-  .mowisse-card {
-    @apply bg-bg-card rounded-2xl p-4 border border-white/10;
-  }
-
-  /* ボタン */
   .btn-primary {
-    @apply bg-brand-primary text-white font-semibold rounded-xl px-6 py-3
-           active:scale-95 transition-transform duration-100;
+    @apply btn-neo;
   }
 
   .btn-outline {
-    @apply border border-brand-primary text-brand-primary font-semibold rounded-xl px-6 py-3
-           active:scale-95 transition-transform duration-100;
+    @apply font-title font-semibold rounded-2xl px-6 py-3.5 text-sm
+           border border-brand-primary/50 text-brand-primary
+           active:scale-95 transition-all duration-150;
+    background: rgba(108, 92, 231, 0.08);
+  }
+  .btn-outline:hover {
+    background: rgba(108, 92, 231, 0.15);
+    border-color: rgba(108, 92, 231, 0.7);
   }
 
-  /* チェックイン選択肢ボタン */
+  .btn-ghost {
+    @apply font-title font-semibold rounded-xl px-4 py-2 text-sm text-white/60
+           hover:text-white hover:bg-white/5 active:scale-95 transition-all duration-150;
+  }
+
+  /* Badge / pill */
+  .neo-badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-title font-semibold;
+    background: rgba(108, 92, 231, 0.15);
+    color: #A78BFA;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+  }
+  .neo-badge.cyan  { background: rgba(0,206,206,0.12); color: #22D3EE; border-color: rgba(34,211,238,0.2); }
+  .neo-badge.pink  { background: rgba(244,114,182,0.12); color: #F472B6; border-color: rgba(244,114,182,0.2); }
+  .neo-badge.green { background: rgba(52,211,153,0.12); color: #34D399; border-color: rgba(52,211,153,0.2); }
+  .neo-badge.orange { background: rgba(251,146,60,0.12); color: #FB923C; border-color: rgba(251,146,60,0.2); }
+
+  /* Input */
+  .neo-input {
+    @apply w-full bg-bg-card text-white px-4 py-3.5 rounded-2xl
+           border border-white/[0.08] text-sm
+           focus:border-brand-primary/60 focus:outline-none focus:ring-2 focus:ring-brand-primary/20
+           transition-all duration-200 placeholder:text-white/25;
+  }
+
+  /* Section header */
+  .neo-section-title {
+    @apply text-white/40 text-[11px] font-title font-bold uppercase tracking-[0.15em] mb-3;
+  }
+
+  /* Divider */
+  .neo-divider {
+    @apply flex items-center gap-3 my-4;
+  }
+  .neo-divider::before, .neo-divider::after {
+    content: '';
+    @apply flex-1 h-px;
+    background: linear-gradient(90deg, transparent, rgba(108,92,231,0.2), transparent);
+  }
+
+  /* Checkin choice */
   .checkin-choice {
-    @apply mowisse-card flex items-center gap-3 w-full text-left
-           hover:border-brand-primary/50 active:scale-[0.98]
+    @apply neo-card flex items-center gap-3 w-full text-left
+           hover:border-brand-primary/30 active:scale-[0.98]
            transition-all duration-150 cursor-pointer;
   }
 
-  /* Layer 3 タイル */
+  /* Tile button */
   .tile-btn {
-    @apply bg-bg-surface border border-white/20 rounded-xl px-4 py-2
+    @apply bg-bg-surface border border-white/[0.1] rounded-2xl px-4 py-2
            font-title font-semibold text-white
            active:scale-95 transition-all duration-100 animate-tile-enter;
   }
-
   .tile-btn.selected {
-    @apply border-brand-primary bg-brand-primary/20;
+    @apply border-brand-primary;
+    background: rgba(108, 92, 231, 0.15);
+    box-shadow: 0 0 16px rgba(108, 92, 231, 0.2);
   }
 
-  /* コンボゲージ */
+  /* Combo gauge */
   .combo-gauge-fill {
     @apply h-full rounded-full transition-all duration-300;
     background: linear-gradient(90deg, var(--color-brand-primary), var(--color-brand-secondary));
   }
 
-  /* Mowiセリフ */
+  /* Mowi quote */
   .mowi-quote {
-    font-size: var(--text-mowi);
-    @apply text-white/80 italic leading-relaxed;
+    font-size: 16px;
+    @apply text-white/70 italic leading-relaxed;
     font-family: 'Noto Sans JP', sans-serif;
   }
 
-  /* パターンテキスト */
+  /* Pattern text */
   .pattern-text {
-    font-size: var(--text-pattern);
+    font-size: 22px;
     @apply font-bold text-white font-title tracking-wide;
   }
+
+  /* Modal overlay */
+  .neo-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center px-4;
+    background: rgba(11, 11, 26, 0.75);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Modal content */
+  .neo-modal {
+    @apply w-full max-w-md rounded-3xl p-6 border border-white/[0.08] animate-pop-in;
+    background: linear-gradient(160deg, #1A1A3E 0%, #12122B 100%);
+    box-shadow: 0 8px 60px rgba(108, 92, 231, 0.2);
+  }
+
+  /* Header bar for teacher pages */
+  .neo-header {
+    @apply px-6 py-4 border-b border-white/[0.06];
+    background: linear-gradient(180deg, rgba(18,18,43,0.95) 0%, rgba(11,11,26,0.9) 100%);
+    backdrop-filter: blur(12px);
+  }
 }
 
-/* ─── Utilities ─────────────────────────────────────────────── */
+/* --- Utilities ---------------------------------------------- */
 @layer utilities {
-  .safe-pb {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  .safe-pb { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .safe-pt { padding-top: max(1rem, env(safe-area-inset-top)); }
+
+  .text-neo-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #6C5CE7, #00CECE);
   }
 
-  .safe-pt {
-    padding-top: max(1rem, env(safe-area-inset-top));
+  .text-neo-pink {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #F472B6, #A78BFA);
   }
+
+  .border-neo {
+    border-image: linear-gradient(135deg, rgba(108,92,231,0.3), rgba(0,206,206,0.3)) 1;
+  }
+
+  .glow-purple { box-shadow: 0 0 20px rgba(108, 92, 231, 0.3); }
+  .glow-cyan   { box-shadow: 0 0 20px rgba(0, 206, 206, 0.3); }
+  .glow-pink   { box-shadow: 0 0 20px rgba(244, 114, 182, 0.3); }
 }
 
-/* ─── Keyframes ─────────────────────────────────────────────── */
+/* --- Keyframes ---------------------------------------------- */
 @keyframes rainbowGlow {
   0%   { box-shadow: 0 0 40px 12px #FF0080; }
   17%  { box-shadow: 0 0 40px 12px #FF8C00; }

@@ -35,10 +35,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-bg-dark pb-24 safe-pt">
+  <div class="min-h-screen bg-bg-dark pb-28 safe-pt">
     <header class="px-5 pt-4 pb-3">
       <h1 class="text-white text-xl font-title font-bold">ゲームライブラリ</h1>
-      <p class="text-white/40 text-xs font-title mt-0.5">{{ gameStore.catalog.length }} ゲーム</p>
+      <p class="text-white/25 text-xs font-title mt-0.5">{{ gameStore.catalog.length }} ゲーム</p>
     </header>
 
     <!-- Category filter -->
@@ -47,10 +47,10 @@ onMounted(() => {
         v-for="cat in categories"
         :key="cat.id"
         @click="activeCategory = cat.id"
-        class="shrink-0 px-4 py-1.5 rounded-full text-xs font-title font-semibold transition-colors"
+        class="shrink-0 px-4 py-1.5 rounded-full text-xs font-title font-semibold transition-all duration-200"
         :class="activeCategory === cat.id
-          ? 'bg-brand-primary text-white'
-          : 'bg-bg-card text-white/50 hover:text-white/80'"
+          ? 'bg-neo-gradient text-white shadow-neo-sm'
+          : 'bg-bg-card text-white/30 border border-white/[0.06] hover:text-white/50'"
       >
         {{ cat.label }}
       </button>
@@ -61,14 +61,14 @@ onMounted(() => {
       <div
         v-for="game in filteredGames()"
         :key="game.id"
-        class="bg-bg-card rounded-2xl p-4 cursor-pointer active:scale-[0.97] transition-transform"
+        class="neo-card cursor-pointer active:scale-[0.97] transition-all duration-150 hover:shadow-neo-md animate-pop-in"
         @click="playGame(game.id)"
       >
         <div class="text-3xl mb-2">{{ game.icon }}</div>
         <p class="text-white font-title font-semibold text-sm leading-tight">{{ game.title_ja }}</p>
-        <p class="text-white/40 text-[10px] font-title mt-1">{{ gameStore.categoryLabels[game.category] }}</p>
+        <p class="text-white/25 text-[10px] font-title mt-1">{{ gameStore.categoryLabels[game.category] }}</p>
         <div v-if="!game.is_free && subStore.currentPlan === 'free'" class="mt-2">
-          <span class="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full font-title">PRO</span>
+          <span class="neo-badge orange !text-[9px]">PRO</span>
         </div>
       </div>
     </div>

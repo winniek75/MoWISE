@@ -1,170 +1,159 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-24">
-    <header class="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3">
-      <button @click="router.back()" class="text-gray-500 text-sm font-bold">← 戻る</button>
-      <h1 class="text-lg font-bold text-gray-900">⚙ 設定</h1>
+  <div class="min-h-screen bg-bg-dark pb-28">
+    <header class="neo-header flex items-center gap-3">
+      <button @click="router.back()" class="text-white/30 text-sm font-title font-bold hover:text-white/50 transition-colors">← 戻る</button>
+      <h1 class="text-lg font-title font-bold text-white">設定</h1>
     </header>
 
-    <main class="px-4 py-5 space-y-6">
+    <main class="px-5 py-5 space-y-5 max-w-lg mx-auto">
 
-      <!-- アカウント -->
+      <!-- Account -->
       <section>
-        <p class="text-xs font-bold text-gray-400 mb-2 px-1">アカウント</p>
-        <div class="bg-white rounded-2xl divide-y divide-gray-100 shadow-sm">
+        <p class="neo-section-title px-1">アカウント</p>
+        <div class="neo-card !p-0 divide-y divide-white/[0.05]">
           <div class="px-4 py-3">
-            <p class="text-xs text-gray-400">名前</p>
-            <p class="font-bold text-gray-900">{{ user?.display_name }}</p>
+            <p class="text-[11px] text-white/25 font-title">名前</p>
+            <p class="font-title font-bold text-white">{{ user?.display_name }}</p>
           </div>
           <div class="px-4 py-3">
-            <p class="text-xs text-gray-400">クラス</p>
-            <p class="font-bold text-gray-900">{{ user?.class_name ?? '未参加' }}</p>
+            <p class="text-[11px] text-white/25 font-title">クラス</p>
+            <p class="font-title font-bold text-white">{{ user?.class_name ?? '未参加' }}</p>
           </div>
         </div>
       </section>
 
-      <!-- 通知設定 -->
+      <!-- Notifications -->
       <section>
-        <p class="text-xs font-bold text-gray-400 mb-2 px-1">通知</p>
-        <div class="bg-white rounded-2xl divide-y divide-gray-100 shadow-sm">
-          <!-- 朝チェックイン通知 -->
+        <p class="neo-section-title px-1">通知</p>
+        <div class="neo-card !p-0 divide-y divide-white/[0.05]">
           <div class="px-4 py-3 flex items-center justify-between">
-            <p class="text-sm text-gray-700">朝チェックイン通知</p>
+            <p class="text-sm text-white/60 font-title">朝チェックイン通知</p>
             <button
               @click="settings.notify_morning = !settings.notify_morning; save()"
-              class="relative w-12 h-6 rounded-full transition-colors duration-200"
-              :class="settings.notify_morning ? 'bg-indigo-500' : 'bg-gray-300'"
+              class="relative w-11 h-6 rounded-full transition-colors duration-200"
+              :class="settings.notify_morning ? 'bg-brand-primary' : 'bg-white/10'"
             >
               <span
                 class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
-                :class="settings.notify_morning ? 'translate-x-6' : 'translate-x-0.5'"
-              ></span>
+                :class="settings.notify_morning ? 'translate-x-5' : 'translate-x-0.5'"
+              />
             </button>
           </div>
-          <!-- 夕チェックイン通知 -->
           <div class="px-4 py-3 flex items-center justify-between">
-            <p class="text-sm text-gray-700">夕チェックイン通知</p>
+            <p class="text-sm text-white/60 font-title">夕チェックイン通知</p>
             <button
               @click="settings.notify_evening = !settings.notify_evening; save()"
-              class="relative w-12 h-6 rounded-full transition-colors duration-200"
-              :class="settings.notify_evening ? 'bg-indigo-500' : 'bg-gray-300'"
+              class="relative w-11 h-6 rounded-full transition-colors duration-200"
+              :class="settings.notify_evening ? 'bg-brand-primary' : 'bg-white/10'"
             >
               <span
                 class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
-                :class="settings.notify_evening ? 'translate-x-6' : 'translate-x-0.5'"
-              ></span>
+                :class="settings.notify_evening ? 'translate-x-5' : 'translate-x-0.5'"
+              />
             </button>
           </div>
-          <!-- 練習リマインダー -->
           <div class="px-4 py-3 flex items-center justify-between">
-            <p class="text-sm text-gray-700">練習リマインダー</p>
+            <p class="text-sm text-white/60 font-title">練習リマインダー</p>
             <button
               @click="settings.notify_practice = !settings.notify_practice; save()"
-              class="relative w-12 h-6 rounded-full transition-colors duration-200"
-              :class="settings.notify_practice ? 'bg-indigo-500' : 'bg-gray-300'"
+              class="relative w-11 h-6 rounded-full transition-colors duration-200"
+              :class="settings.notify_practice ? 'bg-brand-primary' : 'bg-white/10'"
             >
               <span
                 class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
-                :class="settings.notify_practice ? 'translate-x-6' : 'translate-x-0.5'"
-              ></span>
+                :class="settings.notify_practice ? 'translate-x-5' : 'translate-x-0.5'"
+              />
             </button>
           </div>
-          <!-- 通知時刻（朝） -->
           <div class="px-4 py-3 flex items-center justify-between">
-            <p class="text-sm text-gray-700">通知時刻（朝）</p>
+            <p class="text-sm text-white/60 font-title">通知時刻（朝）</p>
             <input
               type="time" v-model="settings.notify_morning_time"
               @change="save"
-              class="text-sm text-indigo-600 font-bold border border-gray-200 rounded-lg px-2 py-1"
+              class="text-sm text-brand-secondary font-title font-bold bg-bg-card border border-white/[0.08] rounded-lg px-2 py-1"
             />
           </div>
-          <!-- 通知時刻（夕） -->
           <div class="px-4 py-3 flex items-center justify-between">
-            <p class="text-sm text-gray-700">通知時刻（夕）</p>
+            <p class="text-sm text-white/60 font-title">通知時刻（夕）</p>
             <input
               type="time" v-model="settings.notify_evening_time"
               @change="save"
-              class="text-sm text-indigo-600 font-bold border border-gray-200 rounded-lg px-2 py-1"
+              class="text-sm text-brand-secondary font-title font-bold bg-bg-card border border-white/[0.08] rounded-lg px-2 py-1"
             />
           </div>
         </div>
       </section>
 
-      <!-- 練習モード -->
+      <!-- Practice mode -->
       <section>
-        <p class="text-xs font-bold text-gray-400 mb-2 px-1">練習モード</p>
-        <div class="bg-white rounded-2xl shadow-sm">
-          <div class="px-4 py-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-bold text-gray-900">ゲーム化ステージ</p>
-                <p class="text-xs text-gray-400">「つくる」SVO・「話す」Sprint を有効化</p>
-              </div>
-              <button
-                @click="toggleGameMode"
-                class="relative w-12 h-6 rounded-full transition-colors duration-200"
-                :class="settings.game_mode_enabled ? 'bg-indigo-500' : 'bg-gray-300'"
-              >
-                <span
-                  class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
-                  :class="settings.game_mode_enabled ? 'translate-x-6' : 'translate-x-0.5'"
-                ></span>
-              </button>
+        <p class="neo-section-title px-1">練習モード</p>
+        <div class="neo-card">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-title font-bold text-white">ゲーム化ステージ</p>
+              <p class="text-[11px] text-white/25 font-title mt-0.5">「つくる」SVO・「話す」Sprint を有効化</p>
             </div>
+            <button
+              @click="toggleGameMode"
+              class="relative w-11 h-6 rounded-full transition-colors duration-200"
+              :class="settings.game_mode_enabled ? 'bg-brand-primary' : 'bg-white/10'"
+            >
+              <span
+                class="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200"
+                :class="settings.game_mode_enabled ? 'translate-x-5' : 'translate-x-0.5'"
+              />
+            </button>
           </div>
         </div>
       </section>
 
-      <!-- Roblox 連携 -->
+      <!-- Roblox -->
       <section v-if="!isDemoMode">
-        <p class="text-xs font-bold text-gray-400 mb-2 px-1">Roblox 連携</p>
-
-        <!-- 未連携時 -->
+        <p class="neo-section-title px-1">Roblox 連携</p>
         <button
           v-if="!linkLoading && !linkStatus.isLinked"
           @click="router.push({ name: 'RobloxLink' })"
-          class="w-full bg-white rounded-2xl shadow-sm px-4 py-4 flex items-center justify-between active:scale-[0.99] transition-transform"
+          class="neo-card w-full flex items-center justify-between active:scale-[0.99] transition-transform"
         >
           <div class="text-left">
-            <p class="text-sm font-bold text-gray-900">🎮 Roblox と連携する</p>
-            <p class="text-xs text-gray-400 mt-0.5">Word Coins が 1.5 倍になる</p>
+            <p class="text-sm font-title font-bold text-white">Roblox と連携する</p>
+            <p class="text-[11px] text-white/25 font-title mt-0.5">Word Coins が 1.5 倍になる</p>
           </div>
-          <span class="text-gray-400">▶︎</span>
+          <span class="text-white/20">▶︎</span>
         </button>
-
-        <!-- 連携済時 -->
-        <div v-else-if="!linkLoading && linkStatus.isLinked" class="bg-white rounded-2xl shadow-sm px-4 py-4">
-          <p class="text-sm font-bold text-green-600">✅ Roblox 連携中</p>
-          <p class="text-sm text-gray-900 mt-1">
+        <div v-else-if="!linkLoading && linkStatus.isLinked" class="neo-card">
+          <p class="text-sm font-title font-bold text-correct">Roblox 連携中</p>
+          <p class="text-sm text-white/60 font-title mt-1">
             {{ linkStatus.robloxDisplayName ?? '(表示名未取得)' }}
-            <span class="text-xs text-gray-400 ml-1">（連携日：{{ formatDate(linkStatus.linkedAt) }}）</span>
+            <span class="text-[11px] text-white/20 ml-1">（連携日：{{ formatDate(linkStatus.linkedAt) }}）</span>
           </p>
           <button
             @click="showUnlinkModal = true"
-            class="mt-3 w-full py-2 text-sm font-bold text-red-500 border border-red-200 rounded-xl active:bg-red-50 transition-colors"
+            class="mt-3 w-full py-2.5 text-sm font-title font-bold text-wrong border border-wrong/20 rounded-2xl active:bg-wrong/5 transition-colors"
           >
             連携を解除
           </button>
         </div>
-
-        <!-- ロード中 -->
-        <div v-else class="bg-white rounded-2xl shadow-sm px-4 py-4">
-          <p class="text-xs text-gray-400">確認中...</p>
+        <div v-else class="neo-card">
+          <p class="text-[11px] text-white/25 font-title">確認中...</p>
         </div>
       </section>
 
-      <!-- デモモード切替（オフライン時のみ） -->
+      <!-- Demo mode toggle -->
       <section v-if="isDemoMode">
-        <p class="text-xs font-bold text-gray-400 mb-2 px-1">デモモード</p>
-        <div class="bg-white rounded-2xl shadow-sm">
-          <div class="px-4 py-3 flex items-center justify-between">
+        <p class="neo-section-title px-1">デモモード</p>
+        <div class="neo-card">
+          <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-bold text-gray-900">ロール切替</p>
-              <p class="text-xs text-gray-400">現在: <span class="font-bold" :class="authStore.isTeacher ? 'text-purple-600' : 'text-blue-600'">{{ authStore.isTeacher ? 'Teacher' : 'Student' }}</span></p>
+              <p class="text-sm font-title font-bold text-white">ロール切替</p>
+              <p class="text-[11px] text-white/25 font-title mt-0.5">
+                現在: <span class="font-bold" :class="authStore.isTeacher ? 'text-neon-purple' : 'text-neon-cyan'">{{ authStore.isTeacher ? 'Teacher' : 'Student' }}</span>
+              </p>
             </div>
             <button
               @click="authStore.toggleDemoRole()"
-              class="px-4 py-2 rounded-full text-sm font-bold transition-colors"
-              :class="authStore.isTeacher ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'"
+              class="neo-badge cursor-pointer active:scale-95 transition-transform"
+              :class="authStore.isTeacher ? 'cyan' : ''"
             >
               {{ authStore.isTeacher ? 'Student に切替' : 'Teacher に切替' }}
             </button>
@@ -172,39 +161,38 @@
         </div>
       </section>
 
-      <!-- ログアウト -->
+      <!-- Logout -->
       <section>
-        <div class="bg-white rounded-2xl shadow-sm">
-          <button @click="handleLogout" class="w-full px-4 py-4 text-left text-red-500 font-bold text-sm">
+        <div class="neo-card">
+          <button @click="handleLogout" class="w-full text-left text-wrong font-title font-bold text-sm">
             ログアウト
           </button>
         </div>
       </section>
-
     </main>
 
-    <!-- 連携解除確認モーダル -->
+    <!-- Unlink modal -->
     <div
       v-if="showUnlinkModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6"
+      class="neo-overlay"
       @click.self="showUnlinkModal = false"
     >
-      <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-5">
-        <h2 class="text-base font-bold text-gray-900">Roblox 連携を解除</h2>
-        <p class="mt-3 text-sm text-gray-600 leading-relaxed">
+      <div class="neo-modal !max-w-sm">
+        <h2 class="text-base font-title font-bold text-white">Roblox 連携を解除</h2>
+        <p class="mt-3 text-sm text-white/50 leading-relaxed">
           解除すると Word Coins ブーストが無効になります。<br />
           Roblox 側のプレイデータは保持されます。
         </p>
         <div class="mt-5 flex gap-3">
           <button
-            class="flex-1 py-2.5 text-sm font-bold text-gray-700 bg-gray-100 rounded-xl active:bg-gray-200"
+            class="btn-ghost flex-1 py-2.5 border border-white/10 rounded-2xl"
             :disabled="unlinking"
             @click="showUnlinkModal = false"
           >
             キャンセル
           </button>
           <button
-            class="flex-1 py-2.5 text-sm font-bold text-white bg-red-500 rounded-xl active:bg-red-600 disabled:opacity-50"
+            class="flex-1 py-2.5 text-sm font-title font-bold text-white bg-wrong rounded-2xl active:scale-95 transition-transform disabled:opacity-50"
             :disabled="unlinking"
             @click="handleUnlink"
           >
@@ -237,7 +225,6 @@ const settings = ref({
   game_mode_enabled:   true,
 })
 
-// ── Roblox 連携状態 ───────────────────────────────────────
 const { fetchLinkStatus, unlink } = useRobloxLink()
 const linkLoading = ref(true)
 const linkStatus = ref<RobloxLinkStatus>({

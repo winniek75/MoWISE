@@ -1,17 +1,17 @@
 <template>
-  <div class="min-h-screen bg-gray-50 pb-24">
+  <div class="min-h-screen bg-bg-dark pb-28">
     <!-- Header -->
-    <header class="bg-white border-b border-gray-200 px-6 py-4">
+    <header class="neo-header">
       <div class="max-w-5xl mx-auto flex items-center justify-between">
         <div>
-          <p class="text-xs text-indigo-500 font-semibold tracking-widest uppercase">MoWISE for Teachers</p>
-          <h1 class="text-xl font-bold text-gray-900 mt-0.5">ダッシュボード</h1>
+          <p class="text-brand-secondary text-[11px] font-title font-bold tracking-[0.2em] uppercase">MoWISE for Teachers</p>
+          <h1 class="text-xl font-title font-bold text-white mt-0.5">ダッシュボード</h1>
         </div>
         <div class="flex items-center gap-3">
-          <span class="text-sm text-gray-500">{{ auth.displayName }}</span>
+          <span class="text-sm text-white/40 font-title">{{ auth.displayName }}</span>
           <button
             @click="showCreateModal = true"
-            class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+            class="btn-neo !py-2 !px-4 !text-xs"
           >
             + クラスを作成
           </button>
@@ -19,73 +19,77 @@
       </div>
     </header>
 
-    <main class="max-w-5xl mx-auto px-6 py-6">
+    <main class="max-w-5xl mx-auto px-5 py-6">
       <!-- Plan banner -->
-      <div v-if="subStore.currentPlan === 'free'" class="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-4 mb-6 flex items-center justify-between">
-        <div>
-          <p class="text-white font-semibold">Free プラン</p>
-          <p class="text-white/70 text-sm">1クラス5人まで・ゲーム3種類 →アップグレードで全機能解放</p>
+      <div v-if="subStore.currentPlan === 'free'" class="neo-card mb-6 !p-4 relative overflow-hidden">
+        <div class="absolute inset-0 bg-neo-gradient opacity-[0.08]" />
+        <div class="relative flex items-center justify-between">
+          <div>
+            <p class="text-white font-title font-bold">Free プラン</p>
+            <p class="text-white/40 text-sm mt-0.5">1クラス5人まで・ゲーム3種類 → アップグレードで全機能解放</p>
+          </div>
+          <button
+            @click="router.push({ name: 'TeacherSubscription' })"
+            class="btn-outline !py-2 !px-4 !text-xs shrink-0"
+          >
+            アップグレード
+          </button>
         </div>
-        <button
-          @click="router.push({ name: 'TeacherSubscription' })"
-          class="bg-white text-indigo-600 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-gray-100"
-        >
-          アップグレード
-        </button>
       </div>
 
       <!-- Stats -->
-      <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
-          <p class="text-sm text-gray-500">クラス数</p>
-          <p class="text-2xl font-bold text-gray-900">{{ teacherStore.classes.length }}</p>
+      <div class="grid grid-cols-3 gap-3 mb-6">
+        <div class="neo-stat">
+          <p class="stat-value">{{ teacherStore.classes.length }}</p>
+          <p class="stat-label">クラス数</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
-          <p class="text-sm text-gray-500">総生徒数</p>
-          <p class="text-2xl font-bold text-gray-900">{{ totalStudents }}</p>
+        <div class="neo-stat">
+          <p class="stat-value">{{ totalStudents }}</p>
+          <p class="stat-label">総生徒数</p>
         </div>
-        <div class="bg-white rounded-xl border border-gray-200 p-4">
-          <p class="text-sm text-gray-500">今週のゲーム数</p>
-          <p class="text-2xl font-bold text-gray-900">{{ weeklyGames }}</p>
+        <div class="neo-stat">
+          <p class="stat-value">{{ weeklyGames }}</p>
+          <p class="stat-label">今週のゲーム数</p>
         </div>
       </div>
 
       <!-- Loading -->
       <div v-if="teacherStore.loading" class="flex justify-center py-20">
-        <div class="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+        <div class="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+
+      <!-- Empty state -->
+      <div v-else-if="teacherStore.classes.length === 0" class="text-center py-20">
+        <div class="w-16 h-16 mowi-orb glow-low mx-auto mb-4 animate-float" />
+        <p class="text-white/50 font-title">まだクラスがありません</p>
+        <p class="text-white/25 text-sm mt-1 font-title">「クラスを作成」から始めましょう</p>
       </div>
 
       <!-- Classes list -->
-      <div v-else-if="teacherStore.classes.length === 0" class="text-center py-20">
-        <p class="text-4xl mb-4">📚</p>
-        <p class="text-gray-500">まだクラスがありません</p>
-        <p class="text-gray-400 text-sm mt-1">「クラスを作成」から始めましょう</p>
-      </div>
-
-      <div v-else class="space-y-4">
+      <div v-else class="space-y-3">
         <div
           v-for="cls in teacherStore.classes"
           :key="cls.id"
-          class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow cursor-pointer"
+          class="neo-card cursor-pointer hover:shadow-neo-md active:scale-[0.99] transition-all duration-200"
           @click="router.push({ name: 'TeacherClass', params: { classId: cls.id } })"
         >
           <div class="flex items-start justify-between">
             <div>
-              <h2 class="text-lg font-bold text-gray-900">{{ cls.class_name }}</h2>
-              <p v-if="cls.description" class="text-sm text-gray-500 mt-0.5">{{ cls.description }}</p>
+              <h2 class="text-lg font-title font-bold text-white">{{ cls.class_name }}</h2>
+              <p v-if="cls.description" class="text-sm text-white/40 mt-0.5">{{ cls.description }}</p>
             </div>
             <div class="text-right">
-              <p class="text-xs text-gray-400 mb-1">クラスコード</p>
-              <span class="font-mono text-lg font-bold tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-lg">
+              <p class="text-[10px] text-white/30 mb-1 font-title">クラスコード</p>
+              <span class="font-mono text-lg font-bold tracking-[0.2em] text-neo-gradient">
                 {{ cls.class_code }}
               </span>
             </div>
           </div>
-          <div class="flex items-center gap-4 mt-4 text-sm text-gray-500">
-            <span :class="cls.status === 'active' ? 'text-green-600' : 'text-gray-400'">
+          <div class="flex items-center gap-4 mt-4 text-sm">
+            <span class="neo-badge" :class="cls.status === 'active' ? 'green' : ''">
               {{ cls.status === 'active' ? 'Active' : 'Archived' }}
             </span>
-            <span class="ml-auto text-indigo-500 font-medium">管理 →</span>
+            <span class="ml-auto text-brand-secondary font-title font-medium text-sm">管理 →</span>
           </div>
         </div>
       </div>
@@ -94,35 +98,35 @@
     <!-- Create class modal -->
     <div
       v-if="showCreateModal"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      class="neo-overlay"
       @click.self="showCreateModal = false"
     >
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">新しいクラスを作成</h2>
-        <label class="block text-sm font-medium text-gray-700 mb-1">クラス名 <span class="text-red-500">*</span></label>
+      <div class="neo-modal">
+        <h2 class="text-lg font-title font-bold text-white mb-5">新しいクラスを作成</h2>
+        <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">クラス名 <span class="text-neon-pink">*</span></label>
         <input
           v-model="newClassName"
           type="text"
           placeholder="例：中学2年A組"
-          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          class="neo-input mb-4"
         />
-        <label class="block text-sm font-medium text-gray-700 mt-4 mb-1">メモ（任意）</label>
+        <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">メモ（任意）</label>
         <input
           v-model="newClassDesc"
           type="text"
           placeholder="例：2026年度 春学期"
-          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          class="neo-input"
         />
-        <p class="text-xs text-gray-400 mt-3">クラスコードは自動生成されます</p>
+        <p class="text-[11px] text-white/20 mt-3">クラスコードは自動生成されます</p>
         <div class="flex gap-3 mt-6">
           <button
             @click="showCreateModal = false"
-            class="flex-1 py-2.5 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50"
+            class="btn-ghost flex-1 py-2.5 border border-white/10 rounded-2xl"
           >キャンセル</button>
           <button
             @click="handleCreate"
             :disabled="!newClassName.trim() || creating"
-            class="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-40"
+            class="btn-neo flex-1"
           >{{ creating ? '作成中...' : '作成する' }}</button>
         </div>
       </div>

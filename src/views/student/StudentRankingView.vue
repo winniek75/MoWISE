@@ -37,7 +37,7 @@ const rankIcons = ['🥇', '🥈', '🥉']
 </script>
 
 <template>
-  <div class="min-h-screen bg-bg-dark pb-24 safe-pt">
+  <div class="min-h-screen bg-bg-dark pb-28 safe-pt">
     <header class="px-5 pt-4 pb-3">
       <h1 class="text-white text-xl font-title font-bold">ランキング</h1>
     </header>
@@ -48,10 +48,10 @@ const rankIcons = ['🥇', '🥈', '🥉']
         v-for="cls in classes"
         :key="cls.id"
         @click="selectClass(cls.id)"
-        class="shrink-0 px-4 py-1.5 rounded-full text-xs font-title font-semibold transition-colors"
+        class="shrink-0 px-4 py-1.5 rounded-full text-xs font-title font-semibold transition-all duration-200"
         :class="selectedClassId === cls.id
-          ? 'bg-brand-primary text-white'
-          : 'bg-bg-card text-white/50'"
+          ? 'bg-neo-gradient text-white shadow-neo-sm'
+          : 'bg-bg-card text-white/30 border border-white/[0.06]'"
       >
         {{ cls.name }}
       </button>
@@ -59,9 +59,9 @@ const rankIcons = ['🥇', '🥈', '🥉']
 
     <!-- No data -->
     <div v-if="student.leaderboard.length === 0" class="px-5 mt-12 text-center">
-      <p class="text-4xl mb-3">🏆</p>
-      <p class="text-white/50 font-title text-sm">まだランキングデータがありません</p>
-      <p class="text-white/30 font-title text-xs mt-1">ゲームをプレイしてランキングに参加しましょう</p>
+      <div class="w-14 h-14 mowi-orb glow-low mx-auto mb-4 animate-float" />
+      <p class="text-white/40 font-title text-sm">まだランキングデータがありません</p>
+      <p class="text-white/20 font-title text-xs mt-1">ゲームをプレイしてランキングに参加しましょう</p>
     </div>
 
     <!-- Leaderboard -->
@@ -69,30 +69,30 @@ const rankIcons = ['🥇', '🥈', '🥉']
       <div
         v-for="entry in student.leaderboard"
         :key="entry.user_id"
-        class="flex items-center gap-3 rounded-xl p-3 transition-colors"
-        :class="isMe(entry.user_id) ? 'bg-brand-primary/20 border border-brand-primary/30' : 'bg-bg-card'"
+        class="neo-card !py-3 !px-4 flex items-center gap-3 transition-all duration-200"
+        :class="isMe(entry.user_id) ? '!border-brand-secondary/30 shadow-neo-cyan' : ''"
       >
         <!-- Rank -->
         <div class="w-8 text-center shrink-0">
           <span v-if="(entry.rank ?? 0) <= 3" class="text-xl">{{ rankIcons[(entry.rank ?? 1) - 1] }}</span>
-          <span v-else class="text-white/50 font-title font-bold text-sm">{{ entry.rank }}</span>
+          <span v-else class="text-white/30 font-title font-bold text-sm">{{ entry.rank }}</span>
         </div>
 
-        <!-- Avatar + name -->
+        <!-- Name -->
         <div class="flex-1 min-w-0">
           <p class="text-white font-title font-semibold text-sm truncate">
             {{ entry.display_name }}
-            <span v-if="isMe(entry.user_id)" class="text-brand-primary text-xs ml-1">(あなた)</span>
+            <span v-if="isMe(entry.user_id)" class="text-brand-secondary text-xs ml-1">(あなた)</span>
           </p>
-          <p class="text-white/40 text-[10px] font-title">
+          <p class="text-white/25 text-[10px] font-title">
             {{ entry.games_played }} ゲーム・正答率 {{ Math.round(entry.avg_accuracy ?? 0) }}%
           </p>
         </div>
 
         <!-- XP -->
         <div class="text-right shrink-0">
-          <p class="text-brand-primary font-title font-bold text-sm">{{ entry.total_xp }} XP</p>
-          <p class="text-white/30 text-[10px] font-title">{{ entry.total_score }} pt</p>
+          <p class="text-brand-secondary font-title font-bold text-sm">{{ entry.total_xp }} XP</p>
+          <p class="text-white/20 text-[10px] font-title">{{ entry.total_score }} pt</p>
         </div>
       </div>
     </div>
