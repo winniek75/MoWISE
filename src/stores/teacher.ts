@@ -179,6 +179,27 @@ export const useTeacherStore = defineStore('teacher', () => {
     robloxStats.value = stats
   }
 
+  // ─── 生徒アカウント作成（PIN方式） ──────────────────────────────
+  async function createStudentAccount(classId: string, studentName: string) {
+    const { data, error: err } = await supabase.rpc('create_student_account', {
+      p_class_id: classId,
+      p_student_name: studentName,
+    })
+    if (err) { error.value = err.message; return null }
+    return data as { user_id: string; pin: string; class_code: string; display_name: string }
+  }
+
+  // ─── クラスの生徒PIN一覧取得 ────────────────────────────────────
+  async function fetchClassPins(classId: string) {
+    const { data, error: err } = await supabase
+      .from('student_pins')
+      .select('pin, user_id, users(display_name)')
+      .eq('class_id', classId)
+      .order('created_at')
+    if (err) { error.value = err.message; return [] }
+    return data ?? []
+  }
+
   // ─── ユーティリティ ───────────────────────────────────────────
   function generateClassCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -191,6 +212,7 @@ export const useTeacherStore = defineStore('teacher', () => {
     classes, students, pendingMembers, pendingBadges, robloxStats, loading, error,
     fetchMyClasses, createClass,
     fetchClassStudents, fetchPendingMembers, approveMember, removeMember,
+    createStudentAccount, fetchClassPins,
     fetchPendingBadges, approveBadge, rejectBadge, fetchRobloxStats,
   }
 })

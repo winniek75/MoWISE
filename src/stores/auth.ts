@@ -172,6 +172,27 @@ export const useAuthStore = defineStore('auth', () => {
     if (err) throw err
   }
 
+  /** 生徒PINログイン（クラスコード + PIN） */
+  async function signInAsStudent(classCode: string, pin: string) {
+    loading.value = true
+    error.value   = null
+    try {
+      const email = `${classCode.toLowerCase()}-${pin}@s.mowise.app`
+      const password = `${classCode.toUpperCase()}${pin}`
+      const { data, error: err } = await supabase.auth.signInWithPassword({ email, password })
+      if (err) throw new Error('クラスコードまたはPINが正しくありません')
+      session.value  = data.session
+      authUser.value = data.user
+      if (data.user) await fetchUserRow(data.user.id)
+      return data
+    } catch (e: unknown) {
+      error.value = (e as Error).message
+      throw e
+    } finally {
+      loading.value = false
+    }
+  }
+
   /** ログアウト */
   async function signOut() {
     await supabase.auth.signOut()
@@ -207,7 +228,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated, isTeacher, isStudent, userId, displayName,
     // 新ストア（checkin.ts / mowi.ts）が authStore.user でアクセスできるようエイリアス
     user: authUser,
-    initialize, fetchUserRow, signUpWithEmail, signInWithEmail, signInWithGoogle, signOut, updateProfile,
+    initialize, fetchUserRow, signUpWithEmail, signInWithEmail, signInAsStudent, signInWithGoogle, signOut, updateProfile,
     toggleDemoRole,
   }
 })

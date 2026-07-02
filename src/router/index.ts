@@ -7,6 +7,7 @@ const router = createRouter({
     // ──── Auth ────
     { path: '/auth/callback', name: 'AuthCallback', component: () => import('@/views/auth/AuthCallbackView.vue') },
     { path: '/login', name: 'Login', component: () => import('@/views/auth/LoginView.vue'), meta: { requiresGuest: true } },
+    { path: '/student-login', redirect: to => ({ path: '/login', query: to.query }) },
     { path: '/signup', name: 'Signup', component: () => import('@/views/auth/SignupView.vue'), meta: { requiresGuest: true } },
 
     // ──── Student ────

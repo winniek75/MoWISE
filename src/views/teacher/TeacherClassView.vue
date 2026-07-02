@@ -87,6 +87,71 @@
         </div>
       </section>
 
+      <!-- Add student -->
+      <section class="neo-card">
+        <h2 class="neo-section-title">生徒を追加</h2>
+        <div class="flex gap-2">
+          <input
+            v-model="newStudentName"
+            type="text"
+            placeholder="生徒の名前"
+            class="neo-input flex-1"
+            @keyup.enter="handleCreateStudent"
+          />
+          <button
+            @click="handleCreateStudent"
+            :disabled="!newStudentName.trim() || creatingStudent"
+            class="btn-neo !py-2.5 !px-5 !text-sm !rounded-xl shrink-0"
+          >
+            {{ creatingStudent ? '作成中...' : '追加' }}
+          </button>
+        </div>
+        <p v-if="createStudentError" class="text-neon-pink text-xs mt-2">{{ createStudentError }}</p>
+
+        <!-- Created students with PINs -->
+        <div v-if="createdStudents.length > 0" class="mt-4 space-y-2">
+          <p class="text-[11px] text-white/30 font-title font-semibold">作成済み生徒（PINを共有してください）</p>
+          <div
+            v-for="cs in createdStudents"
+            :key="cs.user_id"
+            class="flex items-center justify-between bg-white/[0.03] rounded-xl px-4 py-3 border border-white/[0.06]"
+          >
+            <div>
+              <p class="text-white font-title font-semibold text-sm">{{ cs.display_name }}</p>
+              <p class="text-white/30 text-xs mt-0.5">クラスコード: <span class="font-mono text-white/50">{{ cs.class_code }}</span></p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] text-white/25 font-title">PIN</p>
+              <p class="font-mono text-2xl font-bold tracking-[0.3em] text-neo-gradient">{{ cs.pin }}</p>
+            </div>
+          </div>
+          <button
+            @click="printStudentCards"
+            class="btn-ghost !text-xs border border-white/10 !rounded-xl w-full mt-2"
+          >PIN一覧を印刷用に表示</button>
+        </div>
+
+        <!-- Existing PINs -->
+        <div v-if="existingPins.length > 0" class="mt-4">
+          <button
+            @click="showExistingPins = !showExistingPins"
+            class="text-[11px] text-brand-secondary font-title font-medium hover:underline"
+          >
+            {{ showExistingPins ? 'PIN一覧を閉じる' : `既存の生徒PIN一覧を表示（${existingPins.length}名）` }}
+          </button>
+          <div v-if="showExistingPins" class="mt-2 space-y-1">
+            <div
+              v-for="ep in existingPins"
+              :key="ep.user_id"
+              class="flex items-center justify-between bg-white/[0.02] rounded-lg px-3 py-2"
+            >
+              <span class="text-white/60 text-sm font-title">{{ (ep.users as any)?.display_name ?? '---' }}</span>
+              <span class="font-mono text-sm font-bold tracking-[0.2em] text-white/80">{{ ep.pin }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Pending members -->
       <section v-if="store.pendingMembers.length > 0">
         <h2 class="text-sm font-title font-semibold text-neon-orange mb-3">
@@ -250,6 +315,68 @@ const currentClass = ref<any>(null)
 
 const rejectModal = ref({ open: false, badgeId: '', reason: '' })
 
+// Student creation
+const newStudentName = ref('')
+const creatingStudent = ref(false)
+const createStudentError = ref('')
+const createdStudents = ref<Array<{ user_id: string; pin: string; class_code: string; display_name: string }>>([])
+const existingPins = ref<any[]>([])
+const showExistingPins = ref(false)
+
+async function handleCreateStudent() {
+  if (!newStudentName.value.trim()) return
+  creatingStudent.value = true
+  createStudentError.value = ''
+  const result = await store.createStudentAccount(classId, newStudentName.value.trim())
+  creatingStudent.value = false
+  if (!result) {
+    createStudentError.value = store.error ?? 'Failed to create student'
+    return
+  }
+  createdStudents.value.push(result)
+  newStudentName.value = ''
+  // Refresh student list
+  await store.fetchClassStudents(classId)
+}
+
+function printStudentCards() {
+  const allStudents = [...createdStudents.value]
+  // Add existing PINs if loaded
+  if (existingPins.value.length > 0) {
+    for (const ep of existingPins.value) {
+      if (!allStudents.find(s => s.user_id === ep.user_id)) {
+        allStudents.push({
+          user_id: ep.user_id,
+          pin: ep.pin,
+          class_code: currentClass.value?.class_code ?? '',
+          display_name: (ep.users as any)?.display_name ?? '',
+        })
+      }
+    }
+  }
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>MoWISE Student PINs</title>
+<style>body{font-family:sans-serif;padding:20px}
+.card{border:2px solid #333;border-radius:12px;padding:16px 24px;margin:8px;display:inline-block;width:280px;text-align:center}
+.name{font-size:18px;font-weight:bold;margin-bottom:8px}
+.label{font-size:11px;color:#888;margin-bottom:2px}
+.code{font-family:monospace;font-size:16px;letter-spacing:0.15em}
+.pin{font-family:monospace;font-size:32px;font-weight:bold;letter-spacing:0.3em;color:#6C5CE7}
+.url{font-size:10px;color:#aaa;margin-top:8px}
+@media print{body{padding:0}.card{break-inside:avoid}}</style></head><body>
+<h2>MoWISE - ${currentClass.value?.class_name ?? 'Class'} ログイン情報</h2>
+${allStudents.map(s => `<div class="card">
+<div class="name">${s.display_name}</div>
+<div class="label">クラスコード</div>
+<div class="code">${s.class_code}</div>
+<div class="label" style="margin-top:12px">PIN</div>
+<div class="pin">${s.pin}</div>
+<div class="url">mowise.vercel.app</div>
+</div>`).join('\n')}
+</body></html>`
+  const w = window.open('', '_blank')
+  if (w) { w.document.write(html); w.document.close(); w.print() }
+}
+
 const editingRange = ref(false)
 const rangeFrom = ref('P001')
 const rangeTo = ref('P035')
@@ -326,6 +453,7 @@ onMounted(async () => {
   ])
 
   await store.fetchRobloxStats(classId)
+  existingPins.value = await store.fetchClassPins(classId)
   await fetchWeakPatterns()
 })
 

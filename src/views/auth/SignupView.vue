@@ -9,7 +9,6 @@ const auth = useAuthStore()
 const email = ref('')
 const password = ref('')
 const displayName = ref('')
-const role = ref<'student' | 'teacher'>('teacher')
 const loading = ref(false)
 const error = ref('')
 
@@ -18,10 +17,10 @@ async function handleSignup() {
   loading.value = true
   error.value = ''
   try {
-    await auth.signUpWithEmail(email.value, password.value, displayName.value, role.value)
-    router.push(role.value === 'teacher' ? { name: 'TeacherDashboard' } : { name: 'StudentHome' })
+    await auth.signUpWithEmail(email.value, password.value, displayName.value, 'teacher')
+    router.push({ name: 'TeacherDashboard' })
   } catch (e: any) {
-    error.value = e.message || '登録に失敗しました'
+    error.value = e.message || 'Registration failed'
   } finally {
     loading.value = false
   }
@@ -37,29 +36,7 @@ async function handleSignup() {
     <div class="w-full max-w-sm relative z-10">
       <div class="text-center mb-8">
         <h1 class="text-3xl font-title font-bold text-neo-gradient">MoWISE</h1>
-        <p class="text-white/30 text-sm font-title mt-2">アカウント作成</p>
-      </div>
-
-      <!-- Role selector -->
-      <div class="flex gap-2 mb-6 p-1 bg-bg-card rounded-2xl border border-white/[0.06]">
-        <button
-          @click="role = 'teacher'"
-          class="flex-1 py-3 rounded-xl text-sm font-title font-semibold transition-all duration-200"
-          :class="role === 'teacher'
-            ? 'bg-neo-gradient text-white shadow-neo-sm'
-            : 'text-white/40 hover:text-white/60'"
-        >
-          先生として登録
-        </button>
-        <button
-          @click="role = 'student'"
-          class="flex-1 py-3 rounded-xl text-sm font-title font-semibold transition-all duration-200"
-          :class="role === 'student'
-            ? 'bg-neo-gradient text-white shadow-neo-sm'
-            : 'text-white/40 hover:text-white/60'"
-        >
-          生徒として登録
-        </button>
+        <p class="text-white/30 text-sm font-title mt-2">先生アカウント作成</p>
       </div>
 
       <div class="space-y-4 animate-slide-up">
@@ -68,7 +45,7 @@ async function handleSignup() {
           <input
             v-model="displayName"
             type="text"
-            :placeholder="role === 'teacher' ? '例：山田先生' : '例：たろう'"
+            placeholder="例：山田先生"
             class="neo-input"
           />
         </div>
@@ -102,7 +79,11 @@ async function handleSignup() {
         </button>
 
         <p class="text-center text-white/20 text-xs mt-2">
-          {{ role === 'teacher' ? 'Freeプラン（1クラス5人まで）が自動適用されます' : 'クラスコードを入力してクラスに参加できます' }}
+          Freeプラン（1クラス5人まで）が自動適用されます
+        </p>
+
+        <p class="text-center text-white/25 text-xs mt-1">
+          生徒のアカウントは先生が作成・管理します
         </p>
       </div>
 
