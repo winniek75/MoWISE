@@ -119,6 +119,9 @@ export const useGameStore = defineStore('game', () => {
     return earned
   }
 
+  // Coins & tickets earned in the last game (for result display)
+  const lastReward = ref<{ coins: number; tickets: number }>({ coins: 0, tickets: 0 })
+
   async function saveScore(payload: GameScorePayload & { userId: string; assignmentId?: string; classId?: string }) {
     const { data, error } = await supabase
       .from('game_scores')
@@ -141,6 +144,13 @@ export const useGameStore = defineStore('game', () => {
     if (error) { console.error('[game] saveScore:', error); return null }
     recentScores.value.unshift(data)
 
+    // Extract reward info from metadata (set by DB trigger)
+    const meta = data.metadata as Record<string, unknown> | null
+    lastReward.value = {
+      coins: (meta?.coins_awarded as number) ?? 0,
+      tickets: (meta?.tickets_awarded as number) ?? 0,
+    }
+
     // Check for newly earned badges (trigger fires on INSERT)
     const newBadges = await checkNewBadges(payload.userId)
     if (newBadges.length > 0) {
@@ -161,7 +171,7 @@ export const useGameStore = defineStore('game', () => {
   return {
     catalog, recentScores, loading,
     gamesByCategory, categoryLabels,
-    newlyEarnedBadges, userBadgeIds,
+    newlyEarnedBadges, userBadgeIds, lastReward,
     fetchCatalog, fetchRecentScores, saveScore, getGameById,
     fetchUserBadges, checkNewBadges, clearNewBadges,
   }

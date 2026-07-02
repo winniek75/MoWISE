@@ -204,6 +204,68 @@
         </div>
       </section>
 
+      <!-- Assignment completion -->
+      <section v-if="assignmentStats.length > 0" class="neo-card">
+        <h2 class="neo-section-title">宿題の提出状況</h2>
+        <div class="space-y-3">
+          <div v-for="a in assignmentStats" :key="a.assignment_id" class="bg-white/[0.02] rounded-xl px-4 py-3">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <p class="text-white font-title font-semibold text-sm">{{ a.game_title }}</p>
+                <p v-if="a.assignment_title" class="text-white/25 text-xs">{{ a.assignment_title }}</p>
+              </div>
+              <div class="text-right">
+                <p class="text-neo-gradient font-title font-bold text-lg">{{ a.completed_count }}/{{ a.total_count }}</p>
+                <p class="text-white/20 text-[10px] font-title">提出率 {{ Math.round(a.completed_count / a.total_count * 100) }}%</p>
+              </div>
+            </div>
+            <div class="w-full h-2 bg-white/[0.06] rounded-full overflow-hidden">
+              <div class="h-full bg-neo-gradient rounded-full transition-all duration-500"
+                :style="{ width: `${a.completed_count / a.total_count * 100}%` }" />
+            </div>
+            <p v-if="a.due_date" class="text-white/15 text-[10px] font-title mt-1">
+              期限: {{ formatDate(a.due_date) }}
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game performance by category -->
+      <section v-if="categoryStats.length > 0" class="neo-card">
+        <h2 class="neo-section-title">カテゴリ別パフォーマンス</h2>
+        <div class="grid grid-cols-2 gap-3">
+          <div v-for="cs in categoryStats" :key="cs.category" class="bg-white/[0.02] rounded-xl px-4 py-3 text-center">
+            <p class="text-white/40 text-[11px] font-title mb-1">{{ gameStore.categoryLabels[cs.category] || cs.category }}</p>
+            <p class="font-title font-bold text-xl" :class="strengthColor(cs.strength_level)">
+              {{ cs.avg_accuracy }}%
+            </p>
+            <p class="text-white/20 text-[10px] font-title mt-0.5">{{ cs.play_count }}回プレイ</p>
+            <span class="inline-block mt-1 text-[9px] font-title font-semibold px-2 py-0.5 rounded-full"
+              :class="strengthBadge(cs.strength_level)">
+              {{ strengthLabel(cs.strength_level) }}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Top game stats -->
+      <section v-if="gameStats.length > 0" class="neo-card">
+        <h2 class="neo-section-title">ゲーム別成績（クラス平均）</h2>
+        <div class="space-y-1">
+          <div v-for="gs in gameStats" :key="gs.game_id"
+            class="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/[0.02] transition-colors">
+            <div class="flex-1">
+              <p class="text-white font-title text-sm font-medium">{{ gs.game_title }}</p>
+              <p class="text-white/20 text-[10px] font-title">{{ gs.total_plays }}回プレイ | {{ gs.player_count }}人参加</p>
+            </div>
+            <div class="text-right">
+              <p class="text-neo-gradient font-title font-bold">{{ gs.avg_accuracy }}%</p>
+              <p class="text-white/20 text-[10px] font-title">平均正答率</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Students list -->
       <section>
         <h2 class="text-sm font-title font-semibold text-white/60 mb-3">
@@ -304,11 +366,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTeacherStore } from '@/stores/teacher'
+import { useGameStore } from '@/stores/game'
 import { supabase } from '@/lib/supabase'
 
 const route  = useRoute()
 const router = useRouter()
 const store  = useTeacherStore()
+const gameStore = useGameStore()
 
 const classId      = route.params.classId as string
 const currentClass = ref<any>(null)
@@ -437,6 +501,9 @@ const classActiveRate = computed(() => {
 })
 
 const weakPatterns = ref<string[]>([])
+const assignmentStats = ref<any[]>([])
+const categoryStats = ref<any[]>([])
+const gameStats = ref<any[]>([])
 
 onMounted(async () => {
   const { data } = await supabase
@@ -454,7 +521,12 @@ onMounted(async () => {
 
   await store.fetchRobloxStats(classId)
   existingPins.value = await store.fetchClassPins(classId)
-  await fetchWeakPatterns()
+  await Promise.all([
+    fetchWeakPatterns(),
+    fetchAssignmentStats(),
+    fetchCategoryStats(),
+    fetchGameStats(),
+  ])
 })
 
 async function fetchWeakPatterns() {
@@ -476,6 +548,100 @@ async function fetchWeakPatterns() {
     .sort((a, b) => a.avg - b.avg)
     .slice(0, 3)
     .map(x => x.pno)
+}
+
+async function fetchAssignmentStats() {
+  const { data } = await supabase
+    .from('assignment_completion')
+    .select('assignment_id, game_title, assignment_title, due_date, student_id, is_completed')
+    .eq('class_id', classId)
+  if (!data || data.length === 0) return
+  // Group by assignment
+  const grouped: Record<string, any> = {}
+  for (const row of data as any[]) {
+    if (!grouped[row.assignment_id]) {
+      grouped[row.assignment_id] = {
+        assignment_id: row.assignment_id,
+        game_title: row.game_title,
+        assignment_title: row.assignment_title,
+        due_date: row.due_date,
+        total_count: 0,
+        completed_count: 0,
+      }
+    }
+    grouped[row.assignment_id].total_count++
+    if (row.is_completed) grouped[row.assignment_id].completed_count++
+  }
+  assignmentStats.value = Object.values(grouped)
+}
+
+async function fetchCategoryStats() {
+  const { data } = await supabase
+    .from('student_category_weakness')
+    .select('*')
+    .eq('class_id', classId)
+  if (!data || data.length === 0) return
+  // Average across students per category
+  const cats: Record<string, { total_acc: number; total_plays: number; count: number; strength: string }> = {}
+  for (const row of data as any[]) {
+    if (!cats[row.category]) cats[row.category] = { total_acc: 0, total_plays: 0, count: 0, strength: 'ok' }
+    cats[row.category].total_acc += Number(row.avg_accuracy) * Number(row.play_count)
+    cats[row.category].total_plays += Number(row.play_count)
+    cats[row.category].count++
+  }
+  categoryStats.value = Object.entries(cats).map(([category, v]) => ({
+    category,
+    avg_accuracy: v.total_plays > 0 ? Math.round(v.total_acc / v.total_plays) : 0,
+    play_count: v.total_plays,
+    strength_level: v.total_plays > 0
+      ? (v.total_acc / v.total_plays < 50 ? 'weak' : v.total_acc / v.total_plays < 70 ? 'needs_work' : v.total_acc / v.total_plays < 85 ? 'ok' : 'strong')
+      : 'ok',
+  }))
+}
+
+async function fetchGameStats() {
+  const { data } = await supabase
+    .from('student_game_stats')
+    .select('*')
+    .eq('class_id', classId)
+  if (!data || data.length === 0) return
+  // Group by game
+  const games: Record<string, { game_title: string; total_plays: number; total_acc: number; total_weighted: number; players: Set<string> }> = {}
+  for (const row of data as any[]) {
+    if (!games[row.game_id]) games[row.game_id] = { game_title: row.game_title, total_plays: 0, total_acc: 0, total_weighted: 0, players: new Set() }
+    games[row.game_id].total_plays += Number(row.play_count)
+    games[row.game_id].total_weighted += Number(row.avg_accuracy ?? 0) * Number(row.play_count)
+    games[row.game_id].players.add(row.user_id)
+  }
+  gameStats.value = Object.entries(games)
+    .map(([game_id, v]) => ({
+      game_id,
+      game_title: v.game_title,
+      total_plays: v.total_plays,
+      avg_accuracy: v.total_plays > 0 ? Math.round(v.total_weighted / v.total_plays) : 0,
+      player_count: v.players.size,
+    }))
+    .sort((a, b) => b.total_plays - a.total_plays)
+}
+
+function strengthColor(level: string): string {
+  const map: Record<string, string> = { strong: 'text-neon-green', ok: 'text-neon-cyan', needs_work: 'text-neon-orange', weak: 'text-neon-pink' }
+  return map[level] ?? 'text-white'
+}
+
+function strengthBadge(level: string): string {
+  const map: Record<string, string> = {
+    strong: 'bg-neon-green/15 text-neon-green',
+    ok: 'bg-neon-cyan/15 text-neon-cyan',
+    needs_work: 'bg-neon-orange/15 text-neon-orange',
+    weak: 'bg-neon-pink/15 text-neon-pink',
+  }
+  return map[level] ?? ''
+}
+
+function strengthLabel(level: string): string {
+  const map: Record<string, string> = { strong: '得意', ok: '普通', needs_work: '要練習', weak: '苦手' }
+  return map[level] ?? level
 }
 
 async function handleApprove(memberId: string) {

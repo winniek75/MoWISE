@@ -107,12 +107,12 @@ function closeResult() {
             <p class="text-white font-title font-bold text-2xl">{{ lastScore.accuracy ?? '-' }}%</p>
           </div>
           <div class="neo-card !p-3 text-center">
-            <p class="text-white/30 text-[11px] font-title">XP</p>
-            <p class="text-neo-gradient font-title font-bold text-xl">+{{ lastScore.xpEarned ?? 0 }}</p>
+            <p class="text-white/30 text-[11px] font-title">コイン</p>
+            <p class="text-neon-yellow font-title font-bold text-xl">+{{ gameStore.lastReward.coins }}</p>
           </div>
           <div class="neo-card !p-3 text-center">
-            <p class="text-white/30 text-[11px] font-title">時間</p>
-            <p class="text-white font-title font-bold text-xl">{{ lastScore.timeSpent ?? '-' }}s</p>
+            <p class="text-white/30 text-[11px] font-title">ガチャチケット</p>
+            <p class="text-neon-purple font-title font-bold text-xl">+{{ gameStore.lastReward.tickets }}</p>
           </div>
         </div>
 

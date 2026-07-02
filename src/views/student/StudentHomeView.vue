@@ -48,8 +48,11 @@ onMounted(async () => {
       <div class="flex items-center justify-between mt-1">
         <h1 class="text-white text-xl font-title font-bold">{{ auth.displayName }}</h1>
         <div class="flex gap-2">
-          <span class="neo-badge cyan">
-            XP {{ auth.userRow?.total_xp ?? 0 }}
+          <span class="neo-badge" style="background: rgba(250,204,21,0.15); color: #FACC15;">
+            {{ auth.userRow?.coins ?? 0 }} コイン
+          </span>
+          <span class="neo-badge" style="background: rgba(108,92,231,0.15); color: #A78BFA;">
+            {{ auth.userRow?.gacha_tickets ?? 0 }} チケット
           </span>
         </div>
       </div>

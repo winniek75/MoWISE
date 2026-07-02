@@ -87,26 +87,28 @@
         </div>
       </section>
 
-      <!-- Checkins -->
+      <!-- Game-level stats -->
       <section class="neo-card">
-        <h2 class="neo-section-title">直近チェックイン（7日間）</h2>
-        <div v-if="checkins.length === 0" class="text-center py-6 text-white/25 text-sm font-title">
-          チェックイン記録がありません。
+        <h2 class="neo-section-title">ゲーム別成績</h2>
+        <div v-if="studentGameStats.length === 0" class="text-center py-6 text-white/25 text-sm font-title">
+          まだプレイデータがありません。
         </div>
         <div v-else class="space-y-1">
           <div
-            v-for="c in checkins"
-            :key="c.id"
+            v-for="gs in studentGameStats"
+            :key="gs.game_id"
             class="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/[0.02] transition-colors"
           >
-            <div class="flex items-center gap-3">
-              <span class="text-lg">{{ c.type === 'morning' ? '🌅' : '🌙' }}</span>
-              <div>
-                <p class="text-sm text-white/70 font-title">{{ c.type === 'morning' ? '朝チェックイン' : '夜チェックイン' }}</p>
-                <p class="text-[11px] text-white/25 font-title">{{ formatDate(c.created_at) }}</p>
-              </div>
+            <div class="flex-1">
+              <p class="text-sm text-white font-title font-medium">{{ gs.game_title }}</p>
+              <p class="text-[10px] text-white/20 font-title">{{ gs.play_count }}回 | 最高{{ gs.best_score }}点 | {{ gs.avg_time_spent ?? '-' }}秒/回</p>
             </div>
-            <span class="text-lg">{{ feelingEmoji(c.feeling, c.result) }}</span>
+            <div class="text-right">
+              <p class="font-title font-bold" :class="Number(gs.avg_accuracy) >= 80 ? 'text-neon-green' : Number(gs.avg_accuracy) >= 60 ? 'text-neon-yellow' : 'text-neon-pink'">
+                {{ gs.avg_accuracy }}%
+              </p>
+              <p class="text-white/20 text-[10px] font-title">平均正答率</p>
+            </div>
           </div>
         </div>
       </section>
@@ -194,7 +196,7 @@ const studentId = route.params.studentId as string
 
 const student         = ref<any>(null)
 const patternProgress = ref<any[]>([])
-const checkins        = ref<any[]>([])
+const studentGameStats = ref<any[]>([])
 const roblox          = ref<any>(null)
 const feedbacks       = ref<any[]>([])
 const newFeedback     = ref('')
@@ -217,15 +219,13 @@ onMounted(async () => {
     .order('pattern_no')
   patternProgress.value = progress ?? []
 
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-  const { data: checkinData } = await supabase
-    .from('checkins')
+  const { data: gameStatsData } = await supabase
+    .from('student_game_stats')
     .select('*')
     .eq('user_id', studentId)
-    .gte('created_at', sevenDaysAgo.toISOString())
-    .order('created_at', { ascending: false })
-  checkins.value = checkinData ?? []
+    .eq('class_id', classId)
+    .order('play_count', { ascending: false })
+  studentGameStats.value = gameStatsData ?? []
 
   if (store.robloxStats[studentId]) {
     roblox.value = store.robloxStats[studentId]
