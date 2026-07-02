@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useGameStore } from '@/stores/game'
+import { useMissionStore } from '@/stores/mission'
 import type { GameScorePayload } from '@/lib/game-sdk'
 import GameFrame from '@/components/game/GameFrame.vue'
 
@@ -14,6 +15,8 @@ const gameStore = useGameStore()
 const gameId = route.params.gameId as string
 const assignmentId = (route.query.assignmentId as string) || undefined
 const classId = (route.query.classId as string) || undefined
+
+const missionStore = useMissionStore()
 
 const game = computed(() => gameStore.getGameById(gameId))
 const showResult = ref(false)
@@ -36,6 +39,8 @@ async function handleScore(payload: GameScorePayload) {
     assignmentId,
     classId,
   })
+  // Update mission: play_game
+  await missionStore.updateMissionProgress(auth.userId, 'play_game', 1)
 }
 
 async function handleComplete(payload: GameScorePayload) {
@@ -48,6 +53,12 @@ async function handleComplete(payload: GameScorePayload) {
   })
   lastScore.value = payload
   showResult.value = true
+
+  // Update missions
+  await missionStore.updateMissionProgress(auth.userId, 'complete_game', 1)
+  if (payload.accuracy != null) {
+    await missionStore.updateMissionProgress(auth.userId, 'accuracy_above', payload.accuracy)
+  }
 }
 
 function handleExit() {

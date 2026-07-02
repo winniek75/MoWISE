@@ -3,12 +3,14 @@ import { ref, onMounted, computed } from 'vue'
 import { useMonsterStore } from '@/stores/monster'
 import { useAuthStore } from '@/stores/auth'
 import { useGameStore } from '@/stores/game'
+import { useMissionStore } from '@/stores/mission'
 import BottomNav from '@/components/common/BottomNav.vue'
 import type { UserMonster } from '@/stores/monster'
 
 const monsterStore = useMonsterStore()
 const auth = useAuthStore()
 const gameStore = useGameStore()
+const missionStore = useMissionStore()
 
 const activeTab = ref<'collection' | 'gallery' | 'gacha'>('collection')
 const selectedMonster = ref<UserMonster | null>(null)
@@ -54,9 +56,10 @@ async function handleFeed() {
   feedLoading.value = false
   if (result) {
     feedResult.value = result
-    // Refresh auth to update coins
-    if (auth.userId) await auth.fetchUserRow(auth.userId)
-    // Update selected monster reference
+    if (auth.userId) {
+      await auth.fetchUserRow(auth.userId)
+      await missionStore.updateMissionProgress(auth.userId, 'feed_monster', 1)
+    }
     selectedMonster.value = monsterStore.myMonsters.find(m => m.id === selectedMonster.value?.id) ?? null
   }
 }
@@ -75,7 +78,10 @@ async function handleGacha() {
   gachaAnimating.value = false
   if (result) {
     gachaResult.value = result
-    if (auth.userId) await auth.fetchUserRow(auth.userId)
+    if (auth.userId) {
+      await auth.fetchUserRow(auth.userId)
+      await missionStore.updateMissionProgress(auth.userId, 'pull_gacha', 1)
+    }
   }
 }
 

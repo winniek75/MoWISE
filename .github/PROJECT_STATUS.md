@@ -23,42 +23,104 @@
 
 ---
 
-## Changes Made (2026-07-02)
+## Completed Phases
 
-### 1. Game Catalog Reorganization
-- **Category rename**: `vocabulary` → `eiken` (英検対策)
-- **Grammar titles fixed** to match actual content:
-  - 動詞活用バトル → to/ing判別バトル (infinitive vs gerund)
-  - 文法ドリル → 関係詞・分詞ドリル (relative clauses & participles)
-  - アレドクイズ → Are/Do判別クイズ (be-verb vs do-verb)
-  - 英検文法 → 時制・受動態ドリル (tense & passive)
-- **Eiken titles clarified**:
-  - 英検クイズ → 英検ボキャブラリー (vocab quiz)
-  - 英検チャレンジ → 英検模擬テスト (mock exam simulator)
-  - 英検SNS → 英検トレーニング (grammar+vocab hybrid)
-- All descriptions updated to accurately reflect content
+### Phase 1: Coins/Tickets + Teacher Analytics (COMPLETE)
+- `coins` & `gacha_tickets` columns added to `users` table
+- Coins/tickets awarded on game score save
+- Teacher analytics: game-level reports, assignment completion tracking
+- Weekly progress views, weakness detection
 
-### 2. Student PIN Login System
-- **Teachers create student accounts** (name only) → 4-digit PIN auto-generated
-- **Students login** with class code + PIN (no email required)
-- **QR code support**: `mowise.vercel.app/student-login?c=CODE&p=PIN`
-- Login page redesigned with student/teacher tab switcher
-- Signup page now teacher-only
-- Teacher class view: student creation UI + PIN display + printable cards
-- **DB**: `student_pins` table + `create_student_account()` RPC function
+### Phase 2: Monster System (COMPLETE)
+- **DB Tables**: `monster_species`, `user_monsters`
+- Monster definitions: 20-30 species, 3 evolution stages, 4 rarities (common/uncommon/rare/legendary)
+- User monster collection with buddy system
+- Monster gallery UI + buddy display on home screen
+- **Frontend**: MonsterGallery.vue, MonsterBuddy.vue, FeedingView.vue implemented
+- **DB Functions**: `feed_monster()` — EXP gain → level up → stage evolution
 
-### 3. Files Changed
-- `src/stores/auth.ts` — signInAsStudent() added
-- `src/stores/game.ts` — category labels updated
-- `src/stores/teacher.ts` — createStudentAccount(), fetchClassPins() added
-- `src/views/auth/LoginView.vue` — student/teacher tab login
-- `src/views/auth/SignupView.vue` — teacher-only signup
-- `src/views/student/StudentGamesView.vue` — eiken filter
-- `src/views/teacher/TeacherClassView.vue` — student creation UI
-- `src/components/game/GameIcon.vue` — category comment update
-- `src/assets/styles/main.css` — .cat-eiken style
-- `src/router/index.ts` — /student-login redirect
-- `supabase/migrations/20260702_*` — DB migrations
+### Phase 3: Gacha & Daily Missions (COMPLETE - DB Layer)
+
+#### DB Tables Created
+| Table | Purpose |
+|-------|---------|
+| `mission_definitions` | 16 mission templates (3 difficulty levels) |
+| `user_daily_missions` | Per-user daily mission assignments & progress |
+| `gacha_history` | Pull records with rarity/species/duplicate tracking |
+| `login_streaks` | Consecutive login tracking with reward milestones |
+
+#### Mission Definitions (16 total)
+| Difficulty | Examples | Reward |
+|------------|----------|--------|
+| 1 (Easy) | Play 1 game, Clear 1 game, Feed monster, 70%+ accuracy | 10-20 coins or 1 food |
+| 2 (Normal) | Play 5 games, 80%+ accuracy, Category challenges, Pull gacha | 25-30 coins |
+| 3 (Hard) | Play 10 games, Clear 5 games, 90%+ accuracy, Play 15min | 1 gacha ticket |
+
+#### DB Functions Created
+| Function | Description |
+|----------|-------------|
+| `assign_daily_missions(user_id)` | Assigns 3 daily missions (1 per difficulty level), idempotent |
+| `update_mission_progress(user_id, condition_type, increment, category)` | Updates matching mission progress, returns newly completed |
+| `claim_mission_reward(user_id, mission_id)` | Claims reward (coins/tickets/food), prevents double-claim |
+| `pull_gacha(user_id)` | Full gacha flow: ticket deduction → rarity roll → species pick → new/duplicate handling |
+| `feed_monster(user_id, monster_id, exp_gain)` | Feed monster → EXP → level up → evolution check |
+| `update_login_streak(user_id)` | Streak tracking + milestone rewards (3/7/14/30 day bonuses) |
+
+#### Gacha Rarity Rates
+| Rarity | Rate | Duplicate Compensation |
+|--------|------|----------------------|
+| Common | 50% | 10 coins |
+| Uncommon | 30% | 20 coins |
+| Rare | 15% | 50 coins |
+| Legendary | 5% | 100 coins |
+
+#### Login Streak Rewards
+| Streak | Coins | Tickets |
+|--------|-------|---------|
+| Daily | 5 | 0 |
+| 3 days | 15 | 0 |
+| 7 days | 30 | 1 |
+| 14 days | 50 | 2 |
+| 30 days | 100 | 3 |
+| Every 7 days | 20 | 1 |
+
+#### RLS Policies Applied
+- `mission_definitions` — public read
+- `user_daily_missions` — user reads/updates own only
+- `login_streaks` — user reads own only
+- `gacha_history` — user reads own only
+
+---
+
+## Next Phases (TODO)
+
+### Phase 3b: Frontend — Gacha & Mission UI
+- [ ] **Daily Mission Panel** on student home screen (3 cards with progress bars)
+- [ ] **Mission reward claim UI** with coin/ticket animation
+- [ ] **Gacha Page** with egg-hatching / capsule animation
+- [ ] **Gacha result modal** (new monster reveal vs duplicate coins)
+- [ ] **Login streak popup** on daily first login (streak fire + reward display)
+- [ ] **Integration**: Call `update_mission_progress()` from `gameStore.saveScore()`
+- [ ] **Integration**: Call `assign_daily_missions()` on student login
+- [ ] **Integration**: Call `update_login_streak()` on auth session start
+
+### Phase 4: Migration & Cleanup
+- [ ] Remove Mowi mascot system (`stores/mowi.ts`, `MowiOrb.vue`, checkin views)
+- [ ] Remove morning/evening checkin
+- [ ] Monster level = new progress indicator for teachers
+- [ ] Clean up unused Mowi-related styles and components
+
+### Phase 5: monster_species Seed Data
+- [ ] Owner provides original monster illustrations (stage 1/2/3)
+- [ ] Seed 20-30 monster species into `monster_species` table
+- [ ] Assign category-linked monsters (eiken/grammar/phonics themed)
+
+### Phase 6: Polish & Launch Prep
+- [ ] Battle Pass / Season system
+- [ ] League / Division leaderboards
+- [ ] Boss Battles
+- [ ] CSV/PDF analytics export for teachers
+- [ ] Parent sharing link
 
 ---
 
@@ -90,65 +152,29 @@
 
 ---
 
-## Roadmap: Monster x Gacha System
+## Full DB Schema (public tables)
 
-### Decision: Replace Mowi mascot + checkin system with Monster Raising + Gacha
-
-**Why:**
-- Morning/evening checkin = obligation, not fun
-- Mowi orb is too abstract for kids
-- Kids engage with: visible growth, collection, competition, instant rewards
-
-### Core Loop
-```
-Game Clear → Coins + EXP → Feed Monster → Growth & Evolution
-          → Gacha Tickets → New Monster from Gacha
-```
-
-### Phase 1: Foundation (coins/tickets + teacher analytics)
-- Add coins & gacha_tickets to users
-- Award coins/tickets on game score save
-- Teacher analytics: game-level reports, assignment completion tracking
-- Weekly progress views, weakness detection
-
-### Phase 2: Monster System
-- Monster definitions DB (20-30 species, 3 evolution stages each)
-- User monster collection (user_monsters table)
-- Feeding/EXP/evolution logic
-- Monster gallery UI + buddy display
-- **Design: Owner provides original monster illustrations**
-
-### Phase 3: Gacha & Daily Missions
-- Gacha UI with egg-hatching animation
-- Rarity system: ★1 Normal(60%) / ★2 Rare(25%) / ★3 SR(12%) / ★4 Legend(3%)
-- Daily missions replacing checkin (e.g., "Clear 1 game today" → 3 food)
-- Streak bonuses (3-day → ticket, 7-day → ★2+ guaranteed ticket)
-
-### Phase 4: Migration & Cleanup
-- Remove Mowi mascot system (stores/mowi.ts, MowiOrb.vue, checkin views)
-- Remove morning/evening checkin
-- Monster level = new progress indicator for teachers
-
-### Game Integration Strategy: Hybrid
-- **SDK (iframe)**: All games start here. Proper WiseGame SDK integration.
-- **Vue integrated**: High-priority games migrated into MoWISE as components.
-- **Migration path**: SDK → Vue component, one game at a time. Same saveScore() pipeline.
-- **No breaking changes**: game_scores table is the same regardless of rendering method.
-
----
-
-## Teacher Analytics Roadmap
-
-| Priority | Feature | Status |
-|---|---|---|
-| HIGH | Game-level score reports (per game, per student) | Phase 1 |
-| HIGH | Weekly/monthly progress charts | Phase 1 |
-| HIGH | Assignment completion tracking | Phase 1 |
-| MED | Auto weakness detection by category/grade | Phase 1 |
-| MED | Parent sharing link (read-only) | Phase 2+ |
-| MED | Cross-class comparison dashboard | Phase 2+ |
-| LOW | CSV/PDF report export | Partial (CSV exists) |
-| LOW | Inactivity alerts (3+ days) | Phase 2+ |
+| Table | Purpose |
+|-------|---------|
+| `users` | All users (teachers + students), coins, tickets, XP |
+| `classes` | Teacher-created classes |
+| `class_members` | Student-class membership |
+| `student_pins` | PIN login for students |
+| `game_catalog` | 18 game definitions |
+| `game_scores` | All game play records |
+| `assignments` | Teacher-assigned games |
+| `badge_definitions` | Badge templates |
+| `user_badges` | Earned badges |
+| `subscriptions` | Plan management |
+| `monster_species` | 20-30 monster definitions (4 rarities, 3 stages) |
+| `user_monsters` | Player's monster collection |
+| `gacha_history` | Gacha pull records |
+| `mission_definitions` | 16 daily mission templates |
+| `user_daily_missions` | Per-user daily mission state |
+| `login_streaks` | Login streak tracking |
+| `mowi_state` | (Legacy) Mowi mascot state — to be removed in Phase 4 |
+| `checkins` | (Legacy) Morning/evening checkin — to be removed in Phase 4 |
+| `teacher_feedback` | Teacher feedback on students |
 
 ---
 
