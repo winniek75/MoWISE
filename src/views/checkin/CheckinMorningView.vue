@@ -292,6 +292,7 @@ async function proceedToWordCard() {
 
 async function proceedToHome() {
   showSavedToast.value = true
+  setCheckinDismissed('morning')
   await sleep(800)
   router.push({ name: 'Home' })
 }

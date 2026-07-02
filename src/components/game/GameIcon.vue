@@ -22,7 +22,7 @@ const sz = props.size || 'md'
 
 // SVG path data per game (Lucide-style, 24x24 viewBox, stroke)
 const icons: Record<string, string> = {
-  // --- vocabulary ---
+  // --- eiken (英検対策) ---
   'eiken-game':
     'M4 19.5v-15A2.5 2.5 0 016.5 2H20v20H6.5a2.5 2.5 0 010-5H20 M8 7h6 M8 11h4',
   'fallingwordbattle':

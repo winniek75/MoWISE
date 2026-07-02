@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS game_catalog (
     title_ja    TEXT NOT NULL,
     description TEXT,
     description_ja TEXT,
-    category    TEXT NOT NULL DEFAULT 'vocabulary'
-                CHECK (category IN ('vocabulary','grammar','phonics','writing','listening','mixed')),
+    category    TEXT NOT NULL DEFAULT 'eiken'
+                CHECK (category IN ('eiken','grammar','phonics','writing','listening','mixed')),
     icon        TEXT NOT NULL DEFAULT '🎮',
     url         TEXT NOT NULL,  -- Vercel deployment URL
     thumbnail   TEXT,
@@ -28,25 +28,25 @@ CREATE POLICY "game_catalog_admin_write" ON game_catalog FOR ALL
 
 -- Seed game catalog
 INSERT INTO game_catalog (id, title, title_ja, description_ja, category, icon, url, sort_order, is_free) VALUES
-('eiken-game',         'Eiken Quiz',          '英検クイズ',          '英検の語彙問題をゲーム形式で学習', 'vocabulary', '📝', 'https://eiken-game-winniek75s-projects.vercel.app', 1, true),
-('fallingwordbattle',  'Falling Word Battle', '落下ワードバトル',     '落ちてくる英単語の意味を素早く選択', 'vocabulary', '⬇️', 'https://fallingwordbattle-winniek75s-projects.vercel.app', 2, true),
-('verbform-battle',    'Verb Form Battle',    '動詞活用バトル',      '動詞の正しい活用形を瞬時に判断', 'grammar',    '⚔️', 'https://verbform-battle-winniek75s-projects.vercel.app', 3, true),
-('flashinput',         'Flash Input',         'フラッシュ入力',      '英単語を素早くタイピング', 'vocabulary',  '⚡', 'https://flashinput-winniek75s-projects.vercel.app', 4, false),
-('grammar-drill',      'Grammar Drill',       '文法ドリル',          '文法問題を繰り返し練習', 'grammar',     '📖', 'https://grammar-drill-winniek75s-projects.vercel.app', 5, false),
-('grammar-app',        'Grammar Classroom',   '文法クラスルーム',     '教室向け文法学習', 'grammar',     '🏫', 'https://grammar-app-winniek75s-projects.vercel.app', 6, false),
-('eiken-grammar-game', 'Eiken Grammar',       '英検文法',            '英検の文法問題に挑戦', 'grammar',     '🎯', 'https://eiken-grammar-game-winniek75s-projects.vercel.app', 7, false),
-('aredo-game',         'Aredo Quiz',          'アレドクイズ',        '文法クイズに挑戦', 'grammar',     '🧩', 'https://aredo-game-winniek75s-projects.vercel.app', 8, false),
-('phonics',            'Phonics Games',       'フォニックスゲーム',   '8種類のフォニックスゲーム', 'phonics',     '🔤', 'https://phonics-winniek75s-projects.vercel.app', 9, false),
-('phonics-battle',     'Phonics Battle',      'フォニックスバトル',   'フォニックスで対戦', 'phonics',     '🥊', 'https://phonics-battle-winniek75s-projects.vercel.app', 10, false),
-('Phonics-sounds',     'Phonics Sounds',      'フォニックスサウンド', '音を聴いて学ぶフォニックス', 'phonics',     '🔊', 'https://phonics-sounds-winniek75s-projects.vercel.app', 11, false),
-('sight-words-memory', 'Sight Words Memory',  'サイトワード記憶',    'サイトワードの記憶ゲーム', 'phonics',     '🧠', 'https://sight-words-memory-winniek75s-projects.vercel.app', 12, false),
-('instant-english-app','Instant English',     'インスタント英語',    'AI活用の英作文練習', 'writing',     '✍️', 'https://instant-english-app-winniek75s-projects.vercel.app', 13, false),
-('sentence-dash',      'Sentence Dash',       'センテンスダッシュ',   '文を素早く組み立てるゲーム', 'writing',     '🏃', 'https://sentence-dash-winniek75s-projects.vercel.app', 14, false),
-('wh-questiongame',    'WH Question Game',    'WH質問ゲーム',       'WH疑問文を学ぶクイズ', 'grammar',     '❓', 'https://wh-questiongame-winniek75s-projects.vercel.app', 15, false),
-('wise-english-floor', 'The Floor',           'ザ・フロア',          'フロア型英語ゲーム', 'mixed',       '🏢', 'https://wise-english-floor-winniek75s-projects.vercel.app', 16, false),
-('beat-word-crush',    'Beat Word Crush',     'ビートワードクラッシュ','リズムに合わせて英単語', 'vocabulary',  '🎵', 'https://beat-word-crush-winniek75s-projects.vercel.app', 17, false),
-('eiken-sns-app',      'Eiken SNS',           '英検SNS',            'SNS形式で英検学習', 'vocabulary',  '📱', 'https://eiken-sns-app-winniek75s-projects.vercel.app', 18, false),
-('eiken-challenge',    'Eiken Challenge',     '英検チャレンジ',      '英検の総合チャレンジ', 'vocabulary',  '🏆', 'https://eiken-challenge-winniek75s-projects.vercel.app', 19, false)
+('eiken-game',         'Eiken Quiz',                        '英検クイズ',          '英検5〜3級の語彙問題をアーケード形式で学習', 'eiken',   '📝', 'https://eiken-game-winniek75s-projects.vercel.app', 1, true),
+('fallingwordbattle',  'Falling Word Battle',               '落下ワードバトル',     '英検5〜2級の英単語が落下！正しい意味を素早く選択', 'eiken',   '⬇️', 'https://fallingwordbattle-winniek75s-projects.vercel.app', 2, true),
+('verbform-battle',    'To/Ing Battle',                     'to/ing判別バトル',    'to不定詞と動名詞(-ing)の使い分けを瞬時に判断', 'grammar',  '⚔️', 'https://verbform-battle-winniek75s-projects.vercel.app', 3, true),
+('flashinput',         'Flash Input',                       'フラッシュ入力',      '認知科学に基づく語彙インプット（画像・音声・文脈の5段階学習）', 'eiken',   '⚡', 'https://flashinput-winniek75s-projects.vercel.app', 4, false),
+('grammar-drill',      'Relative Clause & Participle Drill','関係詞・分詞ドリル',   '関係代名詞・関係副詞・分詞の108問ドリル（英検3級〜準2級）', 'grammar', '📖', 'https://grammar-drill-winniek75s-projects.vercel.app', 5, false),
+('grammar-app',        'Grammar Classroom',                 '文法クラスルーム',     '中学1〜3年の文法300問をライブレッスンで出題', 'grammar',  '🏫', 'https://grammar-app-winniek75s-projects.vercel.app', 6, false),
+('eiken-grammar-game', 'Tense & Passive Drill',             '時制・受動態ドリル',   '現在完了・過去形・受動態の文法問題に挑戦', 'grammar',  '🎯', 'https://eiken-grammar-game-winniek75s-projects.vercel.app', 7, false),
+('aredo-game',         'Are/Do Quiz',                       'Are/Do判別クイズ',    'be動詞(Are)と一般動詞(Do)の疑問文を瞬時に判別', 'grammar',  '🧩', 'https://aredo-game-winniek75s-projects.vercel.app', 8, false),
+('phonics',            'Phonics Games',                     'フォニックスゲーム',   '8種類のフォニックスゲーム', 'phonics',    '🔤', 'https://phonics-winniek75s-projects.vercel.app', 9, false),
+('phonics-battle',     'Phonics Battle',                    'フォニックスバトル',   'フォニックスで対戦', 'phonics',    '🥊', 'https://phonics-battle-winniek75s-projects.vercel.app', 10, false),
+('Phonics-sounds',     'Phonics Sounds',                    'フォニックスサウンド', '音を聴いて学ぶフォニックス', 'phonics',    '🔊', 'https://phonics-sounds-winniek75s-projects.vercel.app', 11, false),
+('sight-words-memory', 'Sight Words Memory',                'サイトワード記憶',    'サイトワードの記憶ゲーム', 'phonics',    '🧠', 'https://sight-words-memory-winniek75s-projects.vercel.app', 12, false),
+('instant-english-app','Instant English',                   'インスタント英語',    'AI活用の英作文練習', 'writing',    '✍️', 'https://instant-english-app-winniek75s-projects.vercel.app', 13, false),
+('sentence-dash',      'Sentence Dash',                     'センテンスダッシュ',   '文を素早く組み立てるゲーム', 'writing',    '🏃', 'https://sentence-dash-winniek75s-projects.vercel.app', 14, false),
+('wh-questiongame',    'WH Question Game',                  'WH質問ゲーム',       '13種類の疑問詞（What/Who/Where等）を画像付きで学習', 'grammar', '❓', 'https://wh-questiongame-winniek75s-projects.vercel.app', 15, false),
+('wise-english-floor', 'The Floor',                         'ザ・フロア',          'フロア型英語ゲーム', 'mixed',      '🏢', 'https://wise-english-floor-winniek75s-projects.vercel.app', 16, false),
+('beat-word-crush',    'Beat Word Crush',                   'ビートワードクラッシュ','リズムに合わせて英検語彙をタップ！ビートシンク型パズル', 'eiken', '🎵', 'https://beat-word-crush-winniek75s-projects.vercel.app', 17, false),
+('eiken-sns-app',      'Eiken SNS',                         '英検SNS',            'SNS風チャットで英検の文法200問＋語彙750問に挑戦', 'eiken',  '📱', 'https://eiken-sns-app-winniek75s-projects.vercel.app', 18, false),
+('eiken-challenge',    'Eiken Challenge',                    '英検チャレンジ',      '英検5〜3級の筆記＋リスニング模擬試験シミュレーター', 'eiken', '🏆', 'https://eiken-challenge-winniek75s-projects.vercel.app', 19, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- ========== assignments: homework / class game assignments ==========

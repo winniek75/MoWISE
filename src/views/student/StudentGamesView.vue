@@ -14,7 +14,7 @@ const activeCategory = ref('all')
 
 const categories = [
   { id: 'all', label: '全て' },
-  { id: 'vocabulary', label: '語彙' },
+  { id: 'eiken', label: '英検対策' },
   { id: 'grammar', label: '文法' },
   { id: 'phonics', label: 'フォニックス' },
   { id: 'writing', label: 'ライティング' },

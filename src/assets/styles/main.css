@@ -76,7 +76,7 @@
     @apply w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shrink-0;
     box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08);
   }
-  .game-icon.cat-vocabulary {
+  .game-icon.cat-eiken {
     background: linear-gradient(135deg, #6C5CE7 0%, #A78BFA 100%);
     box-shadow: 0 4px 16px rgba(108,92,231,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
   }

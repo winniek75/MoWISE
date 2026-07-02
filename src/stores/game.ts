@@ -66,7 +66,7 @@ export const useGameStore = defineStore('game', () => {
   })
 
   const categoryLabels: Record<string, string> = {
-    vocabulary: '語彙・単語',
+    eiken: '英検対策',
     grammar: '文法',
     phonics: 'フォニックス',
     writing: 'ライティング',
