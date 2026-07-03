@@ -26,7 +26,7 @@ const router = createRouter({
     { path: '/teacher/:classId/student/:studentId', name: 'TeacherStudent', component: () => import('@/views/teacher/TeacherStudentView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
 
     // ──── Reading（レベル別多読・spec v1.0）────
-    { path: '/reading', name: 'ReadingLibrary', component: () => import('@/views/reading/ReadingLibraryView.vue'), meta: { requiresAuth: true, requiresStudent: true } },
+    { path: '/reading', name: 'ReadingLibrary', component: () => import('@/views/reading/ReadingLibraryView.vue'), meta: { requiresAuth: true } },
     { path: '/reading/:bookId', name: 'ReadingBook', component: () => import('@/views/reading/ReadingBookView.vue'), meta: { requiresAuth: true, hideBottomNav: true } },
 
     // ──── Settings ────

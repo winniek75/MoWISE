@@ -80,6 +80,21 @@ function previewGame(url: string) {
     </header>
 
     <main class="max-w-5xl mx-auto px-5 py-6">
+      <!-- リーディング入口 -->
+      <div class="mb-6">
+        <button
+          @click="router.push({ name: 'ReadingLibrary' })"
+          class="w-full text-left bg-neo-card border border-white/[0.06] rounded-3xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform"
+        >
+          <span class="text-3xl">📖</span>
+          <div class="flex-1">
+            <p class="text-white text-sm font-title font-bold">リーディング</p>
+            <p class="text-white/30 text-[11px] font-title">レベル別に読む・聴く・クイズ（英検・TOEIC形式）</p>
+          </div>
+          <span class="text-white/30 text-sm">&rarr;</span>
+        </button>
+      </div>
+
       <div v-for="(games, category) in gameStore.gamesByCategory" :key="category" class="mb-8">
         <h2 class="neo-section-title">
           {{ gameStore.categoryLabels[category] || category }}
