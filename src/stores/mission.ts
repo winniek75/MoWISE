@@ -107,12 +107,15 @@ export const useMissionStore = defineStore('mission', () => {
     }
   }
 
-  async function claimReward(missionId: string): Promise<{ reward_type: string; reward_amount: number } | null> {
-    const { data, error } = await supabase.rpc('claim_mission_reward', { p_mission_id: missionId })
+  async function claimReward(udmId: string, userId: string): Promise<{ reward_type: string; reward_amount: number } | null> {
+    const m = todayMissions.value.find(m => m.id === udmId)
+    if (!m) return null
+    const { data, error } = await supabase.rpc('claim_mission_reward', {
+      p_user_id: userId,
+      p_mission_id: m.mission_id, // mission_definitions.id (TEXT)
+    })
     if (error) { console.error('[mission] claim:', error); return null }
-    // Update local state
-    const m = todayMissions.value.find(m => m.id === missionId)
-    if (m) m.reward_claimed = true
+    m.reward_claimed = true
     return data as { reward_type: string; reward_amount: number }
   }
 

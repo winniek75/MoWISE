@@ -59,6 +59,11 @@ async function handleComplete(payload: GameScorePayload) {
   if (payload.accuracy != null) {
     await missionStore.updateMissionProgress(auth.userId, 'accuracy_above', payload.accuracy)
   }
+  // Category mission
+  const category = game.value?.category
+  if (category) {
+    await missionStore.updateMissionProgress(auth.userId, 'play_category', 1, category)
+  }
 }
 
 function handleExit() {

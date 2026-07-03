@@ -38,10 +38,11 @@ function rewardIcon(type: string) {
   return type === 'tickets' ? '🎫' : '🪙'
 }
 
-async function handleClaimReward(missionId: string) {
-  claimingId.value = missionId
-  await missionStore.claimReward(missionId)
-  if (auth.userId) await auth.fetchUserRow(auth.userId)
+async function handleClaimReward(udmId: string) {
+  if (!auth.userId) return
+  claimingId.value = udmId
+  await missionStore.claimReward(udmId, auth.userId)
+  await auth.fetchUserRow(auth.userId)
   claimingId.value = null
 }
 

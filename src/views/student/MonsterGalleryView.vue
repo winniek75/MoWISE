@@ -207,7 +207,7 @@ function closeMonsterDetail() {
           {{ gachaAnimating ? 'ガチャ中...' : `ガチャを回す (1チケット)` }}
         </button>
         <p class="text-white/20 text-[10px] font-title mt-3">
-          ★ Normal 60% | ★★ Rare 25% | ★★★ SR 12% | ★★★★ Legend 3%
+          ★ Common 50% | ★★ Uncommon 30% | ★★★ Rare 15% | ★★★★ Legend 5%
         </p>
       </div>
     </div>
