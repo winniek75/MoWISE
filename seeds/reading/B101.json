@@ -1,0 +1,61 @@
+{
+  "book_no": "B101",
+  "level": 1,
+  "level_code": "seed",
+  "title": "Where Is Momo?",
+  "title_ja": "モモはどこ？",
+  "genre": "story",
+  "word_count": 46,
+  "pages": [
+    { "page_no": 1, "body": "This is my cat, Momo.", "image": "page_01.png" },
+    { "page_no": 2, "body": "Where is Momo?", "image": "page_02.png" },
+    { "page_no": 3, "body": "Momo is not in the box.", "image": "page_03.png" },
+    { "page_no": 4, "body": "Momo is not under the bed.", "image": "page_04.png" },
+    { "page_no": 5, "body": "Momo is not on the sofa.", "image": "page_05.png" },
+    { "page_no": 6, "body": "Momo is not in the garden.", "image": "page_06.png" },
+    { "page_no": 7, "body": "Look! Momo is on my bag!", "image": "page_07.png" },
+    { "page_no": 8, "body": "Momo, I love you!", "image": "page_08.png" }
+  ],
+  "quizzes": [
+    {
+      "question_no": 1,
+      "format": "match_picture",
+      "question": "Which is a cat?",
+      "choices": ["q1_a.png", "q1_b.png", "q1_c.png", "q1_d.png"],
+      "answer_index": 0,
+      "explanation_ja": "cat は「ねこ」。この本の主人公モモはねこです。"
+    },
+    {
+      "question_no": 2,
+      "format": "match_picture",
+      "question": "Which is a box?",
+      "choices": ["q2_a.png", "q2_b.png", "q2_c.png", "q2_d.png"],
+      "answer_index": 2,
+      "explanation_ja": "box は「はこ」。in the box で「はこの中に」という意味になります。"
+    },
+    {
+      "question_no": 3,
+      "format": "true_false",
+      "question": "Momo is in the box.",
+      "choices": ["True", "False"],
+      "answer_index": 1,
+      "explanation_ja": "モモは、はこの中に「いません」でした（Momo is not in the box.）。答えは False。"
+    },
+    {
+      "question_no": 4,
+      "format": "true_false",
+      "question": "Momo is on the bag.",
+      "choices": ["True", "False"],
+      "answer_index": 0,
+      "explanation_ja": "さいごのページで、モモはかばんの上（on my bag）にいました。答えは True。"
+    },
+    {
+      "question_no": 5,
+      "format": "true_false",
+      "question": "The cat's name is Momo.",
+      "choices": ["True", "False"],
+      "answer_index": 0,
+      "explanation_ja": "1ページ目に This is my cat, Momo. とあります。ねこの名前はモモです。"
+    }
+  ]
+}

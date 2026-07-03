@@ -42,6 +42,21 @@ onMounted(() => {
       <p class="text-white/25 text-xs font-title mt-0.5">{{ gameStore.catalog.length }} ゲーム</p>
     </header>
 
+    <!-- リーディング入口（レベル別多読） -->
+    <div class="px-5 mb-4">
+      <button
+        @click="router.push({ name: 'ReadingLibrary' })"
+        class="w-full text-left bg-neo-card border border-white/[0.06] rounded-3xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform"
+      >
+        <span class="text-3xl">📖</span>
+        <div class="flex-1">
+          <p class="text-white text-sm font-title font-bold">リーディング</p>
+          <p class="text-white/30 text-[11px] font-title">レベル別に読む・聴く・クイズ（英検・TOEIC形式）</p>
+        </div>
+        <span class="text-white/30 text-sm">→</span>
+      </button>
+    </div>
+
     <!-- Category filter -->
     <div class="px-5 mb-4 flex gap-2 overflow-x-auto no-scrollbar">
       <button
