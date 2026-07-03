@@ -1,18 +1,14 @@
 // ============================================================
-// stores/reading.ts - MoWISE Reading（レベル別多読）
-// spec: docs/mowise_reading_spec_v1.md
+// stores/reading.ts - MoWISE Reading (level-based extensive reading)
 // ============================================================
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/stores/auth'
 
-// NOTE: src/types/database.ts に reading_* テーブルが未反映のため、
-// 型再生成（supabase gen types）までの間は untyped クライアントでアクセスする
 const sb = supabase as any
 
-// Storage 公開URLベース（画像・音声）
 export const READING_STORAGE_BASE = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/reading`
-import { useAuthStore } from '@/stores/auth'
 
 export const READING_LEVELS = [
   { level: 1, code: 'seed',   name: 'Seed',   ja: '英検5級',   color: '#00FF88' },
@@ -24,58 +20,49 @@ export const READING_LEVELS = [
 ] as const
 
 export interface ReadingBook {
-  id: string
-  book_no: string
-  level: number
-  level_code: string
-  title: string
-  title_ja: string
-  genre: string
-  word_count: number
-  cover_url: string | null
-  is_free: boolean
-  sort_order: number
+  id: string; book_no: string; level: number; level_code: string
+  title: string; title_ja: string; genre: string; word_count: number
+  cover_url: string | null; is_free: boolean; sort_order: number
 }
-
 export interface ReadingPage {
-  id: string
-  page_no: number
-  body: string
-  image_url: string | null
-  audio_url: string | null
+  id: string; page_no: number; body: string; image_url: string | null; audio_url: string | null
 }
-
 export interface ReadingQuiz {
-  id: string
-  question_no: number
+  id: string; question_no: number
   format: 'match_picture' | 'true_false' | 'vocab_mc' | 'cloze_mc' | 'comprehension_mc'
-  question: string
-  choices: string[]
-  answer_index: number
-  explanation_ja: string
+  question: string; choices: string[]; answer_index: number; explanation_ja: string
 }
-
 export interface ReadingProgress {
-  book_id: string
-  status: 'reading' | 'read' | 'quiz_done'
-  quiz_score: number | null
-  quiz_attempts: number
-  listened: boolean
+  book_id: string; status: 'reading' | 'read' | 'quiz_done'
+  quiz_score: number | null; quiz_attempts: number; listened: boolean
+}
+export interface WeeklyStats {
+  week_label: string; books_read: number; pages_read: number; quiz_score_avg: number | null; recordings: number
+}
+export interface ReadingAssignment {
+  id: string; class_id: string; book_id: string; teacher_id: string
+  due_date: string | null; instructions: string | null
+  created_at: string; book?: ReadingBook
 }
 
-// XP ルール（spec §5）
 export const XP_READ = 10
 export const XP_LISTEN = 5
-export const XP_QUIZ_PASS = 20 // 5問中4問以上・初回のみ
+export const XP_QUIZ_PASS = 20
+export const XP_RECORDING = 5
 
 export const useReadingStore = defineStore('reading', () => {
   const books = ref<ReadingBook[]>([])
   const progress = ref<Record<string, ReadingProgress>>({})
   const loading = ref(false)
-
   const currentBook = ref<ReadingBook | null>(null)
   const currentPages = ref<ReadingPage[]>([])
   const currentQuizzes = ref<ReadingQuiz[]>([])
+  const weeklyStats = ref<WeeklyStats[]>([])
+  const assignments = ref<ReadingAssignment[]>([])
+
+  // === Teacher data ===
+  const studentProgress = ref<any[]>([])
+  const studentRecordings = ref<any[]>([])
 
   const booksByLevel = computed(() => {
     const map: Record<number, ReadingBook[]> = {}
@@ -90,44 +77,29 @@ export const useReadingStore = defineStore('reading', () => {
     const entries = Object.values(progress.value)
     const done = entries.filter(p => p.status === 'quiz_done')
     const scores = done.map(p => p.quiz_score ?? 0)
-    const perLevel: Record<number, { total: number; done: number }> = {}
-    for (const b of books.value) {
-      if (!perLevel[b.level]) perLevel[b.level] = { total: 0, done: 0 }
-      perLevel[b.level].total++
-      const p = progress.value[b.id]
-      if (p && p.status === 'quiz_done') perLevel[b.level].done++
-    }
     return {
       booksRead: entries.filter(p => p.status !== 'reading').length,
       quizDone: done.length,
       avgScore: scores.length ? Math.round((scores.reduce((a, c) => a + c, 0) / scores.length) * 10) / 10 : null,
-      perLevel,
     }
   })
 
+  // === Fetch functions ===
   async function fetchBooks() {
     loading.value = true
     try {
-      const { data, error } = await supabase
-        .from('reading_books')
-        .select('*')
-        .order('level')
-        .order('sort_order')
+      const { data, error } = await supabase.from('reading_books').select('*').order('level').order('sort_order')
       if (error) throw error
       books.value = (data ?? []) as ReadingBook[]
       await fetchProgress()
-    } catch (e) {
-      console.error('[reading] fetchBooks failed', e)
-    } finally {
-      loading.value = false
-    }
+    } catch (e) { console.error('[reading] fetchBooks', e) }
+    finally { loading.value = false }
   }
 
   async function fetchProgress() {
     const auth = useAuthStore()
     if (!auth.user?.id) return
-    const { data } = await supabase
-      .from('reading_progress')
+    const { data } = await supabase.from('reading_progress')
       .select('book_id, status, quiz_score, quiz_attempts, listened')
       .eq('user_id', auth.user.id)
     progress.value = {}
@@ -148,25 +120,18 @@ export const useReadingStore = defineStore('reading', () => {
         ...q,
         choices: Array.isArray(q.choices) ? q.choices : JSON.parse(q.choices as unknown as string),
       }))
-    } finally {
-      loading.value = false
-    }
+    } finally { loading.value = false }
   }
 
   async function addXp(amount: number) {
-    try {
-      await sb.rpc('reading_add_xp', { amount })
-    } catch (e) {
-      console.error('[reading] addXp failed', e)
-    }
+    try { await sb.rpc('reading_add_xp', { amount }) } catch (e) { console.error('[reading] addXp', e) }
   }
 
-  /** 読了マーク（初回のみXP+10） */
   async function markRead(bookId: string) {
     const auth = useAuthStore()
     if (!auth.user?.id) return
     const prev = progress.value[bookId]
-    if (prev && prev.status !== 'reading') return // 既に読了済み → 二重加算防止
+    if (prev && prev.status !== 'reading') return
     await sb.from('reading_progress').upsert(
       { user_id: auth.user.id, book_id: bookId, status: 'read', updated_at: new Date().toISOString() },
       { onConflict: 'user_id,book_id' },
@@ -175,7 +140,6 @@ export const useReadingStore = defineStore('reading', () => {
     await fetchProgress()
   }
 
-  /** 全ページ聴取（初回のみXP+5） */
   async function markListened(bookId: string) {
     const auth = useAuthStore()
     if (!auth.user?.id) return
@@ -189,7 +153,6 @@ export const useReadingStore = defineStore('reading', () => {
     await fetchProgress()
   }
 
-  /** クイズ結果保存。4問以上正解かつ初回合格ならXP+20。戻り値=今回XPを付与したか */
   async function submitQuiz(bookId: string, score: number): Promise<boolean> {
     const auth = useAuthStore()
     if (!auth.user?.id) return false
@@ -197,13 +160,10 @@ export const useReadingStore = defineStore('reading', () => {
     const firstPass = score >= 4 && (!prev || prev.status !== 'quiz_done' || (prev.quiz_score ?? 0) < 4)
     await sb.from('reading_progress').upsert(
       {
-        user_id: auth.user.id,
-        book_id: bookId,
-        status: 'quiz_done',
+        user_id: auth.user.id, book_id: bookId, status: 'quiz_done',
         quiz_score: Math.max(score, prev?.quiz_score ?? 0),
         quiz_attempts: (prev?.quiz_attempts ?? 0) + 1,
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        completed_at: new Date().toISOString(), updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id,book_id' },
     )
@@ -212,9 +172,89 @@ export const useReadingStore = defineStore('reading', () => {
     return firstPass
   }
 
+  // === Recording ===
+  async function saveRecording(bookId: string, blob: Blob, durationSec: number) {
+    const auth = useAuthStore()
+    if (!auth.user?.id) return
+    const path = `${auth.user.id}/${bookId}_${Date.now()}.webm`
+    const { error: uploadErr } = await supabase.storage.from('recordings').upload(path, blob)
+    if (uploadErr) { console.error('[recording] upload', uploadErr); return }
+    await sb.from('reading_recordings').insert({
+      user_id: auth.user.id, book_id: bookId, audio_path: path, duration_sec: durationSec,
+    })
+    await addXp(XP_RECORDING)
+  }
+
+  // === Weekly stats ===
+  async function fetchWeeklyStats() {
+    const auth = useAuthStore()
+    if (!auth.user?.id) return
+    const fourWeeksAgo = new Date(Date.now() - 28 * 86400000).toISOString()
+    const { data: progressData } = await sb.from('reading_progress')
+      .select('book_id, status, quiz_score, updated_at')
+      .eq('user_id', auth.user.id)
+      .gte('updated_at', fourWeeksAgo)
+    const { data: recordingData } = await sb.from('reading_recordings')
+      .select('id, created_at')
+      .eq('user_id', auth.user.id)
+      .gte('created_at', fourWeeksAgo)
+
+    const weeks: Record<string, WeeklyStats> = {}
+    const getWeek = (d: string) => {
+      const dt = new Date(d)
+      const start = new Date(dt)
+      start.setDate(dt.getDate() - dt.getDay())
+      return `${start.getMonth() + 1}/${start.getDate()}`
+    }
+    for (const p of (progressData ?? [])) {
+      const w = getWeek(p.updated_at)
+      if (!weeks[w]) weeks[w] = { week_label: w, books_read: 0, pages_read: 0, quiz_score_avg: null, recordings: 0 }
+      if (p.status !== 'reading') weeks[w].books_read++
+    }
+    for (const r of (recordingData ?? [])) {
+      const w = getWeek(r.created_at)
+      if (!weeks[w]) weeks[w] = { week_label: w, books_read: 0, pages_read: 0, quiz_score_avg: null, recordings: 0 }
+      weeks[w].recordings++
+    }
+    weeklyStats.value = Object.values(weeks).sort((a, b) => a.week_label.localeCompare(b.week_label))
+  }
+
+  // === Assignments (student view) ===
+  async function fetchMyAssignments() {
+    const auth = useAuthStore()
+    if (!auth.user?.id) return
+    const { data } = await sb.from('reading_assignments')
+      .select('*, reading_books(*)')
+      .order('created_at', { ascending: false })
+    assignments.value = (data ?? []).map((a: any) => ({ ...a, book: a.reading_books }))
+  }
+
+  // === Teacher functions ===
+  async function assignReading(classId: string, bookId: string, dueDate?: string, instructions?: string) {
+    const auth = useAuthStore()
+    if (!auth.user?.id) return
+    await sb.from('reading_assignments').insert({
+      class_id: classId, book_id: bookId, teacher_id: auth.user.id,
+      due_date: dueDate || null, instructions: instructions || null,
+    })
+  }
+
+  async function fetchStudentReadingProgress(classId: string) {
+    const { data } = await sb.rpc('get_class_reading_progress', { p_class_id: classId })
+    studentProgress.value = data ?? []
+  }
+
+  async function fetchStudentRecordings(classId: string) {
+    const { data } = await sb.rpc('get_class_reading_recordings', { p_class_id: classId })
+    studentRecordings.value = data ?? []
+  }
+
   return {
     books, progress, loading, currentBook, currentPages, currentQuizzes,
-    booksByLevel, stats,
+    booksByLevel, stats, weeklyStats, assignments,
+    studentProgress, studentRecordings,
     fetchBooks, fetchBook, markRead, markListened, submitQuiz,
+    saveRecording, fetchWeeklyStats, fetchMyAssignments,
+    assignReading, fetchStudentReadingProgress, fetchStudentRecordings,
   }
 })

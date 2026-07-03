@@ -83,13 +83,13 @@ function previewGame(url: string) {
       <!-- リーディング入口 -->
       <div class="mb-6">
         <button
-          @click="router.push({ name: 'ReadingLibrary' })"
+          @click="router.push({ name: 'TeacherReading' })"
           class="w-full text-left bg-neo-card border border-white/[0.06] rounded-3xl p-4 flex items-center gap-4 active:scale-[0.98] transition-transform"
         >
           <span class="text-3xl">📖</span>
           <div class="flex-1">
-            <p class="text-white text-sm font-title font-bold">リーディング</p>
-            <p class="text-white/30 text-[11px] font-title">レベル別に読む・聴く・クイズ（英検・TOEIC形式）</p>
+            <p class="text-white text-sm font-title font-bold">リーディング管理</p>
+            <p class="text-white/30 text-[11px] font-title">課題配信・生徒の進捗確認・音読録音チェック</p>
           </div>
           <span class="text-white/30 text-sm">&rarr;</span>
         </button>

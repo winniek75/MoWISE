@@ -24,6 +24,7 @@ const router = createRouter({
     { path: '/teacher/subscription', name: 'TeacherSubscription', component: () => import('@/views/teacher/TeacherSubscriptionView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
     { path: '/teacher/:classId', name: 'TeacherClass', component: () => import('@/views/teacher/TeacherClassView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
     { path: '/teacher/:classId/student/:studentId', name: 'TeacherStudent', component: () => import('@/views/teacher/TeacherStudentView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
+    { path: '/teacher/reading', name: 'TeacherReading', component: () => import('@/views/teacher/TeacherReadingView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },
 
     // ──── Reading（レベル別多読・spec v1.0）────
     { path: '/reading', name: 'ReadingLibrary', component: () => import('@/views/reading/ReadingLibraryView.vue'), meta: { requiresAuth: true } },
