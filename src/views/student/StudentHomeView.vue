@@ -120,7 +120,7 @@ onMounted(async () => {
         <span class="text-neon-orange text-sm">🔥</span>
         <span class="text-white/40 text-xs font-title">{{ missionStore.streakInfo.streak }}日連続ログイン</span>
         <span v-if="monsterStore.buddy" class="text-white/20 text-xs font-title ml-auto">
-          相棒: {{ monsterStore.buddy.species?.name_ja }} Lv.{{ monsterStore.buddy.level }}
+          相棒: {{ monsterStore.buddy.nickname || monsterStore.buddy.species?.name_ja }} Lv.{{ monsterStore.buddy.level }}
         </span>
       </div>
     </div>

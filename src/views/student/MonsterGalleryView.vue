@@ -37,6 +37,16 @@ const rarityBg: Record<number, string> = {
   4: 'bg-neon-pink/[0.06] border-neon-pink/20',
 }
 
+const animalEmoji: Record<string, string> = {
+  dog: '🐕', cat: '🐱', rabbit: '🐰', hamster: '🐹', turtle: '🐢', frog: '🐸', chick: '🐤', squirrel: '🐿️',
+  penguin: '🐧', dolphin: '🐬', panda: '🐼', owl: '🦉', fox: '🦊', koala: '🐨', otter: '🦦', deer: '🦌',
+  lion: '🦁', wolf: '🐺', eagle: '🦅', shark: '🦈', tiger: '🐯', bear: '🐻',
+  dragon: '🐉', phoenix: '🔥', unicorn: '🦄', griffin: '🦅',
+}
+function getEmoji(id?: string): string {
+  return id ? (animalEmoji[id] ?? '❓') : '❓'
+}
+
 onMounted(async () => {
   await Promise.all([
     monsterStore.fetchSpecies(),
@@ -94,7 +104,7 @@ function closeMonsterDetail() {
 <template>
   <div class="min-h-screen bg-bg-dark pb-28 safe-pt">
     <header class="px-5 pt-4 pb-3">
-      <h1 class="text-white text-xl font-title font-bold">モンスター図鑑</h1>
+      <h1 class="text-white text-xl font-title font-bold">どうぶつ図鑑</h1>
       <div class="flex items-center gap-3 mt-1">
         <span class="text-white/30 text-xs font-title">コレクション {{ monsterStore.collectionRate }}%</span>
         <span class="text-neon-yellow text-xs font-title">{{ userCoins }} コイン</span>
@@ -105,7 +115,7 @@ function closeMonsterDetail() {
     <!-- Tabs -->
     <div class="px-5 mb-4 flex gap-2">
       <button v-for="tab in [
-        { id: 'collection', label: 'コレクション' },
+        { id: 'collection', label: '仲間' },
         { id: 'gallery', label: '図鑑' },
         { id: 'gacha', label: 'ガチャ' },
       ]" :key="tab.id"
@@ -121,16 +131,16 @@ function closeMonsterDetail() {
     <div v-if="activeTab === 'collection'" class="px-5">
       <!-- Buddy display -->
       <div v-if="monsterStore.buddy" class="neo-card mb-4 text-center">
-        <p class="text-white/30 text-[10px] font-title mb-2">相棒モンスター</p>
+        <p class="text-white/30 text-[10px] font-title mb-2">相棒</p>
         <div class="w-20 h-20 mx-auto rounded-2xl bg-white/[0.04] flex items-center justify-center text-4xl mb-2">
-          {{ monsterStore.buddy.species?.name_ja?.charAt(0) ?? '?' }}
+          {{ getEmoji(monsterStore.buddy.species_id) }}
         </div>
         <p class="text-white font-title font-bold">{{ monsterStore.buddy.nickname || monsterStore.buddy.species?.name_ja }}</p>
         <p class="text-white/30 text-xs font-title">Lv.{{ monsterStore.buddy.level }} | Stage {{ monsterStore.buddy.stage }}</p>
       </div>
 
       <div v-if="monsterStore.myMonsters.length === 0" class="text-center py-12 text-white/25 text-sm font-title">
-        まだモンスターがいません。ガチャを回そう！
+        まだ仲間がいません。ガチャを回そう！
       </div>
 
       <div class="grid grid-cols-3 gap-3">
@@ -142,9 +152,10 @@ function closeMonsterDetail() {
           :class="[rarityBg[m.species?.rarity ?? 1], m.is_buddy ? '!border-neon-yellow/40' : '']"
         >
           <div class="w-12 h-12 mx-auto rounded-xl bg-white/[0.06] flex items-center justify-center text-2xl mb-1.5">
-            {{ m.species?.name_ja?.charAt(0) ?? '?' }}
+            {{ getEmoji(m.species_id) }}
           </div>
           <p class="text-white font-title font-semibold text-[11px] leading-tight">{{ m.species?.name_ja }}</p>
+          <p class="text-white/15 text-[9px] font-title">{{ m.species?.name_en }}</p>
           <p class="text-white/25 text-[9px] font-title mt-0.5">Lv.{{ m.level }}</p>
           <p :class="rarityColors[m.species?.rarity ?? 1]" class="text-[9px] font-title">{{ monsterStore.rarityStars(m.species?.rarity ?? 1) }}</p>
         </div>
@@ -161,11 +172,12 @@ function closeMonsterDetail() {
           :class="monsterStore.collectedSpeciesIds.has(sp.id) ? '' : 'opacity-40'"
         >
           <div class="w-12 h-12 mx-auto rounded-xl bg-white/[0.06] flex items-center justify-center text-2xl mb-1.5">
-            {{ monsterStore.collectedSpeciesIds.has(sp.id) ? sp.name_ja.charAt(0) : '?' }}
+            {{ monsterStore.collectedSpeciesIds.has(sp.id) ? getEmoji(sp.id) : '❓' }}
           </div>
           <p class="text-white font-title font-semibold text-[11px] leading-tight">
             {{ monsterStore.collectedSpeciesIds.has(sp.id) ? sp.name_ja : '???' }}
           </p>
+          <p v-if="monsterStore.collectedSpeciesIds.has(sp.id)" class="text-white/15 text-[9px] font-title">{{ sp.name_en }}</p>
           <p :class="rarityColors[sp.rarity]" class="text-[9px] font-title mt-0.5">
             {{ monsterStore.rarityStars(sp.rarity) }}
           </p>
@@ -177,7 +189,7 @@ function closeMonsterDetail() {
     <!-- Gacha tab -->
     <div v-if="activeTab === 'gacha'" class="px-5">
       <div class="neo-card text-center !py-8">
-        <p class="text-white/40 text-sm font-title mb-4">チケットを使ってモンスターをゲット！</p>
+        <p class="text-white/40 text-sm font-title mb-4">チケットを使って仲間をゲット！</p>
 
         <!-- Gacha animation area -->
         <div class="w-32 h-32 mx-auto rounded-full flex items-center justify-center mb-6 transition-all duration-500"
@@ -186,7 +198,7 @@ function closeMonsterDetail() {
             : 'bg-white/[0.04]'"
         >
           <span v-if="gachaAnimating" class="text-5xl animate-spin">🥚</span>
-          <span v-else-if="gachaResult" class="text-5xl">{{ gachaResult.name_ja?.charAt(0) }}</span>
+          <span v-else-if="gachaResult" class="text-5xl">{{ getEmoji(gachaResult.species_id) }}</span>
           <span v-else class="text-5xl">🎰</span>
         </div>
 
@@ -222,7 +234,7 @@ function closeMonsterDetail() {
         <div class="text-center mb-4">
           <div class="w-24 h-24 mx-auto rounded-2xl flex items-center justify-center text-5xl mb-3"
             :class="rarityBg[selectedMonster.species?.rarity ?? 1]">
-            {{ selectedMonster.species?.name_ja?.charAt(0) ?? '?' }}
+            {{ getEmoji(selectedMonster.species_id) }}
           </div>
           <h2 class="text-white font-title font-bold text-lg">
             {{ selectedMonster.nickname || selectedMonster.species?.name_ja }}

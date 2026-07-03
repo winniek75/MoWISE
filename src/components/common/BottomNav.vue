@@ -9,7 +9,7 @@ const auth = useAuthStore()
 const studentTabs = [
   { name: 'StudentHome', icon: 'home', label: 'ホーム' },
   { name: 'StudentGames', icon: 'games', label: 'ゲーム' },
-  { name: 'MonsterGallery', icon: 'monster', label: 'モンスター' },
+  { name: 'MonsterGallery', icon: 'monster', label: 'どうぶつ' },
   { name: 'Settings', icon: 'settings', label: '設定' },
 ]
 
