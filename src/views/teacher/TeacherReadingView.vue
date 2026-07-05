@@ -10,7 +10,7 @@ const router = useRouter()
 const readingStore = useReadingStore()
 const teacherStore = useTeacherStore()
 
-const activeTab = ref<'books' | 'assign' | 'progress' | 'recordings'>('books')
+const activeTab = ref<'books' | 'assign' | 'progress' | 'recordings' | 'preview'>('books')
 const selectedClassId = ref('')
 const selectedBookId = ref('')
 const assignDueDate = ref('')
@@ -22,6 +22,82 @@ const activeLevel = ref(0)
 const classProgress = ref<any[]>([])
 const classRecordings = ref<any[]>([])
 const loadingData = ref(false)
+
+// === Preview / Read-aloud tab state ===
+const previewBookId = ref('')
+const previewPageIndex = ref(0)
+const previewPlaying = ref(false)
+const previewPlaybackRate = ref(1)
+const previewHighlightWord = ref(-1)
+let previewAudioEl: HTMLAudioElement | null = null
+
+const previewPages = computed(() => readingStore.currentPages)
+const previewPage = computed(() => previewPages.value[previewPageIndex.value])
+const previewWords = computed(() => (previewPage.value?.body ?? '').split(/\s+/))
+const previewBookData = computed(() => readingStore.currentBook)
+
+async function openPreview(bookId: string) {
+  previewBookId.value = bookId
+  previewPageIndex.value = 0
+  activeTab.value = 'preview'
+  await readingStore.fetchBook(bookId)
+}
+
+function previewPlay() {
+  previewStop()
+  if (!previewPage.value) return
+  previewPlaying.value = true
+
+  if (previewPage.value.audio_url) {
+    previewAudioEl = new Audio(previewPage.value.audio_url)
+    previewAudioEl.playbackRate = previewPlaybackRate.value
+    previewAudioEl.onended = previewOnEnd
+    previewAudioEl.onerror = previewOnEnd
+    previewAudioEl.play().catch(previewOnEnd)
+    return
+  }
+  if (!('speechSynthesis' in window)) { previewOnEnd(); return }
+  const u = new SpeechSynthesisUtterance(previewPage.value.body)
+  u.lang = 'en-US'
+  u.rate = previewPlaybackRate.value * 0.85
+  u.onboundary = (e: SpeechSynthesisEvent) => {
+    if (e.name !== 'word') return
+    let acc = 0
+    for (let i = 0; i < previewWords.value.length; i++) {
+      if (e.charIndex <= acc + previewWords.value[i].length) { previewHighlightWord.value = i; break }
+      acc += previewWords.value[i].length + 1
+    }
+  }
+  u.onend = previewOnEnd
+  u.onerror = previewOnEnd
+  speechSynthesis.speak(u)
+}
+
+function previewOnEnd() {
+  previewPlaying.value = false
+  previewHighlightWord.value = -1
+}
+
+function previewStop() {
+  if (previewAudioEl) { previewAudioEl.pause(); previewAudioEl = null }
+  if ('speechSynthesis' in window) speechSynthesis.cancel()
+  previewPlaying.value = false
+  previewHighlightWord.value = -1
+}
+
+function previewSetRate(rate: number) {
+  previewPlaybackRate.value = rate
+  if (previewAudioEl) previewAudioEl.playbackRate = rate
+}
+
+function previewNext() {
+  previewStop()
+  if (previewPageIndex.value < previewPages.value.length - 1) previewPageIndex.value++
+}
+function previewPrev() {
+  previewStop()
+  if (previewPageIndex.value > 0) previewPageIndex.value--
+}
 
 function levelMeta(level: number) {
   return READING_LEVELS.find(l => l.level === level)!
@@ -123,10 +199,11 @@ onMounted(async () => {
       <div class="flex gap-1 mb-4 overflow-x-auto no-scrollbar">
         <button
           v-for="tab in [
-            { id: 'books', label: '📚 本の一覧' },
-            { id: 'assign', label: '📋 課題配信' },
-            { id: 'progress', label: '📊 生徒進捗' },
-            { id: 'recordings', label: '🎙 音読録音' },
+            { id: 'books', label: '📚 一覧' },
+            { id: 'preview', label: '👁 閲覧' },
+            { id: 'assign', label: '📋 配信' },
+            { id: 'progress', label: '📊 進捗' },
+            { id: 'recordings', label: '🎙 録音' },
           ] as const"
           :key="tab.id"
           @click="activeTab = tab.id"
@@ -195,13 +272,17 @@ onMounted(async () => {
             <!-- Action buttons -->
             <div class="flex gap-2 mt-3">
               <button
-                @click="previewBook(book.id)"
+                @click="openPreview(book.id)"
                 class="flex-1 py-2 rounded-xl bg-neo-gradient text-white text-xs font-title font-bold shadow-neo-sm active:scale-[0.98] transition-transform"
-              >中身を見る ▶</button>
+              >閲覧・音読 ▶</button>
+              <button
+                @click="previewBook(book.id)"
+                class="py-2 px-3 rounded-xl bg-bg-card border border-white/[0.06] text-white/60 text-xs font-title font-semibold active:scale-[0.98] transition-transform"
+              >全画面</button>
               <button
                 @click="assignBook(book.id)"
                 class="flex-1 py-2 rounded-xl bg-bg-card border border-white/[0.06] text-white/60 text-xs font-title font-semibold active:scale-[0.98] transition-transform"
-              >課題に配信</button>
+              >課題配信</button>
             </div>
           </div>
         </div>
@@ -306,6 +387,109 @@ onMounted(async () => {
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- ===== PREVIEW / READ-ALOUD TAB ===== -->
+      <div v-if="activeTab === 'preview'">
+        <div v-if="!previewBookId || !previewBookData" class="text-center py-12">
+          <p class="text-white/30 text-sm font-title mb-3">本の一覧から「閲覧・音読」をタップしてください</p>
+          <button @click="activeTab = 'books'" class="px-4 py-2 rounded-xl bg-neo-gradient text-white text-xs font-title font-bold">本の一覧へ</button>
+        </div>
+        <template v-else>
+          <!-- Book header -->
+          <div class="neo-card !p-3 mb-4">
+            <div class="flex items-center gap-3">
+              <div class="shrink-0 w-12 h-12 rounded-xl overflow-hidden bg-neo-card flex items-center justify-center">
+                <img v-if="previewBookData.cover_url" :src="previewBookData.cover_url" class="w-full h-full object-cover" />
+                <span v-else class="text-lg">📖</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-white text-sm font-title font-bold truncate">{{ previewBookData.title }}</p>
+                <p class="text-white/40 text-[10px] font-title">{{ previewBookData.title_ja }} &middot; {{ previewBookData.word_count }} words</p>
+              </div>
+              <p class="text-white/30 text-[11px] font-title">{{ previewPageIndex + 1 }}/{{ previewPages.length }}</p>
+            </div>
+          </div>
+
+          <!-- Page content -->
+          <div v-if="readingStore.loading" class="text-center py-8 text-white/30 text-sm font-title">読み込み中...</div>
+          <div v-else-if="previewPage" class="space-y-4">
+            <!-- Text display with karaoke -->
+            <div class="bg-[#1e1e40] rounded-2xl border border-white/[0.06] p-4">
+              <div class="flex gap-3">
+                <div v-if="previewPage.image_url" class="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-bg-card">
+                  <img :src="previewPage.image_url" class="w-full h-full object-cover" />
+                </div>
+                <div class="flex-1">
+                  <p class="text-white text-base leading-[1.9] font-title">
+                    <template v-for="(w, i) in previewWords" :key="i">
+                      <span
+                        class="transition-all duration-150 rounded px-0.5"
+                        :class="previewHighlightWord === i
+                          ? 'text-[#00CECE] bg-[#00CECE]/15 font-bold'
+                          : 'text-white/90'"
+                      >{{ w }}</span>{{ ' ' }}
+                    </template>
+                  </p>
+                </div>
+              </div>
+              <!-- Audio status -->
+              <div class="mt-3 pt-2 border-t border-white/[0.06] flex items-center gap-2">
+                <span class="text-[9px] font-title text-white/30">音声:</span>
+                <span v-if="previewPage.audio_url" class="text-[9px] font-title text-neon-green">アップロード済み</span>
+                <span v-else class="text-[9px] font-title text-white/20">未設定（TTS使用）</span>
+              </div>
+            </div>
+
+            <!-- Audio controls -->
+            <div class="flex items-center justify-center gap-3">
+              <div class="flex gap-1">
+                <button
+                  v-for="rate in [0.7, 1, 1.3]"
+                  :key="rate"
+                  @click="previewSetRate(rate)"
+                  class="px-2 py-1 rounded-lg text-[10px] font-title font-bold transition-all"
+                  :class="previewPlaybackRate === rate
+                    ? 'bg-brand-secondary/20 text-brand-secondary'
+                    : 'text-white/30'"
+                >{{ rate }}x</button>
+              </div>
+              <button
+                @click="previewPlaying ? previewStop() : previewPlay()"
+                class="w-12 h-12 rounded-full bg-neo-gradient shadow-neo-md flex items-center justify-center text-white text-lg active:scale-95 transition-transform"
+              >{{ previewPlaying ? '⏸' : '▶' }}</button>
+            </div>
+
+            <!-- Page navigation -->
+            <div class="flex gap-2">
+              <button
+                v-if="previewPageIndex > 0"
+                @click="previewPrev"
+                class="flex-1 py-2.5 rounded-xl bg-bg-card border border-white/[0.06] text-white/50 text-xs font-title font-semibold"
+              >← まえ</button>
+              <button
+                v-if="previewPageIndex < previewPages.length - 1"
+                @click="previewNext"
+                class="flex-1 py-2.5 rounded-xl bg-neo-gradient text-white text-xs font-title font-bold shadow-neo-sm"
+              >つぎ →</button>
+              <button
+                v-else
+                @click="previewBook(previewBookId)"
+                class="flex-1 py-2.5 rounded-xl bg-neo-gradient text-white text-xs font-title font-bold shadow-neo-sm"
+              >全画面で音読・クイズ →</button>
+            </div>
+
+            <!-- Page dots -->
+            <div class="flex justify-center gap-1">
+              <span
+                v-for="i in previewPages.length"
+                :key="i"
+                class="w-1.5 h-1.5 rounded-full transition-colors"
+                :class="i - 1 === previewPageIndex ? 'bg-brand-secondary' : 'bg-white/15'"
+              />
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- ===== RECORDINGS TAB ===== -->

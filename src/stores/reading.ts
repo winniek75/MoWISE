@@ -185,6 +185,21 @@ export const useReadingStore = defineStore('reading', () => {
     await addXp(XP_RECORDING)
   }
 
+  // === Teacher model recording (saved as page audio for students to hear) ===
+  async function saveModelRecording(bookId: string, pageIndex: number, blob: Blob, _durationSec: number) {
+    const auth = useAuthStore()
+    if (!auth.user?.id) return
+    const page = currentPages.value[pageIndex]
+    if (!page) return
+    const bookNo = currentBook.value?.book_no ?? bookId
+    const path = `${bookNo}/model_p${page.page_no}_${Date.now()}.webm`
+    const { error: uploadErr } = await supabase.storage.from('reading').upload(path, blob)
+    if (uploadErr) { console.error('[model-recording] upload', uploadErr); return }
+    const audioUrl = `${READING_STORAGE_BASE}/${path}`
+    await sb.from('reading_pages').update({ audio_url: audioUrl }).eq('id', page.id)
+    currentPages.value[pageIndex] = { ...page, audio_url: audioUrl }
+  }
+
   // === Weekly stats ===
   async function fetchWeeklyStats() {
     const auth = useAuthStore()
@@ -254,7 +269,7 @@ export const useReadingStore = defineStore('reading', () => {
     booksByLevel, stats, weeklyStats, assignments,
     studentProgress, studentRecordings,
     fetchBooks, fetchBook, markRead, markListened, submitQuiz,
-    saveRecording, fetchWeeklyStats, fetchMyAssignments,
+    saveRecording, saveModelRecording, fetchWeeklyStats, fetchMyAssignments,
     assignReading, fetchStudentReadingProgress, fetchStudentRecordings,
   }
 })

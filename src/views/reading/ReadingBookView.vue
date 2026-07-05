@@ -12,6 +12,7 @@ const router = useRouter()
 const store = useReadingStore()
 const auth = useAuthStore()
 const bookId = route.params.bookId as string
+const isTeacher = computed(() => auth.isTeacher)
 
 // === Section management ===
 const section = ref<'dictation' | 'reading' | 'quiz'>('dictation')
@@ -77,7 +78,7 @@ function onPlayEnd() {
     setTimeout(() => play(), 500)
     return
   }
-  if (listenedPages.value.size >= store.currentPages.length && store.currentPages.length > 0) {
+  if (!isTeacher.value && listenedPages.value.size >= store.currentPages.length && store.currentPages.length > 0) {
     store.markListened(bookId)
   }
 }
@@ -101,6 +102,9 @@ let recordingInterval: ReturnType<typeof setInterval> | null = null
 let mediaRecorder: MediaRecorder | null = null
 let recordedChunks: Blob[] = []
 
+// Teacher model recording state
+const teacherRecordingSaved = ref(false)
+
 async function toggleRecording() {
   if (isRecording.value) {
     stopRecording()
@@ -114,7 +118,13 @@ async function toggleRecording() {
     mediaRecorder.onstop = async () => {
       stream.getTracks().forEach(t => t.stop())
       const blob = new Blob(recordedChunks, { type: 'audio/webm' })
-      await store.saveRecording(bookId, blob, recordingTime.value)
+      if (isTeacher.value) {
+        await store.saveModelRecording(bookId, pageIndex.value, blob, recordingTime.value)
+        teacherRecordingSaved.value = true
+        setTimeout(() => { teacherRecordingSaved.value = false }, 2000)
+      } else {
+        await store.saveRecording(bookId, blob, recordingTime.value)
+      }
     }
     mediaRecorder.start()
     isRecording.value = true
@@ -154,12 +164,24 @@ function onTouchEnd(e: TouchEvent) {
   if (dx > 50) prevPage()
 }
 
+// === Navigation (role-aware) ===
+function goBack() {
+  stop()
+  if (isTeacher.value) {
+    router.push({ name: 'TeacherReading' })
+  } else {
+    router.push({ name: 'ReadingLibrary' })
+  }
+}
+
 // === Quiz ===
 async function startQuiz() {
   stop()
-  const alreadyRead = store.progress[bookId] && store.progress[bookId].status !== 'reading'
-  await store.markRead(bookId)
-  if (!alreadyRead) xpEarned.value += XP_READ
+  if (!isTeacher.value) {
+    const alreadyRead = store.progress[bookId] && store.progress[bookId].status !== 'reading'
+    await store.markRead(bookId)
+    if (!alreadyRead) xpEarned.value += XP_READ
+  }
   section.value = 'quiz'
   quizIndex.value = 0
   correctCount.value = 0
@@ -179,8 +201,10 @@ async function nextQuiz() {
     quizIndex.value++
     return
   }
-  const passedFirst = await store.submitQuiz(bookId, correctCount.value)
-  if (passedFirst) xpEarned.value += XP_QUIZ_PASS
+  if (!isTeacher.value) {
+    const passedFirst = await store.submitQuiz(bookId, correctCount.value)
+    if (passedFirst) xpEarned.value += XP_QUIZ_PASS
+  }
   quizDone.value = true
 }
 
@@ -205,8 +229,9 @@ onBeforeUnmount(() => { stop(); stopRecording() })
   <div class="h-screen bg-bg-dark flex flex-col overflow-hidden safe-pt">
     <!-- Header -->
     <header class="shrink-0 px-4 pt-3 pb-2 flex items-center gap-2">
-      <button @click="stop(); router.push({ name: 'ReadingLibrary' })" class="text-white/40 text-xs font-title">← 戻る</button>
+      <button @click="goBack()" class="text-white/40 text-xs font-title">← 戻る</button>
       <p class="flex-1 text-white text-sm font-title font-bold truncate text-center">{{ store.currentBook?.title }}</p>
+      <span v-if="isTeacher" class="shrink-0 px-2 py-0.5 rounded-full bg-brand-accent/20 text-brand-accent text-[9px] font-title font-bold">講師モード</span>
       <p v-if="section !== 'quiz'" class="text-white/30 text-[11px] font-title">{{ pageIndex + 1 }}/{{ totalPages }}</p>
       <p v-else class="text-white/30 text-[11px] font-title">Q{{ quizIndex + 1 }}/{{ store.currentQuizzes.length }}</p>
     </header>
@@ -368,7 +393,12 @@ onBeforeUnmount(() => { stop(); stopRecording() })
           <p v-if="isRecording" class="text-red-400 text-xs font-title font-bold">
             録音中 {{ formatTime(recordingTime) }}
           </p>
-          <p v-else class="text-white/25 text-[10px] font-title">タップして音読を録音</p>
+          <p v-else-if="teacherRecordingSaved" class="text-neon-green text-xs font-title font-bold">
+            お手本音声を保存しました
+          </p>
+          <p v-else class="text-white/25 text-[10px] font-title">
+            {{ isTeacher ? 'お手本音読を録音（生徒に公開）' : 'タップして音読を録音' }}
+          </p>
         </div>
 
         <!-- Page navigation -->
@@ -392,10 +422,13 @@ onBeforeUnmount(() => { stop(); stopRecording() })
       <div v-if="quizDone" class="flex-1 flex flex-col items-center justify-center px-5 animate-pop-in">
         <p class="text-5xl mb-3">{{ correctCount >= 4 ? '🎉' : '💪' }}</p>
         <p class="text-white text-xl font-title font-bold mb-1">{{ correctCount }} / {{ store.currentQuizzes.length }} 正解</p>
-        <p class="text-white/40 text-sm font-title mb-4">
+        <p v-if="isTeacher" class="text-white/40 text-sm font-title mb-4">
+          クイズの確認完了
+        </p>
+        <p v-else class="text-white/40 text-sm font-title mb-4">
           {{ correctCount >= 4 ? 'すばらしい！合格です' : 'もう一度チャレンジしよう' }}
         </p>
-        <div v-if="xpEarned > 0" class="px-4 py-1.5 rounded-full bg-neo-gradient shadow-neo-md mb-6">
+        <div v-if="xpEarned > 0 && !isTeacher" class="px-4 py-1.5 rounded-full bg-neo-gradient shadow-neo-md mb-6">
           <p class="text-white text-sm font-title font-bold">+{{ xpEarned }} XP</p>
         </div>
         <div class="w-full flex flex-col gap-2 px-4">
@@ -404,9 +437,9 @@ onBeforeUnmount(() => { stop(); stopRecording() })
             class="w-full py-3 rounded-xl bg-bg-card border border-white/[0.06] text-white/60 text-sm font-title"
           >もう一度読む</button>
           <button
-            @click="router.push({ name: 'ReadingLibrary' })"
+            @click="goBack()"
             class="w-full py-3 rounded-xl bg-neo-gradient text-white text-sm font-title font-bold shadow-neo-sm"
-          >ライブラリへ戻る</button>
+          >{{ isTeacher ? 'リーディング管理へ戻る' : 'ライブラリへ戻る' }}</button>
         </div>
       </div>
 
