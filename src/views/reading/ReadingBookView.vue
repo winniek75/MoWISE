@@ -3,6 +3,7 @@ import { onMounted, onBeforeUnmount, ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useReadingStore, XP_READ, XP_QUIZ_PASS } from '@/stores/reading'
 import { useAuthStore } from '@/stores/auth'
+import { speakText, stopCurrent } from '@/composables/useMowiseAudio'
 import MatchPictureQuiz from '@/components/reading/MatchPictureQuiz.vue'
 import TrueFalseQuiz from '@/components/reading/TrueFalseQuiz.vue'
 import MultipleChoiceQuiz from '@/components/reading/MultipleChoiceQuiz.vue'
@@ -39,36 +40,26 @@ let audioEl: HTMLAudioElement | null = null
 
 const words = computed(() => (page.value?.body ?? '').split(/\s+/))
 
-function play() {
+async function play() {
   stop()
   if (!page.value) return
   playing.value = true
   listenedPages.value.add(page.value.page_no)
 
-  if (page.value.audio_url) {
-    audioEl = new Audio(page.value.audio_url)
-    audioEl.playbackRate = playbackRate.value
-    audioEl.onended = onPlayEnd
-    audioEl.onerror = onPlayEnd
-    audioEl.play().catch(onPlayEnd)
-    return
-  }
-  if (!('speechSynthesis' in window)) { onPlayEnd(); return }
-  const u = new SpeechSynthesisUtterance(page.value.body)
-  u.lang = 'en-US'
-  u.rate = playbackRate.value * 0.85
-  let wordIdx = 0
-  u.onboundary = (e) => {
-    if (e.name !== 'word') return
-    let acc = 0
-    for (let i = 0; i < words.value.length; i++) {
-      if (e.charIndex <= acc + words.value[i].length) { highlightWord.value = i; break }
-      acc += words.value[i].length + 1
-    }
-  }
-  u.onend = onPlayEnd
-  u.onerror = onPlayEnd
-  speechSynthesis.speak(u)
+  await speakText(page.value.body, {
+    rate: playbackRate.value,
+    audioUrl: page.value.audio_url,
+    onBoundary: (e) => {
+      if (e.name !== 'word') return
+      let acc = 0
+      for (let i = 0; i < words.value.length; i++) {
+        if (e.charIndex <= acc + words.value[i].length) { highlightWord.value = i; break }
+        acc += words.value[i].length + 1
+      }
+    },
+    onEnd: onPlayEnd,
+    onError: onPlayEnd,
+  })
 }
 
 function onPlayEnd() {
@@ -84,8 +75,8 @@ function onPlayEnd() {
 }
 
 function stop() {
-  if (audioEl) { audioEl.pause(); audioEl = null }
-  if ('speechSynthesis' in window) speechSynthesis.cancel()
+  stopCurrent()
+  audioEl = null
   playing.value = false
   highlightWord.value = -1
 }

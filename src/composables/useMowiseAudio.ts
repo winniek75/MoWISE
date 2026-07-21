@@ -15,6 +15,57 @@ const AUDIO_BUCKET = 'mowise-audio'
 let currentAudio: HTMLAudioElement | null = null
 let currentUtterance: SpeechSynthesisUtterance | null = null
 
+// ─────────────────────────────────────────────
+// ネイティブ英語音声の選択（A-1）
+// ─────────────────────────────────────────────
+
+let cachedNativeVoice: SpeechSynthesisVoice | null = null
+let voicesLoaded = false
+
+/**
+ * 端末内から最良のネイティブ英語音声を選ぶ。
+ * 優先順位（上ほど自然なネイティブ発音）:
+ *   1. Google US English（Android Chrome / PC Chrome）
+ *   2. Samantha（iOS/macOS の高品質 en-US）
+ *   3. Microsoft の en-US Natural / Online 系（Windows Edge）
+ *   4. localService=false のクラウド en-US 音声
+ *   5. lang が en-US の任意の音声
+ *   6. lang が en で始まる任意の音声
+ */
+function pickNativeEnglishVoice(): SpeechSynthesisVoice | null {
+  if (cachedNativeVoice) return cachedNativeVoice
+  const voices = window.speechSynthesis.getVoices()
+  if (!voices.length) return null
+
+  const byName = (patterns: RegExp[]) =>
+    voices.find(v => patterns.some(p => p.test(v.name)) && v.lang.startsWith('en'))
+
+  cachedNativeVoice =
+    byName([/Google US English/i]) ??
+    byName([/Samantha/i]) ??
+    byName([/Microsoft.*(Natural|Online).*(en-US|English.*United States)/i]) ??
+    voices.find(v => v.lang === 'en-US' && !v.localService) ??
+    voices.find(v => v.lang === 'en-US') ??
+    voices.find(v => v.lang.startsWith('en')) ??
+    null
+  return cachedNativeVoice
+}
+
+/** voiceschanged は非同期発火するため、初回ロードを保証する */
+function ensureVoicesLoaded(): Promise<void> {
+  if (voicesLoaded || !('speechSynthesis' in window)) return Promise.resolve()
+  return new Promise(resolve => {
+    const done = () => { voicesLoaded = true; resolve() }
+    if (window.speechSynthesis.getVoices().length) { done(); return }
+    window.speechSynthesis.addEventListener('voiceschanged', done, { once: true })
+    setTimeout(done, 1500) // Safari等でイベントが来ない場合の保険
+  })
+}
+
+// ─────────────────────────────────────────────
+// Storage
+// ─────────────────────────────────────────────
+
 /**
  * Supabase Storage のファイルURLを組み立てる
  */
@@ -47,20 +98,27 @@ function tryPlayFromStorage(filename: string): Promise<boolean> {
   })
 }
 
+// ─────────────────────────────────────────────
+// Web Speech API（ネイティブ音声選択付き）
+// ─────────────────────────────────────────────
+
 /**
- * Web Speech API で読み上げ
+ * Web Speech API で読み上げ（ネイティブ英語音声を自動選択）
  */
-function speakWithWebSpeech(
+async function speakWithWebSpeech(
   text: string,
   options: { rate?: number; pitch?: number; lang?: string } = {},
-): void {
+): Promise<void> {
   if (!('speechSynthesis' in window)) return
+  await ensureVoicesLoaded()
   stopCurrent()
 
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = options.lang ?? 'en-US'
   utterance.rate = options.rate ?? 1.0
   utterance.pitch = options.pitch ?? 1.0
+  const voice = pickNativeEnglishVoice()
+  if (voice) utterance.voice = voice
   currentUtterance = utterance
   window.speechSynthesis.speak(utterance)
 }
@@ -102,7 +160,55 @@ export async function playAudio(
     if (played) return
   }
   // 2. フォールバック: Web Speech API
-  speakWithWebSpeech(text, options)
+  await speakWithWebSpeech(text, options)
+}
+
+/**
+ * テキスト読み上げ（Reading用）
+ * boundary/endコールバック付きで単語ハイライト対応。
+ * audio_url がある場合はそちらを優先再生。
+ */
+export async function speakText(
+  text: string,
+  options: {
+    rate?: number
+    audioUrl?: string
+    onBoundary?: (e: SpeechSynthesisEvent) => void
+    onEnd?: () => void
+    onError?: () => void
+  } = {},
+): Promise<{ utterance?: SpeechSynthesisUtterance; audio?: HTMLAudioElement }> {
+  stopCurrent()
+
+  // 1. audio_url がある場合はそちらを再生
+  if (options.audioUrl) {
+    const audio = new Audio(options.audioUrl)
+    audio.playbackRate = options.rate ?? 1.0
+    audio.onended = () => options.onEnd?.()
+    audio.onerror = () => (options.onError ?? options.onEnd)?.()
+    currentAudio = audio
+    await audio.play().catch(() => (options.onError ?? options.onEnd)?.())
+    return { audio }
+  }
+
+  // 2. Web Speech API
+  if (!('speechSynthesis' in window)) {
+    options.onEnd?.()
+    return {}
+  }
+  await ensureVoicesLoaded()
+
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'en-US'
+  utterance.rate = (options.rate ?? 1.0) * 0.85
+  const voice = pickNativeEnglishVoice()
+  if (voice) utterance.voice = voice
+  if (options.onBoundary) utterance.onboundary = options.onBoundary
+  utterance.onend = () => options.onEnd?.()
+  utterance.onerror = () => (options.onError ?? options.onEnd)?.()
+  currentUtterance = utterance
+  window.speechSynthesis.speak(utterance)
+  return { utterance }
 }
 
 /**

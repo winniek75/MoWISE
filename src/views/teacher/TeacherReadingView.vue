@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useReadingStore, READING_LEVELS } from '@/stores/reading'
 import { useTeacherStore } from '@/stores/teacher'
 import { supabase } from '@/lib/supabase'
+import { speakText, stopCurrent } from '@/composables/useMowiseAudio'
 import BottomNav from '@/components/common/BottomNav.vue'
 
 const router = useRouter()
@@ -43,34 +44,25 @@ async function openPreview(bookId: string) {
   await readingStore.fetchBook(bookId)
 }
 
-function previewPlay() {
+async function previewPlay() {
   previewStop()
   if (!previewPage.value) return
   previewPlaying.value = true
 
-  if (previewPage.value.audio_url) {
-    previewAudioEl = new Audio(previewPage.value.audio_url)
-    previewAudioEl.playbackRate = previewPlaybackRate.value
-    previewAudioEl.onended = previewOnEnd
-    previewAudioEl.onerror = previewOnEnd
-    previewAudioEl.play().catch(previewOnEnd)
-    return
-  }
-  if (!('speechSynthesis' in window)) { previewOnEnd(); return }
-  const u = new SpeechSynthesisUtterance(previewPage.value.body)
-  u.lang = 'en-US'
-  u.rate = previewPlaybackRate.value * 0.85
-  u.onboundary = (e: SpeechSynthesisEvent) => {
-    if (e.name !== 'word') return
-    let acc = 0
-    for (let i = 0; i < previewWords.value.length; i++) {
-      if (e.charIndex <= acc + previewWords.value[i].length) { previewHighlightWord.value = i; break }
-      acc += previewWords.value[i].length + 1
-    }
-  }
-  u.onend = previewOnEnd
-  u.onerror = previewOnEnd
-  speechSynthesis.speak(u)
+  await speakText(previewPage.value.body, {
+    rate: previewPlaybackRate.value,
+    audioUrl: previewPage.value.audio_url,
+    onBoundary: (e: SpeechSynthesisEvent) => {
+      if (e.name !== 'word') return
+      let acc = 0
+      for (let i = 0; i < previewWords.value.length; i++) {
+        if (e.charIndex <= acc + previewWords.value[i].length) { previewHighlightWord.value = i; break }
+        acc += previewWords.value[i].length + 1
+      }
+    },
+    onEnd: previewOnEnd,
+    onError: previewOnEnd,
+  })
 }
 
 function previewOnEnd() {
@@ -79,8 +71,8 @@ function previewOnEnd() {
 }
 
 function previewStop() {
-  if (previewAudioEl) { previewAudioEl.pause(); previewAudioEl = null }
-  if ('speechSynthesis' in window) speechSynthesis.cancel()
+  stopCurrent()
+  previewAudioEl = null
   previewPlaying.value = false
   previewHighlightWord.value = -1
 }
