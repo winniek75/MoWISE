@@ -82,56 +82,60 @@ export const useStudentStore = defineStore('student', () => {
 
   async function fetchMyAssignments(userId: string) {
     loading.value = true
-    // Get user's class IDs
-    const { data: memberships } = await supabase
-      .from('class_members')
-      .select('class_id')
-      .eq('user_id', userId)
-      .eq('status', 'approved')
-    if (!memberships || memberships.length === 0) {
-      myAssignments.value = []
-      loading.value = false
-      return
-    }
-    const classIds = memberships.map(m => m.class_id)
-
-    // Fetch assignments with game info
-    const { data, error } = await supabase
-      .from('assignments')
-      .select('*, game_catalog!game_id(title_ja, icon, url), classes!class_id(class_name)')
-      .in('class_id', classIds)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-    if (error) { console.error('[student] fetchAssignments:', error); loading.value = false; return }
-
-    // Get my scores for these assignments
-    const assignmentIds = (data ?? []).map(a => a.id)
-    let myScores: Record<string, { score: number; completed: boolean }> = {}
-    if (assignmentIds.length > 0) {
-      const { data: scores } = await supabase
-        .from('game_scores')
-        .select('assignment_id, score, completed')
+    try {
+      // Get user's class IDs
+      const { data: memberships } = await supabase
+        .from('class_members')
+        .select('class_id')
         .eq('user_id', userId)
-        .in('assignment_id', assignmentIds)
-      if (scores) {
-        for (const s of scores) {
-          if (!myScores[s.assignment_id] || s.score > myScores[s.assignment_id].score) {
-            myScores[s.assignment_id] = { score: s.score, completed: s.completed }
+        .eq('status', 'approved')
+      if (!memberships || memberships.length === 0) {
+        myAssignments.value = []
+        return
+      }
+      const classIds = memberships.map(m => m.class_id)
+
+      // Fetch assignments with game info
+      const { data, error } = await supabase
+        .from('assignments')
+        .select('*, game_catalog!game_id(title_ja, icon, url), classes!class_id(class_name)')
+        .in('class_id', classIds)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+      if (error) { console.error('[student] fetchAssignments:', error); return }
+
+      // Get my scores for these assignments
+      const assignmentIds = (data ?? []).map(a => a.id)
+      let myScores: Record<string, { score: number; completed: boolean }> = {}
+      if (assignmentIds.length > 0) {
+        const { data: scores } = await supabase
+          .from('game_scores')
+          .select('assignment_id, score, completed')
+          .eq('user_id', userId)
+          .in('assignment_id', assignmentIds)
+        if (scores) {
+          for (const s of scores) {
+            if (!myScores[s.assignment_id] || s.score > myScores[s.assignment_id].score) {
+              myScores[s.assignment_id] = { score: s.score, completed: s.completed }
+            }
           }
         }
       }
-    }
 
-    myAssignments.value = (data ?? []).map(a => ({
-      ...a,
-      game_title_ja: (a as any).game_catalog?.title_ja,
-      game_icon: (a as any).game_catalog?.icon,
-      game_url: (a as any).game_catalog?.url,
-      class_name: (a as any).classes?.class_name,
-      my_best_score: myScores[a.id]?.score,
-      my_completed: myScores[a.id]?.completed ?? false,
-    }))
-    loading.value = false
+      myAssignments.value = (data ?? []).map(a => ({
+        ...a,
+        game_title_ja: (a as any).game_catalog?.title_ja,
+        game_icon: (a as any).game_catalog?.icon,
+        game_url: (a as any).game_catalog?.url,
+        class_name: (a as any).classes?.class_name,
+        my_best_score: myScores[a.id]?.score,
+        my_completed: myScores[a.id]?.completed ?? false,
+      }))
+    } catch (e) {
+      console.error('[student] fetchMyAssignments:', e)
+    } finally {
+      loading.value = false
+    }
   }
 
   async function fetchClassLeaderboard(classId: string) {

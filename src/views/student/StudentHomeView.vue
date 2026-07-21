@@ -48,17 +48,21 @@ async function handleClaimReward(udmId: string) {
 
 onMounted(async () => {
   if (auth.userId) {
-    await Promise.all([
-      student.fetchMyAssignments(auth.userId),
-      student.fetchMyClasses(auth.userId),
-      missionStore.fetchTodayMissions(auth.userId),
-      monsterStore.fetchMyMonsters(),
-    ])
-    // Update login streak
-    const streak = await missionStore.updateLoginStreak(auth.userId)
-    if (streak?.milestone) streakReward.value = streak
-    // Refresh user data for updated coins/tickets
-    await auth.fetchUserRow(auth.userId)
+    try {
+      await Promise.all([
+        student.fetchMyAssignments(auth.userId),
+        student.fetchMyClasses(auth.userId),
+        missionStore.fetchTodayMissions(auth.userId),
+        monsterStore.fetchMyMonsters(),
+      ])
+      // Update login streak
+      const streak = await missionStore.updateLoginStreak(auth.userId)
+      if (streak?.milestone) streakReward.value = streak
+      // Refresh user data for updated coins/tickets
+      await auth.fetchUserRow(auth.userId)
+    } catch (e) {
+      console.error('[StudentHome] onMounted error:', e)
+    }
   }
 })
 </script>

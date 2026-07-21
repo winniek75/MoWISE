@@ -53,19 +53,25 @@ export const useMissionStore = defineStore('mission', () => {
 
   async function fetchTodayMissions(userId: string) {
     loading.value = true
-    // Generate if not exists, then fetch
-    const { data } = await supabase.rpc('generate_daily_missions', { p_user_id: userId })
-    if (data) {
-      // Re-fetch with joined definitions
-      const { data: missions } = await supabase
-        .from('user_daily_missions')
-        .select('*, mission_definitions(*)')
-        .eq('user_id', userId)
-        .eq('mission_date', new Date().toISOString().slice(0, 10))
-        .order('created_at')
-      todayMissions.value = missions ?? []
+    try {
+      // Generate if not exists, then fetch
+      const { data, error } = await supabase.rpc('generate_daily_missions', { p_user_id: userId })
+      if (error) { console.error('[mission] generate_daily_missions:', error) }
+      if (data) {
+        // Re-fetch with joined definitions
+        const { data: missions } = await supabase
+          .from('user_daily_missions')
+          .select('*, mission_definitions(*)')
+          .eq('user_id', userId)
+          .eq('mission_date', new Date().toISOString().slice(0, 10))
+          .order('created_at')
+        todayMissions.value = missions ?? []
+      }
+    } catch (e) {
+      console.error('[mission] fetchTodayMissions:', e)
+    } finally {
+      loading.value = false
     }
-    loading.value = false
   }
 
   async function updateMissionProgress(userId: string, conditionType: string, value: number = 1, extra?: string) {
