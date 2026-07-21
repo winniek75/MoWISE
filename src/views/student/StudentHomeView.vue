@@ -182,9 +182,20 @@ onMounted(async () => {
           今日のタスク ({{ pendingAssignments.length }})
         </h2>
 
-        <div v-if="pendingAssignments.length === 0" class="neo-card text-center !py-6">
-          <p class="text-3xl mb-2">🎉</p>
-          <p class="text-white/40 text-sm font-title">全てのタスクを完了しました！</p>
+        <div v-if="pendingAssignments.length === 0" class="neo-card text-center !py-7">
+          <p class="text-4xl mb-3">{{ student.myAssignments.length === 0 ? '🎮' : '🎉' }}</p>
+          <p class="text-white font-title font-semibold text-base mb-1">
+            {{ student.myAssignments.length === 0 ? 'すきなゲームであそぼう！' : 'きょうのタスク、ぜんぶできたね！' }}
+          </p>
+          <p class="text-white/40 text-sm font-title mb-5">
+            {{ student.myAssignments.length === 0 ? 'したのボタンからゲームをえらんでね' : 'つづけてゲームであそべるよ' }}
+          </p>
+          <button
+            @click="router.push({ name: 'StudentGames' })"
+            class="btn-neo w-full !py-3.5 !text-base"
+          >
+            ゲームをえらぶ →
+          </button>
         </div>
 
         <div v-else class="space-y-3">
