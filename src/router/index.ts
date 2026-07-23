@@ -17,6 +17,7 @@ const router = createRouter({
     { path: '/ranking', name: 'StudentRanking', component: () => import('@/views/student/StudentRankingView.vue'), meta: { requiresAuth: true, requiresStudent: true } },
     { path: '/monsters', name: 'MonsterGallery', component: () => import('@/views/student/MonsterGalleryView.vue'), meta: { requiresAuth: true, requiresStudent: true } },
     { path: '/join', name: 'StudentJoinClass', component: () => import('@/views/student/StudentJoinClassView.vue'), meta: { requiresAuth: true } },
+    { path: '/adventure', name: 'AdventureMap', component: () => import('@/views/student/AdventureMapView.vue'), meta: { requiresAuth: true, requiresStudent: true } },
 
     // ──── Teacher ────
     { path: '/teacher', name: 'TeacherDashboard', component: () => import('@/views/teacher/TeacherDashboardView.vue'), meta: { requiresAuth: true, requiresTeacher: true } },

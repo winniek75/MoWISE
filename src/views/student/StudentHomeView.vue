@@ -88,6 +88,21 @@ onMounted(async () => {
       </div>
     </header>
 
+    <!-- Adventure Map shortcut -->
+    <div class="px-5 mt-3 relative z-10">
+      <div
+        class="neo-card !py-4 !px-4 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-all border border-brand-primary/15 bg-brand-primary/[0.03]"
+        @click="router.push({ name: 'AdventureMap' })"
+      >
+        <div class="w-11 h-11 mowi-orb glow-low animate-float shrink-0" />
+        <div class="flex-1 min-w-0">
+          <p class="text-white font-title font-bold text-sm">ぼうけんマップ</p>
+          <p class="text-white/30 text-xs font-title">つぎのぼうけんへ でかけよう！</p>
+        </div>
+        <span class="text-white/20 text-lg">→</span>
+      </div>
+    </div>
+
     <!-- No class state -->
     <div v-if="student.myClasses.length === 0 && !missionStore.loading" class="px-5 mt-8 relative z-10">
       <div class="neo-card text-center !py-8">
