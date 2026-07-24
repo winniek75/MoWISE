@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Concept 1: RPG Battle</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: 'Hiragino Sans','sans-serif'; background:#1a1a2e; color:#fff; height:100vh; overflow:hidden; }
+.game { max-width:420px; margin:0 auto; height:100vh; display:flex; flex-direction:column; position:relative; }
+
+/* Battle Scene */
+.battle-scene { flex:1; display:flex; flex-direction:column; position:relative; overflow:hidden; }
+.sky { background: linear-gradient(180deg, #0f0c29 0%, #302b63 50%, #24243e 100%); flex:1; position:relative; }
+
+/* Enemy */
+.enemy-area { position:absolute; top:8%; left:50%; transform:translateX(-50%); text-align:center; }
+.enemy-sprite { font-size:80px; animation: enemy-idle 2s ease-in-out infinite; display:block; }
+.enemy-name { font-size:14px; color:#ff9; margin-top:4px; }
+.enemy-hp-bar { width:180px; height:12px; background:#333; border-radius:6px; margin:6px auto 0; overflow:hidden; border:1px solid #555; }
+.enemy-hp-fill { height:100%; background: linear-gradient(90deg, #ff4444, #ff6b6b); transition: width 0.5s; border-radius:6px; }
+
+/* Player */
+.player-area { position:absolute; bottom:8%; left:15%; text-align:center; }
+.player-sprite { font-size:56px; animation: player-idle 1.5s ease-in-out infinite; display:block; }
+.player-hp-wrap { margin-top:4px; }
+.player-hp-label { font-size:11px; color:#8f8; }
+.player-hp-bar { width:120px; height:10px; background:#333; border-radius:5px; overflow:hidden; border:1px solid #555; }
+.player-hp-fill { height:100%; background: linear-gradient(90deg, #44ff44, #6bff6b); transition: width 0.5s; border-radius:5px; }
+
+/* Question Panel */
+.question-panel { background: linear-gradient(180deg, #16213e, #0f3460); padding:16px; border-top: 2px solid #e94560; }
+.question-label { font-size:11px; color:#e94560; margin-bottom:4px; letter-spacing:2px; }
+.question-text { font-size:20px; font-weight:bold; text-align:center; padding:8px 0; min-height:44px; }
+
+/* Options */
+.options { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 16px 16px; background:#16213e; }
+.opt-btn { padding:14px 8px; border:2px solid #e94560; background:rgba(233,69,96,0.1); color:#fff; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; transition:all 0.15s; }
+.opt-btn:active { transform:scale(0.95); background:rgba(233,69,96,0.4); }
+.opt-btn.correct { background:#2ecc71; border-color:#27ae60; animation: pop 0.3s; }
+.opt-btn.wrong { background:#e74c3c; border-color:#c0392b; animation: shake 0.4s; }
+.opt-btn:disabled { opacity:0.6; }
+
+/* HUD */
+.hud { display:flex; justify-content:space-between; padding:8px 16px; background:rgba(0,0,0,0.5); font-size:13px; }
+.combo { color:#ffd93d; font-weight:bold; }
+.score-display { color:#00d9ff; font-weight:bold; }
+
+/* Effects */
+.attack-effect { position:absolute; font-size:60px; pointer-events:none; animation: attack-fly 0.6s forwards; z-index:10; }
+.damage-text { position:absolute; font-size:28px; font-weight:bold; pointer-events:none; animation: damage-pop 1s forwards; z-index:10; }
+.damage-text.player-dmg { color:#ff4444; }
+.damage-text.enemy-dmg { color:#ffd93d; }
+
+.enemy-hit { animation: enemy-hit 0.4s !important; }
+.player-hit { animation: player-hit 0.4s !important; }
+
+/* Skill gauge */
+.skill-bar-wrap { position:absolute; bottom:4%; right:10%; text-align:center; }
+.skill-label { font-size:10px; color:#c4a; }
+.skill-bar { width:60px; height:60px; border-radius:50%; border:3px solid #333; display:flex; align-items:center; justify-content:center; font-size:24px; position:relative; overflow:hidden; cursor:pointer; }
+.skill-bar-bg { position:absolute; bottom:0; left:0; right:0; background:rgba(200,80,200,0.4); transition: height 0.4s; }
+.skill-bar.ready { border-color:#f0f; animation: pulse-glow 1s infinite; }
+
+/* Result overlay */
+.result-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100; }
+.result-overlay h1 { font-size:36px; margin-bottom:16px; }
+.result-overlay .stats { font-size:16px; line-height:2; }
+.result-overlay button { margin-top:24px; padding:14px 40px; background:#e94560; border:none; color:#fff; font-size:18px; border-radius:12px; cursor:pointer; }
+
+/* Start overlay */
+.start-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100; }
+.start-overlay h1 { font-size:28px; margin-bottom:8px; color:#e94560; }
+.start-overlay p { color:#aaa; margin-bottom:24px; font-size:14px; }
+.start-overlay button { padding:16px 48px; background:#e94560; border:none; color:#fff; font-size:20px; border-radius:12px; cursor:pointer; font-weight:bold; }
+
+.hidden { display:none !important; }
+
+@keyframes enemy-idle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes player-idle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+@keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.15)} 100%{transform:scale(1)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+@keyframes attack-fly { 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(100px,-120px) scale(1.5)} }
+@keyframes damage-pop { 0%{opacity:1;transform:translateY(0) scale(0.5)} 30%{transform:translateY(-20px) scale(1.2)} 100%{opacity:0;transform:translateY(-60px) scale(0.8)} }
+@keyframes enemy-hit { 0%{filter:brightness(1)} 20%{filter:brightness(3)} 50%{transform:translateX(10px)} 100%{filter:brightness(1);transform:translateX(0)} }
+@keyframes player-hit { 0%{filter:brightness(1)} 20%{filter:brightness(2) hue-rotate(300deg)} 100%{filter:brightness(1)} }
+@keyframes pulse-glow { 0%,100%{box-shadow:0 0 8px #f0f} 50%{box-shadow:0 0 24px #f0f} }
+</style>
+</head>
+<body>
+<div class="game" id="game">
+  <!-- Start -->
+  <div class="start-overlay" id="startOverlay">
+    <h1>RPG BATTLE CONCEPT</h1>
+    <p>英単語でモンスターを倒せ！</p>
+    <button onclick="startGame()">BATTLE START</button>
+  </div>
+
+  <!-- Battle -->
+  <div class="hud">
+    <span>Q: <span id="qNum">1</span>/10</span>
+    <span class="combo" id="comboText"></span>
+    <span class="score-display">Score: <span id="score">0</span></span>
+  </div>
+  <div class="battle-scene">
+    <div class="sky" id="sky">
+      <div class="enemy-area" id="enemyArea">
+        <span class="enemy-sprite" id="enemySprite">👾</span>
+        <div class="enemy-name" id="enemyName">スライム Lv.1</div>
+        <div class="enemy-hp-bar"><div class="enemy-hp-fill" id="enemyHp" style="width:100%"></div></div>
+      </div>
+      <div class="player-area">
+        <span class="player-sprite" id="playerSprite">🧙‍♂️</span>
+        <div class="player-hp-wrap">
+          <div class="player-hp-label">HP</div>
+          <div class="player-hp-bar"><div class="player-hp-fill" id="playerHp" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="skill-bar-wrap">
+        <div class="skill-bar" id="skillBar" onclick="useSkill()">
+          <div class="skill-bar-bg" id="skillFill" style="height:0%"></div>
+          <span>⚡</span>
+        </div>
+        <div class="skill-label">必殺技</div>
+      </div>
+    </div>
+  </div>
+  <div class="question-panel">
+    <div class="question-label">▼ QUESTION</div>
+    <div class="question-text" id="questionText">---</div>
+  </div>
+  <div class="options" id="options">
+    <button class="opt-btn" onclick="answer(0)">-</button>
+    <button class="opt-btn" onclick="answer(1)">-</button>
+    <button class="opt-btn" onclick="answer(2)">-</button>
+    <button class="opt-btn" onclick="answer(3)">-</button>
+  </div>
+
+  <!-- Result -->
+  <div class="result-overlay hidden" id="resultOverlay">
+    <h1 id="resultTitle">VICTORY!</h1>
+    <div class="stats" id="resultStats"></div>
+    <button onclick="location.reload()">RETRY</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  { q:"apple", opts:["りんご","みかん","ぶどう","もも"], ans:0 },
+  { q:"school", opts:["病院","学校","公園","駅"], ans:1 },
+  { q:"friend", opts:["家族","先生","友達","医者"], ans:2 },
+  { q:"beautiful", opts:["大きい","美しい","小さい","速い"], ans:1 },
+  { q:"library", opts:["図書館","教室","体育館","食堂"], ans:0 },
+  { q:"remember", opts:["忘れる","思い出す","考える","教える"], ans:1 },
+  { q:"important", opts:["簡単な","難しい","大切な","危険な"], ans:2 },
+  { q:"enjoy", opts:["楽しむ","走る","食べる","寝る"], ans:0 },
+  { q:"weather", opts:["季節","天気","温度","風"], ans:1 },
+  { q:"delicious", opts:["美味しい","まずい","辛い","甘い"], ans:0 },
+];
+
+const ENEMIES = [
+  { name:"スライム Lv.1", emoji:"👾", hp:3 },
+  { name:"ゴブリン Lv.2", emoji:"👹", hp:3 },
+  { name:"ドラゴン Lv.3", emoji:"🐉", hp:4 },
+];
+
+let state = { qi:0, score:0, combo:0, maxCombo:0, correct:0, playerHp:5, maxPlayerHp:5,
+              enemyIdx:0, enemyHp:3, skillGauge:0, answered:false };
+
+function startGame() {
+  document.getElementById('startOverlay').classList.add('hidden');
+  loadEnemy();
+  showQuestion();
+}
+
+function loadEnemy() {
+  const e = ENEMIES[state.enemyIdx];
+  state.enemyHp = e.hp;
+  document.getElementById('enemySprite').textContent = e.emoji;
+  document.getElementById('enemyName').textContent = e.name;
+  document.getElementById('enemyHp').style.width = '100%';
+}
+
+function showQuestion() {
+  if (state.qi >= QUESTIONS.length) return endGame(true);
+  state.answered = false;
+  const q = QUESTIONS[state.qi];
+  document.getElementById('qNum').textContent = state.qi + 1;
+  document.getElementById('questionText').textContent = `"${q.q}" の意味は？`;
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach((b,i) => {
+    b.textContent = q.opts[i];
+    b.className = 'opt-btn';
+    b.disabled = false;
+  });
+}
+
+function answer(idx) {
+  if (state.answered) return;
+  state.answered = true;
+  const q = QUESTIONS[state.qi];
+  const btns = document.querySelectorAll('.opt-btn');
+  btns.forEach(b => b.disabled = true);
+  const isCorrect = idx === q.ans;
+
+  if (isCorrect) {
+    btns[idx].classList.add('correct');
+    state.combo++;
+    state.correct++;
+    if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+    const pts = 100 + state.combo * 30;
+    state.score += pts;
+    document.getElementById('score').textContent = state.score;
+
+    // Skill gauge
+    state.skillGauge = Math.min(100, state.skillGauge + 25);
+    document.getElementById('skillFill').style.height = state.skillGauge + '%';
+    if (state.skillGauge >= 100) document.getElementById('skillBar').classList.add('ready');
+
+    // Combo text
+    if (state.combo >= 3) {
+      const labels = {3:'NICE! 🔥',5:'GREAT! ⚡',7:'AMAZING! 💥',10:'UNSTOPPABLE! 👑'};
+      document.getElementById('comboText').textContent = labels[state.combo] || `${state.combo} COMBO!`;
+    } else {
+      document.getElementById('comboText').textContent = state.combo > 1 ? `${state.combo} Combo` : '';
+    }
+
+    // Attack animation
+    attackEnemy(pts);
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[q.ans].classList.add('correct');
+    state.combo = 0;
+    document.getElementById('comboText').textContent = '';
+
+    // Enemy attacks player
+    enemyAttack();
+  }
+
+  setTimeout(() => { state.qi++; showQuestion(); }, 1200);
+}
+
+function attackEnemy(pts) {
+  const sky = document.getElementById('sky');
+  // Slash effect
+  const slash = document.createElement('div');
+  slash.className = 'attack-effect';
+  slash.textContent = '⚔️';
+  slash.style.left = '20%'; slash.style.bottom = '20%';
+  sky.appendChild(slash);
+  setTimeout(() => slash.remove(), 600);
+
+  // Enemy hit
+  setTimeout(() => {
+    const es = document.getElementById('enemySprite');
+    es.classList.add('enemy-hit');
+    setTimeout(() => es.classList.remove('enemy-hit'), 400);
+
+    // Damage number
+    const dmg = document.createElement('div');
+    dmg.className = 'damage-text enemy-dmg';
+    dmg.textContent = `-${pts}`;
+    dmg.style.left = '50%'; dmg.style.top = '15%';
+    sky.appendChild(dmg);
+    setTimeout(() => dmg.remove(), 1000);
+
+    // HP
+    state.enemyHp--;
+    const e = ENEMIES[state.enemyIdx];
+    document.getElementById('enemyHp').style.width = Math.max(0, (state.enemyHp / e.hp) * 100) + '%';
+
+    if (state.enemyHp <= 0) {
+      // Next enemy
+      setTimeout(() => {
+        if (state.enemyIdx < ENEMIES.length - 1) {
+          state.enemyIdx++;
+          loadEnemy();
+        }
+      }, 500);
+    }
+  }, 300);
+}
+
+function enemyAttack() {
+  const sky = document.getElementById('sky');
+  setTimeout(() => {
+    const ps = document.getElementById('playerSprite');
+    ps.classList.add('player-hit');
+    setTimeout(() => ps.classList.remove('player-hit'), 400);
+
+    state.playerHp--;
+    document.getElementById('playerHp').style.width = Math.max(0, (state.playerHp / state.maxPlayerHp) * 100) + '%';
+
+    const dmg = document.createElement('div');
+    dmg.className = 'damage-text player-dmg';
+    dmg.textContent = `-1 HP`;
+    dmg.style.left = '15%'; dmg.style.bottom = '25%';
+    sky.appendChild(dmg);
+    setTimeout(() => dmg.remove(), 1000);
+
+    if (state.playerHp <= 0) {
+      setTimeout(() => endGame(false), 500);
+    }
+  }, 400);
+}
+
+function useSkill() {
+  if (state.skillGauge < 100 || state.answered) return;
+  state.skillGauge = 0;
+  document.getElementById('skillFill').style.height = '0%';
+  document.getElementById('skillBar').classList.remove('ready');
+
+  // Auto-correct current question
+  const q = QUESTIONS[state.qi];
+  answer(q.ans);
+}
+
+function endGame(won) {
+  const ov = document.getElementById('resultOverlay');
+  ov.classList.remove('hidden');
+  document.getElementById('resultTitle').textContent = won ? '🏆 VICTORY!' : '💀 DEFEATED...';
+  document.getElementById('resultStats').innerHTML = `
+    スコア: ${state.score}<br>
+    正答率: ${state.correct}/${QUESTIONS.length}<br>
+    最大コンボ: ${state.maxCombo}<br>
+    倒した敵: ${state.enemyIdx + (state.enemyHp <= 0 ? 1 : 0)}体
+  `;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Word Blast - トゥーンブラスト風</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Hiragino Sans',sans-serif;background:#1a1040;color:#fff;height:100vh;overflow:hidden;touch-action:none;user-select:none}
+.game{max-width:420px;margin:0 auto;height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* Top bar */
+.top-bar{background:linear-gradient(180deg,#2d1860,#1a1040);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #6c3fc0;z-index:10}
+.level-badge{background:#6c3fc0;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:bold}
+.moves-display{font-size:15px;font-weight:bold;color:#ffd93d}
+.score-display{font-size:14px;color:#aaa}
+
+/* Goal bar */
+.goal-bar{background:#241450;padding:8px 14px;display:flex;gap:12px;align-items:center;justify-content:center;border-bottom:1px solid #3a2070}
+.goal-item{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,0.06);padding:4px 10px;border-radius:8px;font-size:13px}
+.goal-item.done{opacity:0.4;text-decoration:line-through}
+.goal-item .goal-icon{font-size:18px}
+.goal-item .goal-count{color:#ffd93d;font-weight:bold}
+
+/* Board */
+.board-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden}
+.board-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,#2a1860,#1a1040);z-index:0}
+.board{display:grid;gap:3px;z-index:1;position:relative}
+.cell{border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:transform 0.1s;position:relative;overflow:hidden;font-weight:bold;box-shadow:0 3px 0 rgba(0,0,0,0.3),inset 0 -2px 0 rgba(0,0,0,0.15),inset 0 2px 0 rgba(255,255,255,0.15)}
+.cell:active{transform:scale(0.93)}
+.cell .cell-word{font-size:12px;line-height:1.1;text-align:center;padding:0 2px;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
+.cell .cell-jp{font-size:9px;opacity:0.7;margin-top:1px}
+.cell.highlighted{z-index:2;animation:cell-glow 0.6s ease-in-out infinite alternate}
+@keyframes cell-glow{0%{filter:brightness(1)}100%{filter:brightness(1.3)}}
+.cell.blasting{animation:blast 0.35s ease-out forwards;z-index:5}
+@keyframes blast{0%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:0.6}100%{transform:scale(0);opacity:0}}
+.cell.falling{animation:fall-in 0.3s ease-out}
+@keyframes fall-in{0%{transform:translateY(-60px);opacity:0}100%{transform:translateY(0);opacity:1}}
+
+/* Colors */
+.cat-0{background:linear-gradient(180deg,#ff6b6b,#e74c3c)}
+.cat-1{background:linear-gradient(180deg,#54d88e,#27ae60)}
+.cat-2{background:linear-gradient(180deg,#5ea8ff,#2980b9)}
+.cat-3{background:linear-gradient(180deg,#ffd93d,#f39c12)}
+.cat-4{background:linear-gradient(180deg,#c97dff,#8e44ad)}
+.cat-5{background:linear-gradient(180deg,#ff9f7f,#e67e22)}
+
+/* Power-ups */
+.cell.powerup{box-shadow:0 3px 0 rgba(0,0,0,0.3),0 0 12px rgba(255,255,255,0.4)}
+.cell.powerup .cell-word{font-size:18px}
+.cell.rocket::after{content:'';position:absolute;inset:0;border:2px solid rgba(255,255,255,0.5);border-radius:8px;animation:powerup-pulse 1s infinite}
+.cell.bomb::after{content:'';position:absolute;inset:0;border:2px solid rgba(255,200,0,0.6);border-radius:8px;animation:powerup-pulse 0.8s infinite}
+.cell.disco::after{content:'';position:absolute;inset:0;background:conic-gradient(from 0deg,rgba(255,0,0,0.2),rgba(0,255,0,0.2),rgba(0,0,255,0.2),rgba(255,0,0,0.2));border-radius:8px;animation:disco-spin 2s linear infinite}
+@keyframes powerup-pulse{0%,100%{opacity:0.3}50%{opacity:1}}
+@keyframes disco-spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+
+/* Effects */
+.pop-particle{position:absolute;width:8px;height:8px;border-radius:50%;z-index:10;pointer-events:none;animation:particle-fly 0.6s ease-out forwards}
+@keyframes particle-fly{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(0)}}
+
+.combo-text{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);font-size:32px;font-weight:bold;color:#ffd93d;z-index:20;pointer-events:none;animation:combo-pop 1s forwards;text-shadow:0 2px 8px rgba(0,0,0,0.5)}
+@keyframes combo-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(0.3)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}50%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) translateY(-30px)}}
+
+.score-fly{position:absolute;font-size:18px;font-weight:bold;color:#fff;z-index:20;pointer-events:none;animation:score-up 0.8s ease-out forwards;text-shadow:0 1px 4px rgba(0,0,0,0.5)}
+@keyframes score-up{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-50px)}}
+
+/* Row/col clear effect */
+.line-clear{position:absolute;z-index:15;pointer-events:none}
+.line-clear.horizontal{left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,#fff,transparent);animation:line-flash 0.4s forwards}
+.line-clear.vertical{top:0;bottom:0;width:4px;background:linear-gradient(180deg,transparent,#fff,transparent);animation:line-flash 0.4s forwards}
+@keyframes line-flash{0%{opacity:1;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.5)}}
+
+/* Overlays */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
+.overlay.hidden{display:none}
+.overlay h1{font-size:30px;margin-bottom:6px}
+.overlay .sub{color:#aaa;font-size:13px;margin-bottom:20px;text-align:center;padding:0 24px;line-height:1.6}
+.overlay button{padding:16px 48px;background:linear-gradient(135deg,#6c3fc0,#9b59b6);border:none;color:#fff;font-size:20px;border-radius:14px;cursor:pointer;font-weight:bold;box-shadow:0 4px 15px rgba(108,63,192,0.5)}
+
+.clear-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
+.clear-overlay.hidden{display:none}
+.clear-overlay h1{font-size:36px;color:#ffd93d;margin-bottom:12px}
+.clear-stars{font-size:44px;letter-spacing:10px;margin-bottom:12px}
+.clear-star{display:inline-block;animation:star-in 0.4s ease-out backwards}
+.clear-star:nth-child(2){animation-delay:0.2s}
+.clear-star:nth-child(3){animation-delay:0.4s}
+@keyframes star-in{0%{transform:scale(0) rotate(-30deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.clear-stats{font-size:15px;line-height:2;margin-bottom:16px;text-align:center}
+.clear-overlay button{padding:14px 40px;background:linear-gradient(135deg,#ffd93d,#ff9f43);border:none;color:#1a1040;font-size:18px;font-weight:bold;border-radius:14px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="game" id="game">
+
+<!-- START -->
+<div class="overlay" id="startOverlay">
+  <h1>💥 WORD BLAST</h1>
+  <div class="sub">同じカテゴリの英単語が隣り合っていたら<br>タップで消そう！<br><br>
+  5個以上 → 🚀 ロケット（1列消去）<br>
+  7個以上 → 💣 ボム（周囲爆破）<br>
+  9個以上 → 🪩 ディスコ（同色全消去）</div>
+  <button onclick="startGame()">BLAST!</button>
+</div>
+
+<!-- Top bar -->
+<div class="top-bar">
+  <div class="level-badge" id="levelBadge">Level 1</div>
+  <div class="moves-display">残り <span id="movesDisplay">20</span> 手</div>
+  <div class="score-display" id="scoreDisplay">0</div>
+</div>
+
+<!-- Goals -->
+<div class="goal-bar" id="goalBar"></div>
+
+<!-- Board -->
+<div class="board-wrap">
+  <div class="board-bg"></div>
+  <div class="board" id="board"></div>
+</div>
+
+<!-- Clear -->
+<div class="clear-overlay hidden" id="clearOverlay">
+  <h1>🎉 LEVEL CLEAR!</h1>
+  <div class="clear-stars" id="clearStars"></div>
+  <div class="clear-stats" id="clearStats"></div>
+  <button onclick="nextLevel()">次のレベル</button>
+</div>
+
+</div>
+
+<script>
+// ===== CATEGORIES =====
+const CATS = [
+  { name:'たべもの', emoji:'🍎', words:['apple','bread','rice','milk','egg','cake','meat','juice','cheese','soup'] },
+  { name:'どうぶつ', emoji:'🐶', words:['dog','cat','bird','bear','lion','horse','rabbit','snake','monkey','panda'] },
+  { name:'うごき',   emoji:'⚡', words:['run','jump','swim','eat','read','write','sing','walk','sleep','cook'] },
+  { name:'ばしょ',   emoji:'🏠', words:['school','park','house','shop','station','library','beach','forest','river','garden'] },
+  { name:'からだ',   emoji:'🖐', words:['hand','head','eye','ear','nose','mouth','arm','leg','foot','face'] },
+  { name:'しぜん',   emoji:'🌿', words:['rain','snow','wind','sun','moon','star','cloud','sky','tree','flower'] },
+];
+const JP={apple:'りんご',bread:'パン',rice:'ごはん',milk:'牛乳',egg:'たまご',cake:'ケーキ',meat:'にく',juice:'ジュース',cheese:'チーズ',soup:'スープ',dog:'いぬ',cat:'ねこ',bird:'とり',bear:'くま',lion:'ライオン',horse:'うま',rabbit:'うさぎ',snake:'へび',monkey:'さる',panda:'パンダ',run:'はしる',jump:'とぶ',swim:'およぐ',eat:'たべる',read:'よむ',write:'かく',sing:'うたう',walk:'あるく',sleep:'ねる',cook:'つくる',school:'がっこう',park:'こうえん',house:'いえ',shop:'みせ',station:'えき',library:'としょかん',beach:'ビーチ',forest:'もり',river:'かわ',garden:'にわ',hand:'て',head:'あたま',eye:'め',ear:'みみ',nose:'はな',mouth:'くち',arm:'うで',leg:'あし',foot:'あし',face:'かお',rain:'あめ',snow:'ゆき',wind:'かぜ',sun:'たいよう',moon:'つき',star:'ほし',cloud:'くも',sky:'そら',tree:'き',flower:'はな'};
+
+// ===== LEVELS =====
+const LEVELS = [
+  { cols:6, rows:8, cats:[0,1,2],     moves:25, goals:[{cat:0,n:12},{cat:1,n:12}] },
+  { cols:6, rows:8, cats:[0,1,2,3],   moves:22, goals:[{cat:2,n:10},{cat:3,n:10}] },
+  { cols:7, rows:8, cats:[0,1,2,3,4], moves:20, goals:[{cat:0,n:8},{cat:2,n:8},{cat:4,n:8}] },
+  { cols:7, rows:9, cats:[0,1,2,3,4,5],moves:20, goals:[{cat:1,n:10},{cat:3,n:10},{cat:5,n:10}] },
+];
+
+// ===== STATE =====
+let gs = { level:0, score:0, moves:0, board:[], cols:0, rows:0, activeCats:[], goals:[], busy:false };
+
+function startGame(){
+  document.getElementById('startOverlay').classList.add('hidden');
+  loadLevel();
+}
+
+function loadLevel(){
+  const lv = LEVELS[gs.level % LEVELS.length];
+  gs.cols = lv.cols; gs.rows = lv.rows;
+  gs.activeCats = lv.cats;
+  gs.moves = lv.moves;
+  gs.goals = lv.goals.map(g => ({...g, cleared:0}));
+  gs.busy = false;
+
+  // Fill board
+  gs.board = [];
+  for(let r=0; r<gs.rows; r++){
+    gs.board[r] = [];
+    for(let c=0; c<gs.cols; c++){
+      gs.board[r][c] = makeCell();
+    }
+  }
+  // Remove initial groups
+  let safety=0;
+  while(safety++<50){
+    let found=false;
+    for(let r=0;r<gs.rows;r++) for(let c=0;c<gs.cols;c++){
+      const g=getGroup(r,c);
+      if(g.length>=3){found=true; gs.board[r][c]=makeCell();}
+    }
+    if(!found) break;
+  }
+
+  updateHUD();
+  renderBoard();
+  renderGoals();
+}
+
+function makeCell(exclude){
+  const ci = gs.activeCats[Math.floor(Math.random()*gs.activeCats.length)];
+  const cat = CATS[ci];
+  const word = cat.words[Math.floor(Math.random()*cat.words.length)];
+  return { cat:ci, word, jp:JP[word]||'', type:'normal' };
+}
+
+// ===== BOARD RENDERING =====
+function renderBoard(){
+  const el = document.getElementById('board');
+  const cellSize = Math.min(Math.floor((window.innerWidth-20)/gs.cols), 54);
+  el.style.gridTemplateColumns = `repeat(${gs.cols}, ${cellSize}px)`;
+  el.style.gridTemplateRows = `repeat(${gs.rows}, ${cellSize}px)`;
+  el.innerHTML = '';
+
+  for(let r=0; r<gs.rows; r++){
+    for(let c=0; c<gs.cols; c++){
+      const cell = gs.board[r][c];
+      if(!cell){ el.appendChild(emptyDiv()); continue; }
+      const div = document.createElement('div');
+      div.className = `cell cat-${cell.cat}` + (cell.type!=='normal'?` powerup ${cell.type}`:'');
+      div.dataset.r = r; div.dataset.c = c;
+
+      if(cell.type==='rocket') div.innerHTML='<div class="cell-word">🚀</div>';
+      else if(cell.type==='bomb') div.innerHTML='<div class="cell-word">💣</div>';
+      else if(cell.type==='disco') div.innerHTML='<div class="cell-word">🪩</div>';
+      else div.innerHTML=`<div class="cell-word">${cell.word}</div><div class="cell-jp">${cell.jp}</div>`;
+
+      div.onclick = () => tapCell(r,c);
+      el.appendChild(div);
+    }
+  }
+}
+
+function emptyDiv(){const d=document.createElement('div');d.style.visibility='hidden';return d;}
+
+// ===== GROUP FINDING (flood fill) =====
+function getGroup(r,c){
+  const cell=gs.board[r][c];
+  if(!cell) return [];
+  const cat=cell.cat;
+  const visited=new Set();
+  const stack=[[r,c]];
+  const group=[];
+  while(stack.length){
+    const [cr,cc]=stack.pop();
+    const key=cr*100+cc;
+    if(visited.has(key)) continue;
+    if(cr<0||cr>=gs.rows||cc<0||cc>=gs.cols) continue;
+    const t=gs.board[cr][cc];
+    if(!t||t.cat!==cat) continue;
+    visited.add(key);
+    group.push([cr,cc]);
+    stack.push([cr-1,cc],[cr+1,cc],[cr,cc-1],[cr,cc+1]);
+  }
+  return group;
+}
+
+// ===== TAP =====
+function tapCell(r,c){
+  if(gs.busy) return;
+  const cell=gs.board[r][c];
+  if(!cell) return;
+
+  // Power-up tap
+  if(cell.type==='rocket') return activateRocket(r,c);
+  if(cell.type==='bomb') return activateBomb(r,c);
+  if(cell.type==='disco') return activateDisco(r,c);
+
+  const group=getGroup(r,c);
+  if(group.length<2) return; // need at least 2
+
+  gs.busy=true;
+  gs.moves--;
+  const cat=cell.cat;
+
+  // Track cleared for goals
+  gs.goals.forEach(g=>{
+    if(g.cat===cat) g.cleared += group.length;
+  });
+
+  // Score
+  const pts = group.length * 50 + (group.length>=5? 200:0) + (group.length>=7? 500:0);
+  gs.score += pts;
+
+  // Show score fly
+  showScoreFly(r,c, `+${pts}`);
+
+  // Combo text
+  if(group.length>=5){
+    const texts={5:'NICE! 🔥',7:'GREAT! 💥',9:'AMAZING! 🌟'};
+    const key=group.length>=9?9:group.length>=7?7:5;
+    showCombo(texts[key]);
+  }
+
+  // Blast animation
+  const cells=document.querySelectorAll('.cell');
+  group.forEach(([gr,gc])=>{
+    const idx=gr*gs.cols+gc;
+    if(cells[idx]) cells[idx].classList.add('blasting');
+    spawnParticles(gr,gc,cat);
+  });
+
+  setTimeout(()=>{
+    // Determine power-up
+    let powerup=null, puR=r, puC=c;
+    if(group.length>=9) powerup='disco';
+    else if(group.length>=7) powerup='bomb';
+    else if(group.length>=5) powerup='rocket';
+
+    // Clear cells
+    group.forEach(([gr,gc])=> gs.board[gr][gc]=null);
+
+    // Place power-up
+    if(powerup){
+      gs.board[puR][puC] = { cat, word:'', jp:'', type:powerup };
+    }
+
+    // Gravity + refill
+    applyGravity();
+
+    setTimeout(()=>{
+      renderBoard();
+      updateHUD();
+      renderGoals();
+
+      // Check win/lose
+      if(checkWin()){
+        setTimeout(levelClear,400);
+      } else if(gs.moves<=0){
+        setTimeout(()=>alert('手数切れ！ スコア: '+gs.score),300);
+      }
+      gs.busy=false;
+    },350);
+  },350);
+}
+
+// ===== POWER-UPS =====
+function activateRocket(r,c){
+  gs.busy=true; gs.moves--;
+  const cat=gs.board[r][c].cat;
+  const cleared=[];
+  // Clear entire row
+  for(let cc=0;cc<gs.cols;cc++) if(gs.board[r][cc]){
+    cleared.push([r,cc]);
+    gs.goals.forEach(g=>{if(g.cat===gs.board[r][cc].cat) g.cleared++;});
+  }
+  gs.score+=cleared.length*80;
+  showScoreFly(r,c,`+${cleared.length*80}`);
+  showCombo('🚀 ROCKET!');
+
+  const cells=document.querySelectorAll('.cell');
+  cleared.forEach(([gr,gc])=>{
+    const idx=gr*gs.cols+gc;
+    if(cells[idx]) cells[idx].classList.add('blasting');
+  });
+  setTimeout(()=>{
+    cleared.forEach(([gr,gc])=>gs.board[gr][gc]=null);
+    applyGravity();
+    setTimeout(()=>{renderBoard();updateHUD();renderGoals();gs.busy=false;if(checkWin())setTimeout(levelClear,400);},350);
+  },400);
+}
+
+function activateBomb(r,c){
+  gs.busy=true; gs.moves--;
+  const cleared=[];
+  for(let dr=-2;dr<=2;dr++) for(let dc=-2;dc<=2;dc++){
+    const nr=r+dr, nc=c+dc;
+    if(nr>=0&&nr<gs.rows&&nc>=0&&nc<gs.cols&&gs.board[nr][nc]){
+      cleared.push([nr,nc]);
+      gs.goals.forEach(g=>{if(g.cat===gs.board[nr][nc].cat) g.cleared++;});
+    }
+  }
+  gs.score+=cleared.length*100;
+  showScoreFly(r,c,`+${cleared.length*100}`);
+  showCombo('💣 BOMB!');
+  const cells=document.querySelectorAll('.cell');
+  cleared.forEach(([gr,gc])=>{const idx=gr*gs.cols+gc;if(cells[idx])cells[idx].classList.add('blasting');});
+  setTimeout(()=>{
+    cleared.forEach(([gr,gc])=>gs.board[gr][gc]=null);
+    applyGravity();
+    setTimeout(()=>{renderBoard();updateHUD();renderGoals();gs.busy=false;if(checkWin())setTimeout(levelClear,400);},350);
+  },400);
+}
+
+function activateDisco(r,c){
+  gs.busy=true; gs.moves--;
+  const targetCat=gs.activeCats[Math.floor(Math.random()*gs.activeCats.length)];
+  const cleared=[];
+  for(let rr=0;rr<gs.rows;rr++) for(let cc=0;cc<gs.cols;cc++){
+    if(gs.board[rr][cc]&&gs.board[rr][cc].cat===targetCat){
+      cleared.push([rr,cc]);
+      gs.goals.forEach(g=>{if(g.cat===targetCat) g.cleared++;});
+    }
+  }
+  gs.score+=cleared.length*120;
+  showScoreFly(r,c,`+${cleared.length*120}`);
+  showCombo('🪩 DISCO!');
+  const cells=document.querySelectorAll('.cell');
+  cleared.forEach(([gr,gc])=>{const idx=gr*gs.cols+gc;if(cells[idx])cells[idx].classList.add('blasting');spawnParticles(gr,gc,targetCat);});
+  setTimeout(()=>{
+    cleared.forEach(([gr,gc])=>gs.board[gr][gc]=null);
+    applyGravity();
+    setTimeout(()=>{renderBoard();updateHUD();renderGoals();gs.busy=false;if(checkWin())setTimeout(levelClear,400);},350);
+  },500);
+}
+
+// ===== GRAVITY =====
+function applyGravity(){
+  for(let c=0;c<gs.cols;c++){
+    let writeRow=gs.rows-1;
+    for(let r=gs.rows-1;r>=0;r--){
+      if(gs.board[r][c]){
+        if(r!==writeRow){
+          gs.board[writeRow][c]=gs.board[r][c];
+          gs.board[r][c]=null;
+        }
+        writeRow--;
+      }
+    }
+    // Fill empty top
+    for(let r=writeRow;r>=0;r--){
+      gs.board[r][c]=makeCell();
+    }
+  }
+}
+
+// ===== EFFECTS =====
+function spawnParticles(r,c,cat){
+  const board=document.getElementById('board');
+  const cellSize=board.querySelector('.cell')?.offsetWidth||50;
+  for(let i=0;i<4;i++){
+    const p=document.createElement('div');
+    p.className='pop-particle';
+    const colors=['#ff6b6b','#54d88e','#5ea8ff','#ffd93d','#c97dff','#ff9f7f'];
+    p.style.background=colors[cat%colors.length];
+    p.style.left=(c*cellSize+cellSize/2+c*3)+'px';
+    p.style.top=(r*cellSize+cellSize/2+r*3)+'px';
+    const angle=Math.random()*Math.PI*2;
+    const dist=30+Math.random()*40;
+    p.style.setProperty('--dx',Math.cos(angle)*dist+'px');
+    p.style.setProperty('--dy',Math.sin(angle)*dist+'px');
+    board.appendChild(p);
+    setTimeout(()=>p.remove(),600);
+  }
+}
+
+function showCombo(text){
+  const el=document.createElement('div');
+  el.className='combo-text';
+  el.textContent=text;
+  document.querySelector('.board-wrap').appendChild(el);
+  setTimeout(()=>el.remove(),1000);
+}
+
+function showScoreFly(r,c,text){
+  const board=document.getElementById('board');
+  const cellSize=board.querySelector('.cell')?.offsetWidth||50;
+  const el=document.createElement('div');
+  el.className='score-fly';
+  el.textContent=text;
+  el.style.left=(c*(cellSize+3)+cellSize/2)+'px';
+  el.style.top=(r*(cellSize+3))+'px';
+  board.appendChild(el);
+  setTimeout(()=>el.remove(),800);
+}
+
+// ===== HUD =====
+function updateHUD(){
+  document.getElementById('levelBadge').textContent='Level '+(gs.level+1);
+  document.getElementById('movesDisplay').textContent=gs.moves;
+  document.getElementById('scoreDisplay').textContent=gs.score;
+  document.getElementById('movesDisplay').parentElement.style.color=gs.moves<=5?'#ff4444':'#ffd93d';
+}
+
+function renderGoals(){
+  const el=document.getElementById('goalBar');
+  el.innerHTML='';
+  gs.goals.forEach(g=>{
+    const div=document.createElement('div');
+    const done=g.cleared>=g.n;
+    div.className='goal-item'+(done?' done':'');
+    div.innerHTML=`<span class="goal-icon">${CATS[g.cat].emoji}</span>
+      <span>${CATS[g.cat].name}</span>
+      <span class="goal-count">${Math.min(g.cleared,g.n)}/${g.n}</span>`;
+    el.appendChild(div);
+  });
+}
+
+function checkWin(){
+  return gs.goals.every(g=>g.cleared>=g.n);
+}
+
+// ===== LEVEL CLEAR =====
+function levelClear(){
+  const ov=document.getElementById('clearOverlay');
+  ov.classList.remove('hidden');
+  const starCount=gs.moves>=10?3:gs.moves>=5?2:1;
+  document.getElementById('clearStars').innerHTML=
+    [1,2,3].map(i=>`<span class="clear-star">${i<=starCount?'⭐':'☆'}</span>`).join('');
+  document.getElementById('clearStats').innerHTML=`スコア: ${gs.score}<br>残り手数: ${gs.moves}`;
+}
+
+function nextLevel(){
+  document.getElementById('clearOverlay').classList.add('hidden');
+  gs.level++;
+  loadLevel();
+}
+</script>
+</body>
+</html>

@@ -37,6 +37,30 @@
         </div>
       </div>
 
+      <!-- Quick actions -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <button
+          @click="router.push({ name: 'TeacherGames' })"
+          class="neo-card !py-4 flex items-center gap-3 active:scale-[0.98] transition-all text-left"
+        >
+          <span class="text-2xl">🎮</span>
+          <div>
+            <p class="text-white font-title font-bold text-sm">ゲームを割り当て</p>
+            <p class="text-white/30 text-[11px] font-title">コンテンツ配信</p>
+          </div>
+        </button>
+        <button
+          @click="router.push({ name: 'TeacherReading' })"
+          class="neo-card !py-4 flex items-center gap-3 active:scale-[0.98] transition-all text-left"
+        >
+          <span class="text-2xl">📖</span>
+          <div>
+            <p class="text-white font-title font-bold text-sm">リーディング</p>
+            <p class="text-white/30 text-[11px] font-title">多読・音読管理</p>
+          </div>
+        </button>
+      </div>
+
       <!-- Stats -->
       <div class="grid grid-cols-3 gap-3 mb-6">
         <div class="neo-stat">

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Word Grill - 英単語ソートパズル</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Hiragino Sans',sans-serif;background:#1a0a00;color:#fff;height:100vh;overflow:hidden;touch-action:none;user-select:none}
+.game{max-width:420px;margin:0 auto;height:100vh;position:relative;display:flex;flex-direction:column}
+
+/* HUD */
+.hud{padding:10px 16px;background:linear-gradient(180deg,#2a1000,#1a0800);display:flex;justify-content:space-between;align-items:center;z-index:10;border-bottom:2px solid #8B4513}
+.hud .level{font-size:14px;color:#ffd93d;font-weight:bold}
+.hud .score-area{font-size:14px;color:#ff9f43}
+.hud .timer{font-size:16px;color:#ff6b6b;font-weight:bold}
+
+/* Order area - what to match */
+.order-area{background:linear-gradient(180deg,#2d1400,#1f0e00);padding:10px 12px;border-bottom:2px solid #5a3010}
+.order-label{font-size:11px;color:#c89050;margin-bottom:6px;letter-spacing:1px}
+.order-cards{display:flex;gap:8px;overflow-x:auto}
+.order-card{flex:0 0 auto;background:rgba(255,255,255,0.06);border:2px solid #6a4020;border-radius:10px;padding:8px 12px;text-align:center;min-width:90px;transition:all 0.3s}
+.order-card.completed{border-color:#2ecc71;background:rgba(46,204,113,0.15)}
+.order-card .cat-emoji{font-size:20px}
+.order-card .cat-name{font-size:11px;color:#ccc;margin-top:2px}
+.order-card .cat-progress{font-size:10px;color:#888;margin-top:2px}
+
+/* Grill (main play area) */
+.grill-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px;position:relative}
+.grill{background:radial-gradient(ellipse at center,#3a2010,#2a1508);border-radius:16px;border:3px solid #8B4513;padding:12px;position:relative;box-shadow:inset 0 0 30px rgba(0,0,0,0.5),0 4px 20px rgba(0,0,0,0.5)}
+
+/* Grill lines */
+.grill::before{content:'';position:absolute;inset:12px;background:repeating-linear-gradient(90deg,transparent,transparent 28px,rgba(100,60,30,0.4) 28px,rgba(100,60,30,0.4) 30px);border-radius:8px;pointer-events:none}
+
+/* Heat glow */
+.grill::after{content:'';position:absolute;bottom:-2px;left:10%;right:10%;height:8px;background:linear-gradient(90deg,transparent,rgba(255,100,0,0.4),rgba(255,50,0,0.6),rgba(255,100,0,0.4),transparent);border-radius:0 0 8px 8px;animation:heat-glow 2s ease-in-out infinite}
+@keyframes heat-glow{0%,100%{opacity:0.5}50%{opacity:1}}
+
+/* Skewers (sorting slots) */
+.skewers{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+.skewer{flex:1;max-width:90px;background:rgba(0,0,0,0.3);border:2px dashed rgba(139,69,19,0.5);border-radius:10px;min-height:200px;display:flex;flex-direction:column-reverse;align-items:center;padding:6px 4px;gap:4px;position:relative;transition:all 0.2s}
+.skewer.highlight{border-color:#ffd93d;background:rgba(255,217,61,0.1);box-shadow:0 0 12px rgba(255,217,61,0.3)}
+.skewer.complete{animation:skewer-clear 0.6s ease-out forwards}
+@keyframes skewer-clear{0%{transform:scale(1);opacity:1}50%{transform:scale(1.1);opacity:0.8}100%{transform:scale(0.8);opacity:0}}
+
+/* Word chips */
+.word-chip{width:100%;padding:10px 4px;border-radius:8px;text-align:center;font-size:13px;font-weight:bold;cursor:pointer;transition:all 0.2s;position:relative;line-height:1.2;box-shadow:0 2px 6px rgba(0,0,0,0.3)}
+.word-chip.selected{transform:scale(1.08);box-shadow:0 0 12px rgba(255,255,255,0.4);z-index:5}
+.word-chip .word-jp{font-size:10px;font-weight:normal;opacity:0.7;margin-top:2px}
+
+/* Category colors */
+.cat-food{background:linear-gradient(135deg,#e74c3c,#c0392b);border:2px solid #ff6b6b}
+.cat-animal{background:linear-gradient(135deg,#27ae60,#1e8449);border:2px solid #2ecc71}
+.cat-action{background:linear-gradient(135deg,#2980b9,#1a5276);border:2px solid #3498db}
+.cat-place{background:linear-gradient(135deg,#8e44ad,#6c3483);border:2px solid #a569bd}
+.cat-body{background:linear-gradient(135deg,#d4ac0d,#b7950b);border:2px solid #f1c40f}
+.cat-nature{background:linear-gradient(135deg,#16a085,#117a65);border:2px solid #1abc9c}
+
+/* Word pool (incoming items) */
+.pool-area{background:linear-gradient(180deg,#1f0e00,#2d1400);padding:12px;border-top:2px solid #5a3010}
+.pool-label{font-size:11px;color:#c89050;margin-bottom:8px;letter-spacing:1px}
+.pool{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:48px}
+.pool .word-chip{width:auto;padding:10px 14px;font-size:14px}
+.pool .word-chip:active{transform:scale(0.95)}
+
+/* Effects */
+.match-effect{position:absolute;font-size:28px;font-weight:bold;color:#ffd93d;z-index:30;animation:match-pop 1s forwards;pointer-events:none;text-shadow:0 2px 8px rgba(0,0,0,0.5)}
+@keyframes match-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}50%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) translateY(-40px)}}
+
+.smoke{position:absolute;font-size:24px;pointer-events:none;animation:smoke-rise 1.2s forwards;z-index:25}
+@keyframes smoke-rise{0%{opacity:0.8;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(2)}}
+
+/* Overlays */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
+.overlay.hidden{display:none}
+.overlay h1{font-size:28px;margin-bottom:6px}
+.overlay .sub{color:#aaa;font-size:13px;margin-bottom:20px;text-align:center;padding:0 20px}
+.overlay button{padding:16px 48px;background:linear-gradient(135deg,#e94560,#c23152);border:none;color:#fff;font-size:20px;border-radius:14px;cursor:pointer;font-weight:bold;box-shadow:0 4px 15px rgba(233,69,96,0.4)}
+
+/* Level clear */
+.clear-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50}
+.clear-overlay.hidden{display:none}
+.clear-overlay h1{font-size:32px;color:#ffd93d;margin-bottom:12px}
+.clear-stars{font-size:40px;letter-spacing:8px;margin-bottom:12px}
+.clear-star{display:inline-block;animation:star-in 0.4s ease-out backwards}
+.clear-star:nth-child(2){animation-delay:0.2s}
+.clear-star:nth-child(3){animation-delay:0.4s}
+@keyframes star-in{0%{transform:scale(0) rotate(-30deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+.clear-stats{font-size:15px;line-height:2;margin-bottom:16px;text-align:center}
+.clear-overlay button{padding:14px 40px;background:linear-gradient(135deg,#ffd93d,#ff9f43);border:none;color:#1a0a00;font-size:18px;font-weight:bold;border-radius:14px;cursor:pointer}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="game" id="game">
+
+<!-- START -->
+<div class="overlay" id="startOverlay">
+  <h1>🔥 WORD GRILL</h1>
+  <div class="sub">同じカテゴリの英単語を串に3つ揃えて焼き上げろ！</div>
+  <button onclick="startGame()">START</button>
+</div>
+
+<!-- HUD -->
+<div class="hud">
+  <span class="level" id="levelDisplay">Level 1</span>
+  <span class="score-area">🪙 <span id="scoreDisplay">0</span></span>
+  <span class="timer" id="timerDisplay">⏱ 60</span>
+</div>
+
+<!-- Orders -->
+<div class="order-area">
+  <div class="order-label">📋 オーダー（揃えるカテゴリ）</div>
+  <div class="order-cards" id="orderCards"></div>
+</div>
+
+<!-- Grill -->
+<div class="grill-wrap">
+  <div class="grill" id="grill">
+    <div class="skewers" id="skewers"></div>
+  </div>
+</div>
+
+<!-- Word Pool -->
+<div class="pool-area">
+  <div class="pool-label">👇 タップして串に乗せよう</div>
+  <div class="pool" id="pool"></div>
+</div>
+
+<!-- Clear -->
+<div class="clear-overlay hidden" id="clearOverlay">
+  <h1>🎉 LEVEL CLEAR!</h1>
+  <div class="clear-stars" id="clearStars"></div>
+  <div class="clear-stats" id="clearStats"></div>
+  <button onclick="nextLevel()">次のレベル</button>
+</div>
+
+</div>
+
+<script>
+// ===== CATEGORIES & WORDS =====
+const CATEGORIES = {
+  food:   { name:'たべもの', emoji:'🍖', css:'cat-food',
+    words:['apple','bread','rice','milk','egg','cake','fish','meat','juice','water','cheese','salad','soup','pizza','pasta']},
+  animal: { name:'どうぶつ', emoji:'🐾', css:'cat-animal',
+    words:['dog','cat','bird','fish','bear','lion','tiger','horse','rabbit','snake','monkey','elephant','panda','sheep','wolf']},
+  action: { name:'うごき', emoji:'⚡', css:'cat-action',
+    words:['run','jump','swim','eat','drink','read','write','sing','dance','walk','sleep','cook','fly','throw','catch']},
+  place:  { name:'ばしょ', emoji:'🏠', css:'cat-place',
+    words:['school','park','house','shop','station','library','hospital','church','beach','mountain','city','forest','river','lake','garden']},
+  body:   { name:'からだ', emoji:'🖐', css:'cat-body',
+    words:['hand','head','eye','ear','nose','mouth','arm','leg','foot','face','hair','neck','back','tooth','knee']},
+  nature: { name:'しぜん', emoji:'🌿', css:'cat-nature',
+    words:['rain','snow','wind','sun','moon','star','cloud','sky','tree','flower','sea','fire','ice','rock','sand']},
+};
+
+const JP = {
+  apple:'りんご',bread:'パン',rice:'ごはん',milk:'牛乳',egg:'たまご',cake:'ケーキ',fish:'さかな',meat:'にく',juice:'ジュース',water:'みず',cheese:'チーズ',salad:'サラダ',soup:'スープ',pizza:'ピザ',pasta:'パスタ',
+  dog:'いぬ',cat:'ねこ',bird:'とり',bear:'くま',lion:'ライオン',tiger:'とら',horse:'うま',rabbit:'うさぎ',snake:'へび',monkey:'さる',elephant:'ぞう',panda:'パンダ',sheep:'ひつじ',wolf:'おおかみ',
+  run:'はしる',jump:'とぶ',swim:'およぐ',eat:'たべる',drink:'のむ',read:'よむ',write:'かく',sing:'うたう',dance:'おどる',walk:'あるく',sleep:'ねる',cook:'りょうりする',fly:'とぶ',throw:'なげる',catch:'とる',
+  school:'がっこう',park:'こうえん',house:'いえ',shop:'おみせ',station:'えき',library:'としょかん',hospital:'びょういん',church:'きょうかい',beach:'ビーチ',mountain:'やま',city:'まち',forest:'もり',river:'かわ',lake:'みずうみ',garden:'にわ',
+  hand:'て',head:'あたま',eye:'め',ear:'みみ',nose:'はな',mouth:'くち',arm:'うで',leg:'あし',foot:'あし',face:'かお',hair:'かみ',neck:'くび',back:'せなか',tooth:'は',knee:'ひざ',
+  rain:'あめ',snow:'ゆき',wind:'かぜ',sun:'たいよう',moon:'つき',star:'ほし',cloud:'くも',sky:'そら',tree:'き',flower:'はな',sea:'うみ',fire:'ひ',ice:'こおり',rock:'いわ',sand:'すな',
+};
+
+// ===== LEVELS =====
+const LEVELS = [
+  { cats:['food','animal'], skewers:3, perCat:3, poolSize:6, time:60 },
+  { cats:['food','animal','action'], skewers:4, perCat:3, poolSize:8, time:75 },
+  { cats:['action','place','body'], skewers:4, perCat:3, poolSize:8, time:75 },
+  { cats:['food','animal','place','nature'], skewers:4, perCat:3, poolSize:9, time:90 },
+  { cats:['food','animal','action','place','body'], skewers:5, perCat:3, poolSize:10, time:90 },
+];
+
+// ===== STATE =====
+let gs = {
+  level: 0,
+  score: 0,
+  timer: 60,
+  timerInterval: null,
+  skewerSlots: [],  // array of arrays: each skewer holds word objects
+  pool: [],         // words available to place
+  allWords: [],     // all words for this level
+  orders: {},       // {catKey: {needed:3, done:0}}
+  selectedPool: null,
+};
+
+// ===== GAME START =====
+function startGame() {
+  document.getElementById('startOverlay').classList.add('hidden');
+  loadLevel();
+}
+
+function loadLevel() {
+  const lv = LEVELS[gs.level];
+  gs.timer = lv.time;
+  gs.orders = {};
+  gs.allWords = [];
+
+  // Build word list per category
+  lv.cats.forEach(cat => {
+    gs.orders[cat] = { needed: lv.perCat, done: 0 };
+    const pool = [...CATEGORIES[cat].words];
+    shuffle(pool);
+    for (let i = 0; i < lv.perCat; i++) {
+      gs.allWords.push({ word: pool[i], cat });
+    }
+  });
+
+  shuffle(gs.allWords);
+
+  // Init skewers
+  gs.skewerSlots = [];
+  for (let i = 0; i < lv.skewers; i++) gs.skewerSlots.push([]);
+
+  // Init pool (first batch)
+  gs.pool = gs.allWords.splice(0, lv.poolSize);
+
+  document.getElementById('levelDisplay').textContent = 'Level ' + (gs.level + 1);
+  document.getElementById('scoreDisplay').textContent = gs.score;
+
+  renderOrders();
+  renderSkewers();
+  renderPool();
+  startTimer();
+}
+
+// ===== TIMER =====
+function startTimer() {
+  clearInterval(gs.timerInterval);
+  updateTimerDisplay();
+  gs.timerInterval = setInterval(() => {
+    gs.timer--;
+    updateTimerDisplay();
+    if (gs.timer <= 0) {
+      clearInterval(gs.timerInterval);
+      gameOver();
+    }
+  }, 1000);
+}
+function updateTimerDisplay() {
+  document.getElementById('timerDisplay').textContent = '⏱ ' + gs.timer;
+  document.getElementById('timerDisplay').style.color = gs.timer <= 10 ? '#ff4444' : '#ff6b6b';
+}
+
+// ===== RENDER =====
+function renderOrders() {
+  const el = document.getElementById('orderCards');
+  el.innerHTML = '';
+  Object.entries(gs.orders).forEach(([cat, o]) => {
+    const card = document.createElement('div');
+    card.className = 'order-card' + (o.done >= o.needed ? ' completed' : '');
+    card.innerHTML = `
+      <div class="cat-emoji">${CATEGORIES[cat].emoji}</div>
+      <div class="cat-name">${CATEGORIES[cat].name}</div>
+      <div class="cat-progress">${o.done}/${o.needed}</div>
+    `;
+    el.appendChild(card);
+  });
+}
+
+function renderSkewers() {
+  const el = document.getElementById('skewers');
+  el.innerHTML = '';
+  gs.skewerSlots.forEach((slot, si) => {
+    const skewer = document.createElement('div');
+    skewer.className = 'skewer';
+    skewer.dataset.idx = si;
+    skewer.onclick = () => placeOnSkewer(si);
+
+    slot.forEach((w, wi) => {
+      const chip = document.createElement('div');
+      chip.className = 'word-chip ' + CATEGORIES[w.cat].css;
+      chip.innerHTML = `${w.word}<div class="word-jp">${JP[w.word]||''}</div>`;
+      skewer.appendChild(chip);
+    });
+
+    // Capacity indicator
+    if (slot.length < 3) {
+      const empty = 3 - slot.length;
+      for (let i = 0; i < empty; i++) {
+        const ph = document.createElement('div');
+        ph.style.cssText = 'width:100%;height:36px;border:2px dashed rgba(139,69,19,0.3);border-radius:8px;';
+        skewer.appendChild(ph);
+      }
+    }
+
+    el.appendChild(skewer);
+  });
+}
+
+function renderPool() {
+  const el = document.getElementById('pool');
+  el.innerHTML = '';
+  gs.pool.forEach((w, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'word-chip ' + CATEGORIES[w.cat].css + (gs.selectedPool === i ? ' selected' : '');
+    chip.innerHTML = `${w.word}<div class="word-jp">${JP[w.word]||''}</div>`;
+    chip.onclick = () => selectPoolWord(i);
+    el.appendChild(chip);
+  });
+}
+
+// ===== INTERACTION =====
+function selectPoolWord(idx) {
+  gs.selectedPool = gs.selectedPool === idx ? null : idx;
+  renderPool();
+  // Highlight skewers
+  document.querySelectorAll('.skewer').forEach(s => {
+    s.classList.toggle('highlight', gs.selectedPool !== null && gs.skewerSlots[s.dataset.idx].length < 3);
+  });
+}
+
+function placeOnSkewer(si) {
+  if (gs.selectedPool === null) return;
+  if (gs.skewerSlots[si].length >= 3) return;
+
+  const word = gs.pool.splice(gs.selectedPool, 1)[0];
+  gs.skewerSlots[si].push(word);
+  gs.selectedPool = null;
+
+  // Refill pool
+  if (gs.pool.length < 3 && gs.allWords.length > 0) {
+    const add = Math.min(2, gs.allWords.length);
+    gs.pool.push(...gs.allWords.splice(0, add));
+  }
+
+  renderPool();
+  renderSkewers();
+
+  // Check for 3-match on this skewer
+  checkSkewerMatch(si);
+}
+
+function checkSkewerMatch(si) {
+  const slot = gs.skewerSlots[si];
+  if (slot.length !== 3) return;
+
+  const cats = slot.map(w => w.cat);
+  if (cats[0] === cats[1] && cats[1] === cats[2]) {
+    // MATCH!
+    const cat = cats[0];
+    gs.orders[cat].done++;
+    gs.score += 300;
+    gs.timer += 5; // Bonus time
+    document.getElementById('scoreDisplay').textContent = gs.score;
+
+    // Effects
+    showMatchEffect(si, CATEGORIES[cat].emoji + ' MATCH!');
+    showSmoke(si);
+
+    setTimeout(() => {
+      gs.skewerSlots[si] = [];
+      renderSkewers();
+      renderOrders();
+
+      // Check level complete
+      const allDone = Object.values(gs.orders).every(o => o.done >= o.needed);
+      if (allDone) {
+        clearInterval(gs.timerInterval);
+        setTimeout(levelClear, 500);
+      }
+    }, 600);
+  } else if (slot.length === 3) {
+    // Full but no match - penalty shake
+    const skewerEl = document.querySelectorAll('.skewer')[si];
+    skewerEl.style.animation = 'none';
+    skewerEl.offsetHeight;
+    skewerEl.style.animation = '';
+
+    // Auto-return last placed word to pool after short delay
+    setTimeout(() => {
+      const returned = gs.skewerSlots[si].pop();
+      gs.pool.push(returned);
+      renderSkewers();
+      renderPool();
+    }, 400);
+  }
+}
+
+function showMatchEffect(si, text) {
+  const skewers = document.querySelectorAll('.skewer');
+  const rect = skewers[si].getBoundingClientRect();
+  const grillRect = document.getElementById('grill').getBoundingClientRect();
+
+  const ef = document.createElement('div');
+  ef.className = 'match-effect';
+  ef.textContent = text;
+  ef.style.left = (rect.left - grillRect.left + rect.width / 2) + 'px';
+  ef.style.top = (rect.top - grillRect.top + rect.height / 2) + 'px';
+  document.getElementById('grill').appendChild(ef);
+  setTimeout(() => ef.remove(), 1000);
+}
+
+function showSmoke(si) {
+  const skewers = document.querySelectorAll('.skewer');
+  const rect = skewers[si].getBoundingClientRect();
+  const grillRect = document.getElementById('grill').getBoundingClientRect();
+
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('div');
+    s.className = 'smoke';
+    s.textContent = '💨';
+    s.style.left = (rect.left - grillRect.left + Math.random() * rect.width) + 'px';
+    s.style.top = (rect.top - grillRect.top + rect.height * 0.3) + 'px';
+    s.style.animationDelay = (i * 0.15) + 's';
+    document.getElementById('grill').appendChild(s);
+    setTimeout(() => s.remove(), 1200);
+  }
+}
+
+// ===== LEVEL CLEAR =====
+function levelClear() {
+  const ov = document.getElementById('clearOverlay');
+  ov.classList.remove('hidden');
+
+  const starCount = gs.timer > 30 ? 3 : gs.timer > 10 ? 2 : 1;
+  document.getElementById('clearStars').innerHTML =
+    [1, 2, 3].map(i => `<span class="clear-star">${i <= starCount ? '⭐' : '☆'}</span>`).join('');
+  document.getElementById('clearStats').innerHTML = `
+    スコア: ${gs.score}<br>
+    残り時間ボーナス: +${gs.timer * 10}
+  `;
+  gs.score += gs.timer * 10;
+}
+
+function nextLevel() {
+  document.getElementById('clearOverlay').classList.add('hidden');
+  gs.level = (gs.level + 1) % LEVELS.length;
+  loadLevel();
+}
+
+function gameOver() {
+  // Simple restart for prototype
+  alert(`⏱ 時間切れ！\nスコア: ${gs.score}`);
+  gs.level = 0;
+  gs.score = 0;
+  loadLevel();
+}
+
+// ===== UTIL =====
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>

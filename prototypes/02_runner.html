@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Concept 2: Runner</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Hiragino Sans',sans-serif; background:#1a1a2e; color:#fff; height:100vh; overflow:hidden; touch-action:none; }
+.game { max-width:420px; margin:0 auto; height:100vh; position:relative; overflow:hidden; }
+
+/* Sky & Ground */
+.world { position:absolute; inset:0; }
+.sky { position:absolute; top:0; left:0; right:0; height:55%; background:linear-gradient(180deg,#0b0b3b 0%,#1b2a6b 60%,#3b4fbf 100%); }
+.stars { position:absolute; top:0; left:0; right:0; height:55%; }
+.star { position:absolute; width:3px; height:3px; background:#fff; border-radius:50%; animation: twinkle 2s infinite; }
+.ground { position:absolute; bottom:0; left:0; right:0; height:45%; background:linear-gradient(180deg,#2d5a27 0%,#1a3a15 100%); }
+.road { position:absolute; bottom:0; left:0; right:0; height:45%; display:flex; }
+.lane { flex:1; border-right:2px dashed rgba(255,255,255,0.15); display:flex; align-items:flex-end; justify-content:center; padding-bottom:20%; position:relative; }
+.lane:last-child { border-right:none; }
+
+/* Runner */
+.runner { position:absolute; bottom:42%; font-size:48px; transition: left 0.25s ease-out; z-index:10; left:calc(50% / 3 * 3 - 24px); }
+.runner.stumble { animation: stumble 0.5s; }
+
+/* Road lines animation */
+.road-line { position:absolute; width:4px; height:30px; background:rgba(255,255,255,0.3); border-radius:2px; animation: road-scroll 1s linear infinite; }
+
+/* Gate */
+.gate-group { position:absolute; top:-120px; left:0; right:0; display:flex; animation: gates-fall 2.5s linear forwards; z-index:5; }
+.gate { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 4px; }
+.gate-box { padding:12px 4px; background:rgba(0,0,0,0.7); border:2px solid #555; border-radius:12px; font-size:15px; font-weight:bold; text-align:center; min-height:56px; display:flex; align-items:center; justify-content:center; width:90%; }
+.gate-box.correct-gate { border-color:#2ecc71; background:rgba(46,204,113,0.3); }
+.gate-box.wrong-gate { border-color:#e74c3c; background:rgba(231,76,60,0.3); }
+
+/* HUD */
+.hud { position:absolute; top:0; left:0; right:0; z-index:20; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.4); }
+.distance { font-size:18px; font-weight:bold; color:#ffd93d; }
+.lives { font-size:20px; }
+
+/* Question banner */
+.q-banner { position:absolute; top:50px; left:50%; transform:translateX(-50%); z-index:20; background:rgba(233,69,96,0.9); padding:10px 24px; border-radius:20px; font-size:17px; font-weight:bold; white-space:nowrap; box-shadow:0 4px 15px rgba(233,69,96,0.5); }
+
+/* Effects */
+.correct-flash { position:absolute; inset:0; background:rgba(46,204,113,0.3); z-index:15; animation: flash 0.4s forwards; pointer-events:none; }
+.wrong-flash { position:absolute; inset:0; background:rgba(231,76,60,0.3); z-index:15; animation: flash 0.4s forwards; pointer-events:none; }
+.score-popup { position:absolute; z-index:20; font-size:24px; font-weight:bold; color:#ffd93d; animation: float-up 1s forwards; pointer-events:none; }
+
+/* Overlays */
+.overlay { position:absolute; inset:0; background:rgba(0,0,0,0.88); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:50; }
+.overlay h1 { font-size:32px; margin-bottom:8px; }
+.overlay .sub { color:#aaa; font-size:14px; margin-bottom:24px; }
+.overlay button { padding:16px 48px; background:#e94560; border:none; color:#fff; font-size:20px; border-radius:12px; cursor:pointer; font-weight:bold; }
+.overlay .stats { font-size:16px; line-height:2.2; margin-bottom:16px; }
+.hidden { display:none !important; }
+
+@keyframes twinkle { 0%,100%{opacity:0.3} 50%{opacity:1} }
+@keyframes gates-fall { 0%{top:-120px} 100%{top:calc(55% + 10px)} }
+@keyframes stumble { 0%{transform:rotate(0)} 25%{transform:rotate(-15deg)} 50%{transform:rotate(10deg)} 75%{transform:rotate(-5deg)} 100%{transform:rotate(0)} }
+@keyframes flash { 0%{opacity:1} 100%{opacity:0} }
+@keyframes float-up { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-60px)} }
+@keyframes road-scroll { 0%{transform:translateY(-30px)} 100%{transform:translateY(60px)} }
+</style>
+</head>
+<body>
+<div class="game" id="game">
+  <!-- Start -->
+  <div class="overlay" id="startOverlay">
+    <h1>🏃 WORD RUNNER</h1>
+    <div class="sub">正しい意味の道を走り抜けろ！</div>
+    <button onclick="startGame()">RUN!</button>
+  </div>
+
+  <!-- World -->
+  <div class="world">
+    <div class="sky">
+      <div class="stars" id="stars"></div>
+    </div>
+    <div class="ground">
+      <div class="road" id="road">
+        <div class="lane" data-lane="0"></div>
+        <div class="lane" data-lane="1"></div>
+        <div class="lane" data-lane="2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Runner -->
+  <div class="runner" id="runner">🏃</div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="distance" id="distDisplay">0 m</div>
+    <div class="lives" id="livesDisplay">❤️❤️❤️</div>
+  </div>
+
+  <!-- Question -->
+  <div class="q-banner" id="qBanner">---</div>
+
+  <!-- Result -->
+  <div class="overlay hidden" id="resultOverlay">
+    <h1 id="resultTitle">GAME OVER</h1>
+    <div class="stats" id="resultStats"></div>
+    <button onclick="location.reload()">RETRY</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  { q:"happy", opts:["悲しい","嬉しい","怒った"], ans:1 },
+  { q:"run", opts:["走る","歩く","泳ぐ"], ans:0 },
+  { q:"dog", opts:["猫","鳥","犬"], ans:2 },
+  { q:"morning", opts:["朝","夜","昼"], ans:0 },
+  { q:"water", opts:["火","水","土"], ans:1 },
+  { q:"big", opts:["小さい","速い","大きい"], ans:2 },
+  { q:"eat", opts:["食べる","飲む","寝る"], ans:0 },
+  { q:"book", opts:["ノート","本","鉛筆"], ans:1 },
+  { q:"cold", opts:["暑い","暖かい","寒い"], ans:2 },
+  { q:"study", opts:["勉強する","遊ぶ","休む"], ans:0 },
+  { q:"rain", opts:["雪","雨","風"], ans:1 },
+  { q:"fast", opts:["遅い","強い","速い"], ans:2 },
+  { q:"sing", opts:["歌う","踊る","弾く"], ans:0 },
+  { q:"flower", opts:["木","花","草"], ans:1 },
+  { q:"sleep", opts:["起きる","食べる","眠る"], ans:2 },
+];
+
+let state = { qi:0, lives:3, distance:0, score:0, correct:0, active:false, currentLane:1 };
+let gateTimeout = null;
+
+// Stars
+(function(){
+  const s = document.getElementById('stars');
+  for(let i=0;i<30;i++){
+    const d=document.createElement('div');
+    d.className='star';
+    d.style.left=Math.random()*100+'%';
+    d.style.top=Math.random()*100+'%';
+    d.style.animationDelay=Math.random()*2+'s';
+    s.appendChild(d);
+  }
+})();
+
+function startGame(){
+  document.getElementById('startOverlay').classList.add('hidden');
+  state.active = true;
+  moveRunner(1);
+  nextQuestion();
+  animateDistance();
+}
+
+function moveRunner(lane){
+  state.currentLane = lane;
+  const r = document.getElementById('runner');
+  const positions = ['16%','50%','84%'];
+  r.style.left = `calc(${positions[lane]} - 24px)`;
+}
+
+function nextQuestion(){
+  if(state.qi >= QUESTIONS.length || state.lives <= 0) return endGame();
+  const q = QUESTIONS[state.qi];
+  document.getElementById('qBanner').textContent = `"${q.q}" は？`;
+
+  // Create gates
+  const existing = document.querySelector('.gate-group');
+  if(existing) existing.remove();
+
+  const gg = document.createElement('div');
+  gg.className = 'gate-group';
+  q.opts.forEach((opt, i) => {
+    const gate = document.createElement('div');
+    gate.className = 'gate';
+    const box = document.createElement('div');
+    box.className = 'gate-box';
+    box.textContent = opt;
+    box.dataset.idx = i;
+    gate.appendChild(box);
+    gg.appendChild(gate);
+  });
+
+  document.querySelector('.ground').appendChild(gg);
+
+  // When gates reach player
+  gateTimeout = setTimeout(() => {
+    checkAnswer();
+  }, 2200);
+}
+
+function checkAnswer(){
+  const q = QUESTIONS[state.qi];
+  const isCorrect = state.currentLane === q.ans;
+  const gates = document.querySelectorAll('.gate-box');
+
+  gates.forEach((g,i) => {
+    if(i === q.ans) g.classList.add('correct-gate');
+    else g.classList.add('wrong-gate');
+  });
+
+  if(isCorrect){
+    state.correct++;
+    state.score += 150;
+    // Flash green
+    const f = document.createElement('div');
+    f.className = 'correct-flash';
+    document.getElementById('game').appendChild(f);
+    setTimeout(()=>f.remove(),400);
+    // Score popup
+    const p = document.createElement('div');
+    p.className = 'score-popup';
+    p.textContent = '+150';
+    p.style.top = '40%';
+    p.style.left = '50%';
+    document.getElementById('game').appendChild(p);
+    setTimeout(()=>p.remove(),1000);
+  } else {
+    state.lives--;
+    document.getElementById('livesDisplay').textContent = '❤️'.repeat(state.lives) + '🖤'.repeat(3-state.lives);
+    document.getElementById('runner').classList.add('stumble');
+    setTimeout(()=>document.getElementById('runner').classList.remove('stumble'),500);
+    const f = document.createElement('div');
+    f.className = 'wrong-flash';
+    document.getElementById('game').appendChild(f);
+    setTimeout(()=>f.remove(),400);
+  }
+
+  state.qi++;
+  setTimeout(() => {
+    const gg = document.querySelector('.gate-group');
+    if(gg) gg.remove();
+    if(state.lives > 0) nextQuestion();
+    else endGame();
+  }, 800);
+}
+
+function animateDistance(){
+  if(!state.active) return;
+  state.distance += 3;
+  document.getElementById('distDisplay').textContent = state.distance + ' m';
+  requestAnimationFrame(animateDistance);
+}
+
+function endGame(){
+  state.active = false;
+  clearTimeout(gateTimeout);
+  const ov = document.getElementById('resultOverlay');
+  ov.classList.remove('hidden');
+  document.getElementById('resultTitle').textContent = state.lives > 0 ? '🎉 GOAL!' : '💥 GAME OVER';
+  document.getElementById('resultStats').innerHTML = `
+    走行距離: ${state.distance} m<br>
+    正答: ${state.correct} / ${state.qi}<br>
+    スコア: ${state.score}
+  `;
+}
+
+// Touch / Click controls
+(function(){
+  const game = document.getElementById('game');
+  game.addEventListener('touchstart', handleInput);
+  game.addEventListener('click', handleInput);
+
+  function handleInput(e){
+    if(!state.active) return;
+    const x = (e.touches ? e.touches[0] : e).clientX;
+    const w = game.getBoundingClientRect().width;
+    const rel = x / w;
+    if(rel < 0.33) moveRunner(0);
+    else if(rel < 0.66) moveRunner(1);
+    else moveRunner(2);
+  }
+
+  document.addEventListener('keydown', e => {
+    if(!state.active) return;
+    if(e.key==='ArrowLeft'||e.key==='a') moveRunner(Math.max(0, state.currentLane-1));
+    if(e.key==='ArrowRight'||e.key==='d') moveRunner(Math.min(2, state.currentLane+1));
+  });
+})();
+</script>
+</body>
+</html>

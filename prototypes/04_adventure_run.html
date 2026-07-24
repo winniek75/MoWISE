@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Word Adventure - リングフィット風</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Hiragino Sans',sans-serif;background:#000;color:#fff;height:100vh;overflow:hidden;touch-action:none;user-select:none}
+.game{max-width:480px;margin:0 auto;height:100vh;position:relative;overflow:hidden}
+
+/* ===== WORLD MAP ===== */
+.world-map{position:absolute;inset:0;background:linear-gradient(180deg,#1a0533 0%,#2d1b69 30%,#1b7a3d 70%,#145a2e 100%);z-index:200;display:flex;flex-direction:column;align-items:center;padding-top:40px}
+.world-map h1{font-size:22px;color:#ffd93d;text-shadow:0 2px 8px rgba(0,0,0,0.5);margin-bottom:8px}
+.world-map .world-sub{font-size:12px;color:#aaa;margin-bottom:20px}
+.map-path{position:relative;width:90%;flex:1;max-height:500px}
+.map-node{position:absolute;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;transition:all 0.3s;border:3px solid rgba(255,255,255,0.3)}
+.map-node.locked{opacity:0.4;filter:grayscale(1)}
+.map-node.current{border-color:#ffd93d;box-shadow:0 0 20px rgba(255,217,61,0.6);animation:node-pulse 1.5s infinite}
+.map-node.cleared{border-color:#2ecc71;opacity:0.8}
+.map-line{position:absolute;height:3px;background:rgba(255,255,255,0.15);transform-origin:left center}
+.map-line.active{background:rgba(46,204,113,0.6)}
+.map-start-btn{position:absolute;bottom:30px;padding:16px 48px;background:linear-gradient(135deg,#e94560,#c23152);border:none;color:#fff;font-size:20px;border-radius:16px;cursor:pointer;font-weight:bold;box-shadow:0 4px 20px rgba(233,69,96,0.5)}
+@keyframes node-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+
+/* ===== STAGE (SIDE SCROLL) ===== */
+.stage{position:absolute;inset:0;z-index:100}
+.stage.hidden{display:none}
+
+/* Parallax layers */
+.parallax{position:absolute;inset:0;overflow:hidden}
+.layer{position:absolute;left:0;top:0;height:100%;white-space:nowrap}
+.layer-sky{width:200%;background:linear-gradient(180deg,#87CEEB 0%,#E0F0FF 60%,#fff 100%);z-index:1}
+.layer-mountains{bottom:35%;top:auto;height:25%;width:300%;z-index:2}
+.mountain{display:inline-block;width:0;height:0;border-left:80px solid transparent;border-right:80px solid transparent;border-bottom:120px solid;vertical-align:bottom;margin:0 -20px}
+.layer-trees{bottom:28%;top:auto;height:15%;width:400%;z-index:3;display:flex;align-items:flex-end;gap:30px;padding-left:60px}
+.tree{display:inline-block;text-align:center;font-size:36px;vertical-align:bottom}
+.layer-ground{bottom:0;height:28%;width:400%;z-index:4;display:flex}
+.ground-tile{flex:0 0 100vw;max-width:480px;height:100%}
+
+/* Path on ground */
+.path-strip{position:absolute;bottom:28%;left:0;right:0;height:6px;background:rgba(139,90,43,0.6);z-index:5}
+
+/* Character */
+.character{position:absolute;bottom:29%;z-index:20;font-size:44px;transition:left 0.05s linear;left:15%}
+.character.running .char-body{animation:run-bounce 0.3s infinite}
+.character.jumping .char-body{animation:jump-arc 0.6s ease-out}
+@keyframes run-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes jump-arc{0%{transform:translateY(0)}40%{transform:translateY(-40px)}100%{transform:translateY(0)}}
+
+/* Items on path */
+.path-item{position:absolute;bottom:30%;z-index:15;font-size:28px;transition:left 0.05s linear}
+.path-item.coin{animation:coin-spin 1s linear infinite}
+.path-item.collected{animation:item-collect 0.4s forwards}
+@keyframes coin-spin{0%{transform:scaleX(1)}25%{transform:scaleX(0.3)}50%{transform:scaleX(1)}75%{transform:scaleX(0.3)}100%{transform:scaleX(1)}}
+@keyframes item-collect{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-40px) scale(1.5)}}
+
+/* Encounter marker */
+.encounter-marker{position:absolute;bottom:28%;z-index:16;text-align:center}
+.encounter-marker .marker-emoji{font-size:40px;animation:marker-hover 1.5s ease-in-out infinite}
+.encounter-marker .marker-label{font-size:10px;color:#fff;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:4px;position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);white-space:nowrap}
+@keyframes marker-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* Stage HUD */
+.stage-hud{position:absolute;top:0;left:0;right:0;z-index:30;padding:8px 12px;background:linear-gradient(180deg,rgba(0,0,0,0.6),transparent);display:flex;justify-content:space-between;align-items:center}
+.stage-hud .stage-name{font-size:13px;color:#ffd93d}
+.stage-hud .coin-count{font-size:14px;color:#ffd93d}
+.stage-hud .progress-wrap{flex:1;margin:0 12px;height:8px;background:rgba(255,255,255,0.2);border-radius:4px;overflow:hidden}
+.stage-hud .progress-fill{height:100%;background:linear-gradient(90deg,#ffd93d,#ff9f43);border-radius:4px;transition:width 0.3s}
+
+/* ===== BATTLE POPUP ===== */
+.battle-overlay{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end}
+.battle-overlay.hidden{display:none}
+.battle-bg{position:absolute;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(2px)}
+.battle-card{position:relative;background:linear-gradient(180deg,#1a1a3e,#0d0d2b);border-top:3px solid #e94560;border-radius:20px 20px 0 0;padding:20px 16px 24px;animation:slide-up 0.4s ease-out}
+.battle-enemy{text-align:center;margin-bottom:12px}
+.battle-enemy .enemy-sprite{font-size:56px;animation:enemy-bounce 1s ease-in-out infinite}
+.battle-enemy .enemy-hp{width:60%;margin:8px auto;height:8px;background:#333;border-radius:4px;overflow:hidden}
+.battle-enemy .enemy-hp-fill{height:100%;background:linear-gradient(90deg,#ff4444,#ff6b6b);transition:width 0.5s;border-radius:4px}
+.battle-question{text-align:center;font-size:18px;font-weight:bold;margin:12px 0;min-height:28px}
+.battle-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.battle-btn{padding:14px 8px;background:rgba(255,255,255,0.08);border:2px solid rgba(255,255,255,0.25);color:#fff;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;transition:all 0.15s}
+.battle-btn:active{transform:scale(0.95);background:rgba(255,255,255,0.15)}
+.battle-btn.correct{background:rgba(46,204,113,0.4);border-color:#2ecc71}
+.battle-btn.wrong{background:rgba(231,76,60,0.4);border-color:#e74c3c}
+.battle-btn:disabled{opacity:0.5}
+@keyframes enemy-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes slide-up{0%{transform:translateY(100%)}100%{transform:translateY(0)}}
+
+/* Battle result flash */
+.battle-result{position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);font-size:32px;font-weight:bold;z-index:55;animation:result-pop 0.8s forwards;pointer-events:none;text-shadow:0 2px 12px rgba(0,0,0,0.5)}
+@keyframes result-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}60%{transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) translateY(-30px)}}
+
+/* ===== TREASURE POPUP ===== */
+.treasure-overlay{position:absolute;inset:0;z-index:50;display:flex;align-items:center;justify-content:center}
+.treasure-overlay.hidden{display:none}
+.treasure-card{background:linear-gradient(135deg,#2d1b69,#1a0533);border:2px solid #ffd93d;border-radius:20px;padding:32px 24px;text-align:center;animation:treasure-appear 0.5s ease-out;box-shadow:0 0 40px rgba(255,217,61,0.3);max-width:300px}
+.treasure-card .chest{font-size:64px;margin-bottom:12px}
+.treasure-card .reward{font-size:18px;color:#ffd93d;font-weight:bold;margin-bottom:8px}
+.treasure-card .reward-detail{font-size:14px;color:#aaa;margin-bottom:16px}
+.treasure-card button{padding:12px 32px;background:#ffd93d;border:none;color:#1a0533;font-size:16px;font-weight:bold;border-radius:10px;cursor:pointer}
+@keyframes treasure-appear{0%{transform:scale(0) rotate(-10deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+
+/* ===== STAGE CLEAR ===== */
+.stage-clear{position:absolute;inset:0;z-index:60;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.stage-clear.hidden{display:none}
+.stage-clear h1{font-size:36px;color:#ffd93d;margin-bottom:4px;animation:clear-text 0.6s ease-out}
+.stage-clear .stars-row{font-size:40px;margin:12px 0;letter-spacing:8px}
+.stage-clear .star{display:inline-block;animation:star-pop 0.4s ease-out backwards}
+.stage-clear .star:nth-child(2){animation-delay:0.2s}
+.stage-clear .star:nth-child(3){animation-delay:0.4s}
+.stage-clear .clear-stats{font-size:15px;line-height:2;margin-bottom:20px}
+.stage-clear button{padding:14px 40px;background:linear-gradient(135deg,#ffd93d,#ff9f43);border:none;color:#1a0533;font-size:18px;font-weight:bold;border-radius:14px;cursor:pointer}
+@keyframes clear-text{0%{transform:scale(0);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes star-pop{0%{transform:scale(0) rotate(-30deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="game" id="game">
+
+<!-- ===== WORLD MAP ===== -->
+<div class="world-map" id="worldMap">
+  <h1>🗺️ WORD ADVENTURE</h1>
+  <div class="world-sub">ステージを選んで冒険に出よう！</div>
+  <div class="map-path" id="mapPath"></div>
+  <button class="map-start-btn" id="mapStartBtn" onclick="enterStage()">冒険スタート！</button>
+</div>
+
+<!-- ===== STAGE ===== -->
+<div class="stage hidden" id="stageView">
+  <div class="stage-hud">
+    <span class="stage-name" id="stageName">Stage 1</span>
+    <div class="progress-wrap"><div class="progress-fill" id="stageProgress" style="width:0%"></div></div>
+    <span class="coin-count" id="coinCount">🪙 0</span>
+  </div>
+
+  <div class="parallax" id="parallax">
+    <div class="layer layer-sky"></div>
+    <div class="layer layer-mountains" id="mountainLayer"></div>
+    <div class="layer layer-trees" id="treeLayer"></div>
+    <div class="path-strip"></div>
+    <div class="layer layer-ground" id="groundLayer"></div>
+  </div>
+
+  <div class="character" id="character"><span class="char-body">🏃</span></div>
+</div>
+
+<!-- ===== BATTLE OVERLAY ===== -->
+<div class="battle-overlay hidden" id="battleOverlay">
+  <div class="battle-bg"></div>
+  <div class="battle-card">
+    <div class="battle-enemy">
+      <div class="enemy-sprite" id="battleEnemy">👾</div>
+      <div class="enemy-hp"><div class="enemy-hp-fill" id="battleHpFill" style="width:100%"></div></div>
+    </div>
+    <div class="battle-question" id="battleQuestion">---</div>
+    <div class="battle-options" id="battleOptions"></div>
+  </div>
+</div>
+
+<!-- ===== TREASURE OVERLAY ===== -->
+<div class="treasure-overlay hidden" id="treasureOverlay">
+  <div class="treasure-card">
+    <div class="chest" id="treasureEmoji">🎁</div>
+    <div class="reward" id="treasureReward">+50 コイン！</div>
+    <div class="reward-detail" id="treasureDetail">お宝を発見した！</div>
+    <button onclick="closeTreasure()">OK!</button>
+  </div>
+</div>
+
+<!-- ===== STAGE CLEAR ===== -->
+<div class="stage-clear hidden" id="stageClear">
+  <h1>STAGE CLEAR!</h1>
+  <div class="stars-row" id="clearStars"></div>
+  <div class="clear-stats" id="clearStats"></div>
+  <button onclick="returnToMap()">マップに戻る</button>
+</div>
+
+</div>
+
+<script>
+// ============ DATA ============
+const STAGES = [
+  { name:"🌿 はじまりの森", icon:"🌲", bg:"#2d7d3a",
+    encounters:[
+      {type:"coin",pos:15},{type:"coin",pos:20},
+      {type:"battle",pos:30,enemy:"🐛",name:"いもむし",hp:1,
+        q:{q:"apple",opts:["りんご","みかん","ぶどう","もも"],ans:0}},
+      {type:"coin",pos:40},{type:"coin",pos:45},{type:"coin",pos:48},
+      {type:"treasure",pos:55,reward:"スピードアップ"},
+      {type:"battle",pos:70,enemy:"🐸",name:"カエル",hp:2,
+        qs:[
+          {q:"school",opts:["病院","学校","公園","駅"],ans:1},
+          {q:"friend",opts:["家族","先生","友達","医者"],ans:2}
+        ]},
+      {type:"coin",pos:78},{type:"coin",pos:82},
+      {type:"battle",pos:92,enemy:"🦊",name:"キツネ (BOSS)",hp:3,boss:true,
+        qs:[
+          {q:"beautiful",opts:["大きい","美しい","小さい","速い"],ans:1},
+          {q:"remember",opts:["忘れる","思い出す","考える","教える"],ans:1},
+          {q:"important",opts:["簡単な","難しい","大切な","危険な"],ans:2}
+        ]},
+    ]},
+  { name:"🏔️ こだまの山", icon:"⛰️", bg:"#5a3d7a",
+    encounters:[
+      {type:"coin",pos:12},{type:"coin",pos:18},
+      {type:"battle",pos:28,enemy:"🦇",name:"コウモリ",hp:1,
+        q:{q:"weather",opts:["季節","天気","温度","風"],ans:1}},
+      {type:"coin",pos:38},{type:"treasure",pos:50,reward:"ヒントの書"},
+      {type:"battle",pos:65,enemy:"🐺",name:"オオカミ",hp:2,
+        qs:[
+          {q:"delicious",opts:["美味しい","まずい","辛い","甘い"],ans:0},
+          {q:"enjoy",opts:["楽しむ","走る","食べる","寝る"],ans:0}
+        ]},
+      {type:"coin",pos:75},{type:"coin",pos:80},
+      {type:"battle",pos:93,enemy:"🐉",name:"ドラゴン (BOSS)",hp:3,boss:true,
+        qs:[
+          {q:"library",opts:["図書館","教室","体育館","食堂"],ans:0},
+          {q:"difficult",opts:["簡単な","難しい","楽しい","悲しい"],ans:1},
+          {q:"adventure",opts:["冒険","事件","発明","発見"],ans:0}
+        ]},
+    ]},
+  { name:"🌊 うみのどうくつ", icon:"🌊", bg:"#1a5276", encounters:[] },
+  { name:"🏰 まおうの城", icon:"🏰", bg:"#4a1a2e", encounters:[] },
+];
+
+// ============ STATE ============
+let gs = {
+  currentStage: 0,
+  clearedStages: [],
+  coins: 0,
+  // In-stage
+  scrollX: 0,
+  running: false,
+  encounterIdx: 0,
+  stageCoins: 0,
+  stageCorrect: 0,
+  stageTotal: 0,
+  battleHp: 0,
+  battleQs: [],
+  battleQi: 0,
+};
+const STAGE_LENGTH = 3000; // pixels
+const SCROLL_SPEED = 2.5;
+
+// ============ WORLD MAP ============
+function drawMap() {
+  const mp = document.getElementById('mapPath');
+  mp.innerHTML = '';
+  const positions = [
+    {x:20,y:80},{x:65,y:60},{x:30,y:38},{x:70,y:18}
+  ];
+  // Lines
+  for(let i=0;i<positions.length-1;i++){
+    const a=positions[i], b=positions[i+1];
+    const dx=b.x-a.x, dy=b.y-a.y;
+    const len=Math.sqrt(dx*dx+dy*dy);
+    const ang=Math.atan2(dy,dx)*180/Math.PI;
+    const line=document.createElement('div');
+    line.className='map-line'+(gs.clearedStages.includes(i)?' active':'');
+    line.style.cssText=`left:${a.x+7}%;top:${a.y+7}%;width:${len}%;transform:rotate(${ang}deg)`;
+    mp.appendChild(line);
+  }
+  // Nodes
+  positions.forEach((p,i) => {
+    const node=document.createElement('div');
+    node.className='map-node';
+    const st=STAGES[i];
+    if(gs.clearedStages.includes(i)) node.classList.add('cleared');
+    else if(i===gs.currentStage) node.classList.add('current');
+    else if(i>gs.currentStage) node.classList.add('locked');
+    node.style.cssText=`left:${p.x}%;top:${p.y}%;background:${st.bg}`;
+    node.textContent=st.icon;
+    node.onclick=()=>{ if(i<=gs.currentStage){gs.currentStage=i; drawMap();} };
+    mp.appendChild(node);
+    // Label
+    const label=document.createElement('div');
+    label.style.cssText=`position:absolute;left:${p.x}%;top:${p.y+16}%;font-size:11px;color:#ccc;white-space:nowrap;transform:translateX(-10%)`;
+    label.textContent=st.name;
+    mp.appendChild(label);
+  });
+  document.getElementById('mapStartBtn').textContent=
+    gs.clearedStages.includes(gs.currentStage)?'もう一度':'冒険スタート！';
+}
+drawMap();
+
+// ============ ENTER STAGE ============
+function enterStage() {
+  const st = STAGES[gs.currentStage];
+  if(st.encounters.length===0){ alert('このステージはまだ準備中！'); return; }
+
+  gs.scrollX=0; gs.encounterIdx=0; gs.stageCoins=0; gs.stageCorrect=0; gs.stageTotal=0;
+
+  document.getElementById('worldMap').classList.add('hidden');
+  document.getElementById('stageView').classList.remove('hidden');
+  document.getElementById('stageName').textContent=st.name;
+  document.getElementById('stageProgress').style.width='0%';
+  document.getElementById('coinCount').textContent='🪙 '+gs.coins;
+
+  buildScenery();
+  placeEncounters();
+  startRunning();
+}
+
+function buildScenery(){
+  // Mountains
+  const ml=document.getElementById('mountainLayer');
+  ml.innerHTML='';
+  const mColors=['#6b8e6b','#5a7d5a','#7a9e7a','#4d6d4d'];
+  for(let i=0;i<20;i++){
+    const m=document.createElement('div');
+    m.className='mountain';
+    m.style.borderBottomColor=mColors[i%mColors.length];
+    m.style.borderLeftWidth=(40+Math.random()*60)+'px';
+    m.style.borderRightWidth=(40+Math.random()*60)+'px';
+    m.style.borderBottomWidth=(60+Math.random()*80)+'px';
+    ml.appendChild(m);
+  }
+  // Trees
+  const tl=document.getElementById('treeLayer');
+  tl.innerHTML='';
+  const trees=['🌲','🌳','🌴','🎄','🌿'];
+  for(let i=0;i<40;i++){
+    const t=document.createElement('span');
+    t.className='tree';
+    t.textContent=trees[Math.floor(Math.random()*trees.length)];
+    t.style.fontSize=(28+Math.random()*16)+'px';
+    tl.appendChild(t);
+  }
+  // Ground
+  const gl=document.getElementById('groundLayer');
+  gl.innerHTML='';
+  const gColors=['#3a8a3a','#2d7a2d','#45994a','#2e7a30'];
+  for(let i=0;i<8;i++){
+    const g=document.createElement('div');
+    g.className='ground-tile';
+    g.style.background=`linear-gradient(180deg,${gColors[i%gColors.length]},#1a5a1a)`;
+    gl.appendChild(g);
+  }
+}
+
+function placeEncounters(){
+  // Remove old
+  document.querySelectorAll('.path-item,.encounter-marker').forEach(e=>e.remove());
+  const st=STAGES[gs.currentStage];
+  const par=document.getElementById('parallax');
+
+  st.encounters.forEach((enc,i) => {
+    const px = (enc.pos/100)*STAGE_LENGTH;
+    if(enc.type==='coin'){
+      const el=document.createElement('div');
+      el.className='path-item coin';
+      el.textContent='🪙';
+      el.style.left=px+'px';
+      el.dataset.idx=i;
+      el.dataset.type='coin';
+      par.appendChild(el);
+    } else {
+      const el=document.createElement('div');
+      el.className='encounter-marker';
+      el.style.left=px+'px';
+      el.dataset.idx=i;
+      el.dataset.type=enc.type;
+      const emoji=document.createElement('div');
+      emoji.className='marker-emoji';
+      emoji.textContent= enc.type==='battle'? enc.enemy : '🎁';
+      el.appendChild(emoji);
+      if(enc.type==='battle'){
+        const lbl=document.createElement('div');
+        lbl.className='marker-label';
+        lbl.textContent=enc.name;
+        el.appendChild(lbl);
+      }
+      par.appendChild(el);
+    }
+  });
+}
+
+// ============ RUNNING ============
+let animId=null;
+let lastTime=0;
+
+function startRunning(){
+  gs.running=true;
+  document.getElementById('character').classList.add('running');
+  lastTime=performance.now();
+  animId=requestAnimationFrame(gameLoop);
+}
+function stopRunning(){
+  gs.running=false;
+  document.getElementById('character').classList.remove('running');
+  if(animId) cancelAnimationFrame(animId);
+}
+
+function gameLoop(now){
+  if(!gs.running){return;}
+  const dt=Math.min(now-lastTime, 32);
+  lastTime=now;
+
+  gs.scrollX += SCROLL_SPEED * (dt/16.67);
+
+  // Parallax scroll
+  const ml=document.getElementById('mountainLayer');
+  const tl=document.getElementById('treeLayer');
+  const gl=document.getElementById('groundLayer');
+  ml.style.transform=`translateX(${-gs.scrollX*0.2}px)`;
+  tl.style.transform=`translateX(${-gs.scrollX*0.5}px)`;
+  gl.style.transform=`translateX(${-gs.scrollX*0.8}px)`;
+
+  // Move items
+  const charX = window.innerWidth * 0.15;
+  document.querySelectorAll('.path-item,.encounter-marker').forEach(el=>{
+    const origX = parseFloat(el.style.left);
+    const screenX = origX - gs.scrollX + charX;
+    el.style.transform = `translateX(${-gs.scrollX}px)`;
+  });
+
+  // Progress bar
+  const prog = Math.min(100, (gs.scrollX / STAGE_LENGTH)*100);
+  document.getElementById('stageProgress').style.width=prog+'%';
+
+  // Check encounters
+  checkEncounters();
+
+  // Stage end?
+  if(gs.scrollX >= STAGE_LENGTH){
+    stopRunning();
+    stageClear();
+    return;
+  }
+
+  animId=requestAnimationFrame(gameLoop);
+}
+
+function checkEncounters(){
+  const st=STAGES[gs.currentStage];
+  const charWorldX = gs.scrollX;
+
+  st.encounters.forEach((enc,i)=>{
+    if(enc._done) return;
+    const encX = (enc.pos/100)*STAGE_LENGTH;
+    const dist = encX - charWorldX;
+
+    if(dist < 30 && dist > -10){
+      enc._done=true;
+
+      if(enc.type==='coin'){
+        gs.coins++;
+        gs.stageCoins++;
+        document.getElementById('coinCount').textContent='🪙 '+gs.coins;
+        // Collect animation
+        const el=document.querySelector(`.path-item[data-idx="${i}"]`);
+        if(el) el.classList.add('collected');
+      }
+      else if(enc.type==='battle'){
+        stopRunning();
+        startBattle(enc);
+      }
+      else if(enc.type==='treasure'){
+        stopRunning();
+        showTreasure(enc);
+      }
+    }
+  });
+}
+
+// ============ BATTLE ============
+function startBattle(enc){
+  const ov=document.getElementById('battleOverlay');
+  ov.classList.remove('hidden');
+  document.getElementById('battleEnemy').textContent=enc.enemy;
+
+  if(enc.qs){
+    gs.battleQs=enc.qs;
+    gs.battleHp=enc.hp;
+  } else {
+    gs.battleQs=[enc.q];
+    gs.battleHp=enc.hp;
+  }
+  gs.battleQi=0;
+  document.getElementById('battleHpFill').style.width='100%';
+  showBattleQuestion();
+}
+
+function showBattleQuestion(){
+  const q=gs.battleQs[gs.battleQi];
+  document.getElementById('battleQuestion').textContent=`"${q.q}" の意味は？`;
+  const grid=document.getElementById('battleOptions');
+  grid.innerHTML='';
+  q.opts.forEach((opt,i)=>{
+    const btn=document.createElement('button');
+    btn.className='battle-btn';
+    btn.textContent=opt;
+    btn.onclick=()=>battleAnswer(i);
+    grid.appendChild(btn);
+  });
+}
+
+function battleAnswer(idx){
+  const q=gs.battleQs[gs.battleQi];
+  const btns=document.querySelectorAll('.battle-btn');
+  btns.forEach(b=>b.disabled=true);
+  const correct=idx===q.ans;
+  gs.stageTotal++;
+
+  if(correct){
+    gs.stageCorrect++;
+    btns[idx].classList.add('correct');
+    gs.battleHp--;
+    const hpPct=(gs.battleHp/gs.battleQs.length)*100;
+    document.getElementById('battleHpFill').style.width=Math.max(0,hpPct)+'%';
+
+    // Result flash
+    showBattleResult('⚔️ ナイス！', '#2ecc71');
+
+    gs.coins+=10;
+    document.getElementById('coinCount').textContent='🪙 '+gs.coins;
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[q.ans].classList.add('correct');
+    showBattleResult('💥 ミス！正解: '+q.opts[q.ans], '#e74c3c');
+  }
+
+  gs.battleQi++;
+  setTimeout(()=>{
+    if(gs.battleQi < gs.battleQs.length){
+      showBattleQuestion();
+    } else {
+      // Battle end
+      document.getElementById('battleOverlay').classList.add('hidden');
+      setTimeout(startRunning, 300);
+    }
+  }, 1200);
+}
+
+function showBattleResult(text, color){
+  const el=document.createElement('div');
+  el.className='battle-result';
+  el.textContent=text;
+  el.style.color=color;
+  document.getElementById('battleOverlay').appendChild(el);
+  setTimeout(()=>el.remove(),800);
+}
+
+// ============ TREASURE ============
+function showTreasure(enc){
+  document.getElementById('treasureOverlay').classList.remove('hidden');
+  document.getElementById('treasureReward').textContent=enc.reward;
+  gs.coins+=50;
+  document.getElementById('coinCount').textContent='🪙 '+gs.coins;
+}
+function closeTreasure(){
+  document.getElementById('treasureOverlay').classList.add('hidden');
+  setTimeout(startRunning, 200);
+}
+
+// ============ STAGE CLEAR ============
+function stageClear(){
+  // Reset encounter states
+  STAGES[gs.currentStage].encounters.forEach(e=>delete e._done);
+
+  const ov=document.getElementById('stageClear');
+  ov.classList.remove('hidden');
+
+  const acc=gs.stageTotal>0? gs.stageCorrect/gs.stageTotal : 1;
+  const starCount = acc>=0.9?3 : acc>=0.6?2 : 1;
+
+  document.getElementById('clearStars').innerHTML=
+    [1,2,3].map(i=>`<span class="star">${i<=starCount?'⭐':'☆'}</span>`).join('');
+
+  document.getElementById('clearStats').innerHTML=`
+    正答率: ${gs.stageCorrect}/${gs.stageTotal}<br>
+    コイン: +${gs.stageCoins + gs.stageCorrect*10}<br>
+  `;
+
+  if(!gs.clearedStages.includes(gs.currentStage)){
+    gs.clearedStages.push(gs.currentStage);
+    if(gs.currentStage < STAGES.length-1) gs.currentStage++;
+  }
+}
+
+function returnToMap(){
+  document.getElementById('stageClear').classList.add('hidden');
+  document.getElementById('stageView').classList.add('hidden');
+  document.getElementById('worldMap').classList.remove('hidden');
+  drawMap();
+}
+
+// ============ TAP TO JUMP (future) ============
+document.getElementById('stageView').addEventListener('click', ()=>{
+  if(!gs.running) return;
+  const ch=document.getElementById('character');
+  ch.classList.remove('running');
+  ch.classList.add('jumping');
+  setTimeout(()=>{
+    ch.classList.remove('jumping');
+    if(gs.running) ch.classList.add('running');
+  },600);
+});
+</script>
+</body>
+</html>

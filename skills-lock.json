@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "skills": {
+    "ckm-banner-design": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/banner-design/SKILL.md",
+      "computedHash": "8807907816074f083b41ae2a5d804be896dd3ddf8038ee405d2854308ffb3446"
+    },
+    "ckm-brand": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/brand/SKILL.md",
+      "computedHash": "49dcbb991962df79acb48c8fcf4155f714254ac72881a47995fe77d5092de37f"
+    },
+    "ckm-design": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/design/SKILL.md",
+      "computedHash": "f6a51685993be4ea6b868b73412f771d54caa8c18d7a6c091528005ea24d4a46"
+    },
+    "ckm-design-system": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/design-system/SKILL.md",
+      "computedHash": "01fb2b49187aece0eaa5ead4d90ecf94c7c803c03f7c62a4ec6f67cc4a426631"
+    },
+    "ckm-slides": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/slides/SKILL.md",
+      "computedHash": "8e5de96ccae55ee915e855c160fcec4b739fc70fe6b44aaf61160dee943ae11a"
+    },
+    "ckm-ui-styling": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-styling/SKILL.md",
+      "computedHash": "68874da6102cce0afd076ee8b82e052f0eed20768671051d3001574c49892c95"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "a2d7eab9fd29c7685e10dc0d9acca085e32e817b59b6914c0c1be28a56062fbc"
+    }
+  }
+}

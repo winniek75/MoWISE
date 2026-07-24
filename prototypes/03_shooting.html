@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Concept 3: Space Shooter</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Hiragino Sans',sans-serif; background:#000; color:#fff; height:100vh; overflow:hidden; }
+.game { max-width:420px; margin:0 auto; height:100vh; position:relative; overflow:hidden; background:radial-gradient(ellipse at 50% 0%, #0a0a3a, #000 70%); }
+
+/* Stars */
+.star-field { position:absolute; inset:0; }
+.sf-star { position:absolute; background:#fff; border-radius:50%; animation:sf-fall linear infinite; }
+@keyframes sf-fall { 0%{transform:translateY(-10px)} 100%{transform:translateY(100vh)} }
+
+/* HUD */
+.hud { position:absolute; top:0; left:0; right:0; z-index:20; padding:8px 16px; display:flex; justify-content:space-between; font-size:13px; background:rgba(0,0,0,0.5); }
+.wave-info { color:#ff9; font-weight:bold; }
+.score-info { color:#0ff; font-weight:bold; }
+
+/* Enemies */
+.enemy { position:absolute; font-size:44px; transition: top 0.8s linear; z-index:5; cursor:default; text-align:center; }
+.enemy-word { font-size:13px; background:rgba(0,0,0,0.7); padding:2px 8px; border-radius:8px; border:1px solid #f55; white-space:nowrap; position:absolute; top:-22px; left:50%; transform:translateX(-50%); }
+.enemy.boss { font-size:72px; }
+.enemy.boss .enemy-word { font-size:16px; border-color:#ffd93d; color:#ffd93d; }
+.enemy.exploding { animation: explode 0.5s forwards; }
+@keyframes explode { 0%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:0.5} 100%{transform:scale(0);opacity:0} }
+
+/* Cannon area */
+.cannon-area { position:absolute; bottom:0; left:0; right:0; height:40%; z-index:10; }
+.cannon { position:absolute; bottom:8px; left:50%; transform:translateX(-50%); font-size:48px; }
+
+/* Answer buttons */
+.answer-grid { position:absolute; bottom:70px; left:0; right:0; display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px; }
+.ans-btn { padding:14px 8px; background:rgba(0,200,255,0.1); border:2px solid #0cf; color:#fff; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; transition:all 0.15s; }
+.ans-btn:active { background:rgba(0,200,255,0.4); transform:scale(0.95); }
+.ans-btn.correct { background:rgba(0,255,100,0.4); border-color:#0f6; }
+.ans-btn.wrong { background:rgba(255,50,50,0.4); border-color:#f33; }
+.ans-btn:disabled { opacity:0.5; }
+
+/* Bullet */
+.bullet { position:absolute; width:4px; height:16px; background:linear-gradient(180deg,#0ff,#0f0); border-radius:2px; z-index:8; animation: bullet-fly 0.4s linear forwards; box-shadow:0 0 8px #0ff; }
+@keyframes bullet-fly { 0%{bottom:80px;opacity:1} 100%{bottom:100%;opacity:0} }
+
+/* Hit effect */
+.hit-burst { position:absolute; width:60px; height:60px; border-radius:50%; z-index:9; animation: burst 0.5s forwards; pointer-events:none; }
+@keyframes burst { 0%{transform:scale(0);opacity:1;background:rgba(255,200,0,0.8)} 100%{transform:scale(3);opacity:0;background:rgba(255,100,0,0)} }
+
+/* Overlays */
+.overlay { position:absolute; inset:0; background:rgba(0,0,0,0.9); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:50; }
+.overlay h1 { font-size:32px; margin-bottom:8px; }
+.overlay .sub { color:#888; font-size:14px; margin-bottom:20px; }
+.overlay button { padding:16px 48px; background:#e94560; border:none; color:#fff; font-size:20px; border-radius:12px; cursor:pointer; font-weight:bold; }
+.overlay .stats { font-size:16px; line-height:2.2; margin-bottom:16px; text-align:center; }
+.hidden { display:none !important; }
+
+.wave-banner { position:absolute; top:40%; left:50%; transform:translate(-50%,-50%); font-size:36px; font-weight:bold; color:#ffd93d; z-index:30; animation: wave-in 2s forwards; pointer-events:none; text-shadow:0 0 20px rgba(255,217,61,0.5); }
+@keyframes wave-in { 0%{opacity:0;transform:translate(-50%,-50%) scale(0.5)} 20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} 40%{transform:translate(-50%,-50%) scale(1)} 80%{opacity:1} 100%{opacity:0} }
+
+.combo-display { position:absolute; top:35px; left:50%; transform:translateX(-50%); z-index:20; font-size:20px; font-weight:bold; color:#f90; text-shadow:0 0 10px #f90; transition: opacity 0.3s; }
+</style>
+</head>
+<body>
+<div class="game" id="game">
+  <!-- Stars -->
+  <div class="star-field" id="starField"></div>
+
+  <!-- Start -->
+  <div class="overlay" id="startOverlay">
+    <h1>🚀 WORD BLASTER</h1>
+    <div class="sub">英単語エイリアンを撃墜せよ！</div>
+    <button onclick="startGame()">LAUNCH</button>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <span class="wave-info" id="waveInfo">Wave 1/3</span>
+    <span class="score-info">Score: <span id="scoreDisplay">0</span></span>
+  </div>
+  <div class="combo-display" id="comboDisplay" style="opacity:0"></div>
+
+  <!-- Enemy zone -->
+  <div id="enemyZone" style="position:absolute;top:40px;left:0;right:0;height:50%;z-index:5;"></div>
+
+  <!-- Cannon area -->
+  <div class="cannon-area">
+    <div class="answer-grid" id="answerGrid"></div>
+    <div class="cannon" id="cannon">🔫</div>
+  </div>
+
+  <!-- Result -->
+  <div class="overlay hidden" id="resultOverlay">
+    <h1 id="resultTitle">MISSION COMPLETE</h1>
+    <div class="stats" id="resultStats"></div>
+    <button onclick="location.reload()">RETRY</button>
+  </div>
+</div>
+
+<script>
+// Star field
+(function(){
+  const sf=document.getElementById('starField');
+  for(let i=0;i<40;i++){
+    const s=document.createElement('div');
+    s.className='sf-star';
+    const size=Math.random()*2+1;
+    s.style.width=size+'px';s.style.height=size+'px';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.animationDuration=(Math.random()*4+3)+'s';
+    s.style.animationDelay=Math.random()*5+'s';
+    s.style.opacity=Math.random()*0.7+0.3;
+    sf.appendChild(s);
+  }
+})();
+
+const WAVES = [
+  { name:"Wave 1 - Basics", enemies:[
+    {word:"cat",opts:["猫","犬","鳥","魚"],ans:0,emoji:"👾"},
+    {word:"blue",opts:["赤","青","緑","黄"],ans:1,emoji:"👽"},
+    {word:"three",opts:["1","2","3","4"],ans:2,emoji:"🛸"},
+    {word:"milk",opts:["水","牛乳","茶","汁"],ans:1,emoji:"👾"},
+    {word:"hand",opts:["手","足","頭","目"],ans:0,emoji:"👽"},
+  ]},
+  { name:"Wave 2 - Actions", enemies:[
+    {word:"swim",opts:["泳ぐ","走る","飛ぶ","歩く"],ans:0,emoji:"🛸"},
+    {word:"write",opts:["読む","書く","話す","聞く"],ans:1,emoji:"👾"},
+    {word:"jump",opts:["座る","立つ","跳ぶ","寝る"],ans:2,emoji:"👽"},
+    {word:"listen",opts:["見る","触る","聞く","嗅ぐ"],ans:2,emoji:"🛸"},
+    {word:"open",opts:["閉める","開ける","押す","引く"],ans:1,emoji:"👾"},
+  ]},
+  { name:"⚠️ BOSS WAVE", enemies:[
+    {word:"difficult",opts:["簡単な","難しい","楽しい","悲しい"],ans:1,emoji:"🐙",boss:true},
+    {word:"adventure",opts:["冒険","事件","発明","発見"],ans:0,emoji:"🐲",boss:true},
+    {word:"important",opts:["危険な","大切な","不思議な","普通の"],ans:1,emoji:"👹",boss:true},
+  ]},
+];
+
+let state = { wave:0, ei:0, score:0, combo:0, maxCombo:0, correct:0, total:0, answered:false };
+
+function startGame(){
+  document.getElementById('startOverlay').classList.add('hidden');
+  showWaveBanner();
+}
+
+function showWaveBanner(){
+  const w = WAVES[state.wave];
+  const b = document.createElement('div');
+  b.className = 'wave-banner';
+  b.textContent = w.name;
+  document.getElementById('game').appendChild(b);
+  document.getElementById('waveInfo').textContent = `Wave ${state.wave+1}/${WAVES.length}`;
+  setTimeout(()=>{ b.remove(); spawnEnemy(); }, 2000);
+}
+
+function spawnEnemy(){
+  const w = WAVES[state.wave];
+  if(state.ei >= w.enemies.length){
+    state.wave++;
+    state.ei = 0;
+    if(state.wave >= WAVES.length) return endGame();
+    return showWaveBanner();
+  }
+
+  state.answered = false;
+  const e = w.enemies[state.ei];
+
+  // Enemy element
+  const zone = document.getElementById('enemyZone');
+  zone.innerHTML = '';
+  const ed = document.createElement('div');
+  ed.className = 'enemy' + (e.boss?' boss':'');
+  ed.id = 'currentEnemy';
+  ed.innerHTML = `<div class="enemy-word">${e.word}</div>${e.emoji}`;
+  ed.style.left = (Math.random()*60+20)+'%';
+  ed.style.top = '0%';
+  zone.appendChild(ed);
+
+  // Move enemy down slowly
+  setTimeout(()=>{ ed.style.top = '70%'; }, 50);
+
+  // Answer buttons
+  const grid = document.getElementById('answerGrid');
+  grid.innerHTML = '';
+  e.opts.forEach((opt,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'ans-btn';
+    btn.textContent = opt;
+    btn.onclick = () => handleAnswer(i);
+    grid.appendChild(btn);
+  });
+}
+
+function handleAnswer(idx){
+  if(state.answered) return;
+  state.answered = true;
+  state.total++;
+
+  const w = WAVES[state.wave];
+  const e = w.enemies[state.ei];
+  const btns = document.querySelectorAll('.ans-btn');
+  btns.forEach(b=>b.disabled=true);
+  const isCorrect = idx === e.ans;
+
+  // Fire bullet
+  const bullet = document.createElement('div');
+  bullet.className = 'bullet';
+  bullet.style.left = '50%';
+  document.getElementById('game').appendChild(bullet);
+  setTimeout(()=>bullet.remove(), 400);
+
+  if(isCorrect){
+    btns[idx].classList.add('correct');
+    state.correct++;
+    state.combo++;
+    if(state.combo > state.maxCombo) state.maxCombo = state.combo;
+    state.score += 200 + state.combo * 20;
+    document.getElementById('scoreDisplay').textContent = state.score;
+
+    // Combo
+    const cd = document.getElementById('comboDisplay');
+    if(state.combo >= 2){
+      const labels = {3:'NICE!',5:'GREAT!',7:'AMAZING!',10:'GODLIKE!'};
+      cd.textContent = labels[state.combo] || `${state.combo} COMBO!`;
+      cd.style.opacity = '1';
+    }
+
+    // Enemy explode
+    setTimeout(()=>{
+      const en = document.getElementById('currentEnemy');
+      if(en){
+        en.classList.add('exploding');
+        const burst = document.createElement('div');
+        burst.className = 'hit-burst';
+        burst.style.left = en.style.left;
+        burst.style.top = en.style.top;
+        document.getElementById('enemyZone').appendChild(burst);
+        setTimeout(()=>burst.remove(), 500);
+      }
+    }, 350);
+  } else {
+    btns[idx].classList.add('wrong');
+    btns[e.ans].classList.add('correct');
+    state.combo = 0;
+    document.getElementById('comboDisplay').style.opacity = '0';
+  }
+
+  state.ei++;
+  setTimeout(spawnEnemy, 1200);
+}
+
+function endGame(){
+  const ov = document.getElementById('resultOverlay');
+  ov.classList.remove('hidden');
+  const acc = state.total > 0 ? Math.round(state.correct/state.total*100) : 0;
+  document.getElementById('resultTitle').textContent = acc >= 80 ? '🏆 MISSION COMPLETE!' : '💫 MISSION FAILED';
+  document.getElementById('resultStats').innerHTML = `
+    スコア: ${state.score}<br>
+    正答率: ${state.correct}/${state.total} (${acc}%)<br>
+    最大コンボ: ${state.maxCombo}
+  `;
+}
+</script>
+</body>
+</html>
