@@ -58,33 +58,71 @@
         </div>
       </section>
 
-      <!-- Pattern range -->
-      <section v-if="currentClass" class="neo-card">
-        <div class="flex items-center justify-between">
-          <h2 class="neo-section-title !mb-0">今週のパターン範囲</h2>
+      <!-- Assign content -->
+      <section class="neo-card">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="neo-section-title !mb-0">課題を出す</h2>
           <button
-            v-if="!editingRange"
-            @click="editingRange = true"
-            class="text-xs text-brand-secondary hover:text-brand-secondary/80 font-title font-medium"
-          >変更</button>
+            v-if="!showAssignForm"
+            @click="openAssignForm"
+            class="btn-neo !py-1.5 !px-4 !text-xs !rounded-xl"
+          >+ 新しい課題</button>
         </div>
-        <div v-if="!editingRange" class="mt-2">
-          <p v-if="currentClass.current_pattern_range" class="text-lg font-bold text-white font-title">
-            {{ currentClass.current_pattern_range }}
-          </p>
-          <p v-else class="text-sm text-white/25">未設定（全パターン対象）</p>
+
+        <!-- Assign form -->
+        <div v-if="showAssignForm" class="space-y-3">
+          <div>
+            <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">ゲームを選ぶ</label>
+            <select v-model="assignGameId" class="neo-input appearance-none">
+              <option value="" disabled>-- ゲームを選択 --</option>
+              <option v-for="(games, cat) in gameStore.gamesByCategory" :key="cat" disabled class="text-white/20">
+                ── {{ gameStore.categoryLabels[cat] || cat }} ──
+              </option>
+              <template v-for="(games, cat) in gameStore.gamesByCategory" :key="'g-' + cat">
+                <option v-for="g in games" :key="g.id" :value="g.id">
+                  {{ g.title_ja }}
+                </option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">指示メモ（任意）</label>
+            <input v-model="assignInstructions" type="text" placeholder="例：Grade 3を選んで10問やろう" class="neo-input" />
+          </div>
+          <div>
+            <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">期限（任意）</label>
+            <input v-model="assignDueDate" type="datetime-local" class="neo-input" />
+          </div>
+          <div class="flex gap-2 pt-1">
+            <button @click="showAssignForm = false" class="btn-ghost flex-1 py-2.5 border border-white/10 rounded-2xl text-sm">キャンセル</button>
+            <button
+              @click="handleAssignGame"
+              :disabled="!assignGameId || assigning"
+              class="btn-neo flex-1"
+            >{{ assigning ? '配信中...' : '課題を配信' }}</button>
+          </div>
         </div>
-        <div v-else class="mt-3 flex items-center gap-3">
-          <select v-model="rangeFrom" class="neo-input !w-auto !py-2">
-            <option v-for="p in patternOptions" :key="p" :value="p">{{ p }}</option>
-          </select>
-          <span class="text-white/30">〜</span>
-          <select v-model="rangeTo" class="neo-input !w-auto !py-2">
-            <option v-for="p in patternOptions" :key="p" :value="p">{{ p }}</option>
-          </select>
-          <button @click="savePatternRange" class="btn-neo !py-2 !px-3 !text-xs !rounded-xl">保存</button>
-          <button @click="editingRange = false" class="btn-ghost !text-xs">キャンセル</button>
+
+        <!-- Active assignments list -->
+        <div v-if="activeAssignments.length > 0 && !showAssignForm" class="space-y-2">
+          <div
+            v-for="a in activeAssignments"
+            :key="a.id"
+            class="flex items-center justify-between bg-white/[0.03] rounded-xl px-4 py-3 border border-white/[0.06]"
+          >
+            <div class="flex-1 min-w-0">
+              <p class="text-white font-title font-semibold text-sm truncate">{{ a.game_title_ja || a.game_id }}</p>
+              <p v-if="a.instructions" class="text-white/25 text-xs truncate mt-0.5">{{ a.instructions }}</p>
+              <p v-if="a.due_date" class="text-white/15 text-[10px] font-title mt-0.5">期限: {{ formatDate(a.due_date) }}</p>
+            </div>
+            <button
+              @click="handleDeleteAssignment(a.id)"
+              class="text-white/20 hover:text-neon-pink text-xs ml-3 shrink-0 transition-colors"
+              title="削除"
+            >✕</button>
+          </div>
         </div>
+        <p v-else-if="!showAssignForm" class="text-white/20 text-sm font-title">まだ課題がありません</p>
       </section>
 
       <!-- Add student -->
@@ -367,12 +405,14 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTeacherStore } from '@/stores/teacher'
 import { useGameStore } from '@/stores/game'
+import { useAuthStore } from '@/stores/auth'
 import { supabase } from '@/lib/supabase'
 
 const route  = useRoute()
 const router = useRouter()
 const store  = useTeacherStore()
 const gameStore = useGameStore()
+const auth = useAuthStore()
 
 const classId      = route.params.classId as string
 const currentClass = ref<any>(null)
@@ -441,10 +481,63 @@ ${allStudents.map(s => `<div class="card">
   if (w) { w.document.write(html); w.document.close(); w.print() }
 }
 
-const editingRange = ref(false)
-const rangeFrom = ref('P001')
-const rangeTo = ref('P035')
-const patternOptions = Array.from({ length: 35 }, (_, i) => `P${String(i + 1).padStart(3, '0')}`)
+// Assignment creation
+const showAssignForm = ref(false)
+const assignGameId = ref('')
+const assignInstructions = ref('')
+const assignDueDate = ref('')
+const assigning = ref(false)
+const activeAssignments = ref<any[]>([])
+
+function openAssignForm() {
+  assignGameId.value = ''
+  assignInstructions.value = ''
+  assignDueDate.value = ''
+  showAssignForm.value = true
+  if (gameStore.catalog.length === 0) gameStore.fetchCatalog()
+}
+
+async function handleAssignGame() {
+  if (!assignGameId.value || !auth.userId) return
+  assigning.value = true
+  const game = gameStore.getGameById(assignGameId.value)
+  const { error } = await supabase
+    .from('assignments')
+    .insert({
+      class_id: classId,
+      teacher_id: auth.userId,
+      game_id: assignGameId.value,
+      title: game?.title_ja ?? null,
+      instructions: assignInstructions.value || null,
+      due_date: assignDueDate.value || null,
+    })
+  assigning.value = false
+  if (error) { console.error('[assign]', error); return }
+  showAssignForm.value = false
+  await fetchActiveAssignments()
+}
+
+async function fetchActiveAssignments() {
+  const { data } = await supabase
+    .from('assignments')
+    .select('*, game_catalog!game_id(title_ja)')
+    .eq('class_id', classId)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+  activeAssignments.value = (data ?? []).map((a: any) => ({
+    ...a,
+    game_title_ja: a.game_catalog?.title_ja,
+  }))
+}
+
+async function handleDeleteAssignment(assignmentId: string) {
+  if (!confirm('この課題を削除しますか？')) return
+  await supabase
+    .from('assignments')
+    .update({ status: 'archived' })
+    .eq('id', assignmentId)
+  await fetchActiveAssignments()
+}
 
 function exportCSV() {
   const header = '名前,Lv,連続日数,平均★,完全習得数,バッジ数,今朝の気分,最終練習日'
@@ -469,15 +562,6 @@ function exportCSV() {
   URL.revokeObjectURL(url)
 }
 
-async function savePatternRange() {
-  const range = `${rangeFrom.value}〜${rangeTo.value}`
-  await supabase
-    .from('classes')
-    .update({ current_pattern_range: range })
-    .eq('id', classId)
-  if (currentClass.value) currentClass.value.current_pattern_range = range
-  editingRange.value = false
-}
 
 const classAvgMastery = computed(() => {
   const vals = store.students.map((s: any) => Number(s.avg_mastery_level ?? 0))
@@ -526,6 +610,8 @@ onMounted(async () => {
     fetchAssignmentStats(),
     fetchCategoryStats(),
     fetchGameStats(),
+    fetchActiveAssignments(),
+    gameStore.fetchCatalog(),
   ])
 })
 
