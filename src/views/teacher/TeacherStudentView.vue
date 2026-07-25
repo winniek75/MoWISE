@@ -113,6 +113,44 @@
         </div>
       </section>
 
+      <!-- Wrong answers analysis -->
+      <section class="neo-card">
+        <h2 class="neo-section-title">よく間違えた問題</h2>
+
+        <!-- Tag chips -->
+        <div v-if="wrongTagSummary.length > 0" class="flex flex-wrap gap-1.5 mb-4">
+          <span
+            v-for="t in wrongTagSummary"
+            :key="t.tag"
+            class="text-[11px] font-title font-semibold px-2.5 py-1 rounded-full bg-neon-pink/10 text-neon-pink"
+          >{{ tagLabel(t.tag) }} ×{{ t.count }}</span>
+        </div>
+
+        <div v-if="wrongAnswersTop.length === 0" class="text-center py-6 text-white/25 text-sm font-title">
+          まだ間違いデータがありません<br>
+          <span class="text-[11px] text-white/15">（対応ゲームのプレイ後に表示されます）</span>
+        </div>
+
+        <div v-else class="space-y-1">
+          <div
+            v-for="(wa, i) in wrongAnswersTop"
+            :key="i"
+            class="px-3 py-2.5 rounded-xl hover:bg-white/[0.02] transition-colors"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <p class="text-sm text-white font-title flex-1">{{ wa.question }}</p>
+              <span class="shrink-0 text-[10px] font-title font-bold text-neon-pink bg-neon-pink/10 px-2 py-0.5 rounded-full">×{{ wa.count }}</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[11px] font-title">
+              <span class="text-correct">正答: {{ wa.correct_answer }}</span>
+              <span class="text-wrong">回答: {{ wa.chosen_answer || '(無回答)' }}</span>
+              <span class="text-white/20">{{ wa.game_title }}</span>
+              <span v-if="wa.tag" class="text-white/15">{{ tagLabel(wa.tag) }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Roblox -->
       <section v-if="roblox" class="neo-card !border-neon-purple/15">
         <h2 class="neo-section-title !text-neon-purple">Roblox 進捗</h2>
@@ -197,11 +235,30 @@ const studentId = route.params.studentId as string
 const student         = ref<any>(null)
 const patternProgress = ref<any[]>([])
 const studentGameStats = ref<any[]>([])
+const wrongAnswersTop  = ref<any[]>([])
+const wrongTagSummary  = ref<{ tag: string; count: number }[]>([])
 const roblox          = ref<any>(null)
 const feedbacks       = ref<any[]>([])
 const newFeedback     = ref('')
 const sendingFeedback = ref(false)
 const loading         = ref(true)
+
+const TAG_LABELS: Record<string, string> = {
+  be_verb: 'be動詞', general_verb: '一般動詞', third_person_s: '三単現のs',
+  plural_s: '複数形', pronoun: '代名詞', article: '冠詞',
+  preposition: '前置詞', past_regular: '過去形（規則）', past_irregular: '過去形（不規則）',
+  progressive: '進行形', future: '未来表現', present_perfect: '現在完了',
+  passive: '受動態', auxiliary: '助動詞', to_infinitive: 'to不定詞',
+  gerund: '動名詞', relative_pronoun: '関係代名詞', participle: '分詞',
+  comparative: '比較', imperative: '命令文', there_is: 'There is/are',
+  word_order: '語順', wh_what: 'What疑問文', wh_who: 'Who疑問文',
+  wh_where: 'Where疑問文', wh_when: 'When疑問文', wh_why: 'Why疑問文',
+  wh_how: 'How疑問文', other_grammar: 'その他（文法）',
+}
+
+function tagLabel(tag: string): string {
+  return TAG_LABELS[tag] ?? tag
+}
 
 onMounted(async () => {
   const { data: summary } = await supabase
@@ -226,6 +283,37 @@ onMounted(async () => {
     .eq('class_id', classId)
     .order('play_count', { ascending: false })
   studentGameStats.value = gameStatsData ?? []
+
+  // Wrong answers (last 30 days)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  const { data: wrongData } = await supabase
+    .from('student_wrong_answers')
+    .select('question, correct_answer, chosen_answer, tag, game_title, played_at')
+    .eq('user_id', studentId)
+    .gte('played_at', thirtyDaysAgo)
+    .order('played_at', { ascending: false })
+    .limit(200)
+  if (wrongData && wrongData.length > 0) {
+    // Group by question, count occurrences, take top 10
+    const grouped: Record<string, any> = {}
+    const tagCounts: Record<string, number> = {}
+    for (const w of wrongData) {
+      const key = `${w.question}|${w.correct_answer}`
+      if (!grouped[key]) {
+        grouped[key] = { ...w, count: 0 }
+      }
+      grouped[key].count++
+      if (w.tag) {
+        tagCounts[w.tag] = (tagCounts[w.tag] || 0) + 1
+      }
+    }
+    wrongAnswersTop.value = Object.values(grouped)
+      .sort((a: any, b: any) => b.count - a.count)
+      .slice(0, 10)
+    wrongTagSummary.value = Object.entries(tagCounts)
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+  }
 
   if (store.robloxStats[studentId]) {
     roblox.value = store.robloxStats[studentId]
