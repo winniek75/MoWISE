@@ -69,21 +69,85 @@
           >+ 新しい課題</button>
         </div>
 
-        <!-- Assign form -->
-        <div v-if="showAssignForm" class="space-y-3">
-          <div>
-            <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">ゲームを選ぶ</label>
-            <select v-model="assignGameId" class="neo-input appearance-none">
-              <option value="" disabled>-- ゲームを選択 --</option>
-              <option v-for="(games, cat) in gameStore.gamesByCategory" :key="cat" disabled class="text-white/20">
-                ── {{ gameStore.categoryLabels[cat] || cat }} ──
-              </option>
-              <template v-for="(games, cat) in gameStore.gamesByCategory" :key="'g-' + cat">
-                <option v-for="g in games" :key="g.id" :value="g.id">
-                  {{ g.title_ja }}
-                </option>
-              </template>
-            </select>
+        <!-- Step 1: Game selection (card grid) -->
+        <div v-if="showAssignForm && !assignGameId">
+          <div class="flex items-center justify-between mb-3">
+            <label class="text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider">ゲームを選ぶ</label>
+            <button @click="showAssignForm = false" class="text-white/30 text-xs font-title hover:text-white/50">✕ 閉じる</button>
+          </div>
+
+          <!-- Category filter -->
+          <div class="flex gap-1.5 mb-3 overflow-x-auto pb-1 -mx-1 px-1">
+            <button
+              @click="assignCategoryFilter = ''"
+              class="shrink-0 px-3 py-1 rounded-full text-[11px] font-title font-semibold transition-all"
+              :class="assignCategoryFilter === '' ? 'bg-white/15 text-white' : 'text-white/30 hover:text-white/50'"
+            >すべて</button>
+            <button
+              v-for="(label, cat) in gameStore.categoryLabels"
+              :key="cat"
+              @click="assignCategoryFilter = cat"
+              class="shrink-0 px-3 py-1 rounded-full text-[11px] font-title font-semibold transition-all"
+              :class="assignCategoryFilter === cat ? categoryBadgeClass(cat) : 'text-white/30 hover:text-white/50'"
+            >{{ label }}</button>
+          </div>
+
+          <!-- Game cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[60vh] overflow-y-auto pr-1">
+            <div
+              v-for="g in filteredGamesForAssign"
+              :key="g.id"
+              class="bg-white/[0.03] rounded-2xl border border-white/[0.06] overflow-hidden hover:border-brand-primary/30 transition-all cursor-pointer group"
+              @click="selectGameForAssign(g.id)"
+            >
+              <!-- Thumbnail -->
+              <div class="aspect-video w-full overflow-hidden" :class="!g.thumbnail ? categoryBgClass(g.category) : ''">
+                <img
+                  v-if="g.thumbnail"
+                  :src="g.thumbnail"
+                  :alt="g.title_ja"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center">
+                  <GameIcon :game-id="g.id" :category="g.category" size="lg" />
+                </div>
+              </div>
+              <!-- Info -->
+              <div class="px-3 py-2.5">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-white font-title font-bold text-sm truncate">{{ g.title_ja }}</p>
+                    <p class="text-white/25 text-xs font-title mt-0.5 line-clamp-2">{{ g.description_ja || '' }}</p>
+                  </div>
+                  <span class="shrink-0 text-[9px] font-title font-bold px-2 py-0.5 rounded-full mt-0.5" :class="categoryBadgeClass(g.category)">
+                    {{ gameStore.categoryLabels[g.category] || g.category }}
+                  </span>
+                </div>
+                <div class="flex gap-2 mt-2.5">
+                  <button
+                    class="flex-1 py-1.5 text-[11px] font-title font-bold text-white bg-brand-primary/20 rounded-xl hover:bg-brand-primary/30 transition-colors"
+                    @click.stop="selectGameForAssign(g.id)"
+                  >この課題を出す</button>
+                  <button
+                    class="px-3 py-1.5 text-[11px] font-title text-white/40 border border-white/10 rounded-xl hover:text-white/60 hover:border-white/20 transition-colors"
+                    @click.stop="previewGame(g.url)"
+                  >お試し</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Details (after game selected) -->
+        <div v-if="showAssignForm && assignGameId" class="space-y-3">
+          <!-- Selected game summary -->
+          <div class="flex items-center gap-3 bg-white/[0.03] rounded-xl px-3 py-2.5 border border-brand-primary/20">
+            <GameIcon :game-id="assignGameId" :category="selectedAssignGame?.category ?? 'mixed'" size="sm" />
+            <div class="flex-1 min-w-0">
+              <p class="text-white font-title font-bold text-sm truncate">{{ selectedAssignGame?.title_ja }}</p>
+              <p class="text-white/25 text-xs font-title truncate">{{ selectedAssignGame?.description_ja }}</p>
+            </div>
+            <button @click="assignGameId = ''" class="text-brand-secondary text-xs font-title font-medium hover:underline shrink-0">変更</button>
           </div>
           <div>
             <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">指示メモ（任意）</label>
@@ -94,7 +158,7 @@
             <input v-model="assignDueDate" type="datetime-local" class="neo-input" />
           </div>
           <div class="flex gap-2 pt-1">
-            <button @click="showAssignForm = false" class="btn-ghost flex-1 py-2.5 border border-white/10 rounded-2xl text-sm">キャンセル</button>
+            <button @click="showAssignForm = false; assignGameId = ''" class="btn-ghost flex-1 py-2.5 border border-white/10 rounded-2xl text-sm">キャンセル</button>
             <button
               @click="handleAssignGame"
               :disabled="!assignGameId || assigning"
@@ -407,6 +471,7 @@ import { useTeacherStore } from '@/stores/teacher'
 import { useGameStore } from '@/stores/game'
 import { useAuthStore } from '@/stores/auth'
 import { supabase } from '@/lib/supabase'
+import GameIcon from '@/components/game/GameIcon.vue'
 
 const route  = useRoute()
 const router = useRouter()
@@ -488,11 +553,53 @@ const assignInstructions = ref('')
 const assignDueDate = ref('')
 const assigning = ref(false)
 const activeAssignments = ref<any[]>([])
+const assignCategoryFilter = ref('')
+
+const selectedAssignGame = computed(() => assignGameId.value ? gameStore.getGameById(assignGameId.value) : null)
+
+const filteredGamesForAssign = computed(() => {
+  const all = gameStore.catalog
+  if (!assignCategoryFilter.value) return all
+  return all.filter(g => g.category === assignCategoryFilter.value)
+})
+
+function selectGameForAssign(gameId: string) {
+  assignGameId.value = gameId
+}
+
+function previewGame(url: string) {
+  window.open(url, '_blank')
+}
+
+function categoryBadgeClass(cat: string): string {
+  const map: Record<string, string> = {
+    grammar: 'bg-neon-cyan/15 text-neon-cyan',
+    phonics: 'bg-blue-500/15 text-blue-400',
+    eiken: 'bg-neon-orange/15 text-neon-orange',
+    writing: 'bg-neon-purple/15 text-neon-purple',
+    listening: 'bg-neon-green/15 text-neon-green',
+    mixed: 'bg-white/10 text-white/50',
+  }
+  return map[cat] ?? 'bg-white/10 text-white/50'
+}
+
+function categoryBgClass(cat: string): string {
+  const map: Record<string, string> = {
+    grammar: 'bg-gradient-to-br from-cyan-900/40 to-cyan-800/20',
+    phonics: 'bg-gradient-to-br from-blue-900/40 to-blue-800/20',
+    eiken: 'bg-gradient-to-br from-orange-900/40 to-orange-800/20',
+    writing: 'bg-gradient-to-br from-purple-900/40 to-purple-800/20',
+    listening: 'bg-gradient-to-br from-green-900/40 to-green-800/20',
+    mixed: 'bg-gradient-to-br from-gray-800/40 to-gray-700/20',
+  }
+  return map[cat] ?? 'bg-white/[0.04]'
+}
 
 function openAssignForm() {
   assignGameId.value = ''
   assignInstructions.value = ''
   assignDueDate.value = ''
+  assignCategoryFilter.value = ''
   showAssignForm.value = true
   if (gameStore.catalog.length === 0) gameStore.fetchCatalog()
 }
