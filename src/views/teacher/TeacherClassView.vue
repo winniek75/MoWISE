@@ -600,6 +600,7 @@ function openAssignForm() {
   assignInstructions.value = ''
   assignDueDate.value = ''
   assignCategoryFilter.value = ''
+  assigning.value = false
   showAssignForm.value = true
   if (gameStore.catalog.length === 0) gameStore.fetchCatalog()
 }
@@ -607,21 +608,27 @@ function openAssignForm() {
 async function handleAssignGame() {
   if (!assignGameId.value || !auth.userId) return
   assigning.value = true
-  const game = gameStore.getGameById(assignGameId.value)
-  const { error } = await supabase
-    .from('assignments')
-    .insert({
-      class_id: classId,
-      teacher_id: auth.userId,
-      game_id: assignGameId.value,
-      title: game?.title_ja ?? null,
-      instructions: assignInstructions.value || null,
-      due_date: assignDueDate.value || null,
-    })
-  assigning.value = false
-  if (error) { console.error('[assign]', error); return }
-  showAssignForm.value = false
-  await fetchActiveAssignments()
+  try {
+    const game = gameStore.getGameById(assignGameId.value)
+    const { error } = await supabase
+      .from('assignments')
+      .insert({
+        class_id: classId,
+        teacher_id: auth.userId,
+        game_id: assignGameId.value,
+        title: game?.title_ja ?? null,
+        instructions: assignInstructions.value || null,
+        due_date: assignDueDate.value || null,
+      })
+    if (error) { console.error('[assign]', error); return }
+    showAssignForm.value = false
+    assignGameId.value = ''
+    await fetchActiveAssignments()
+  } catch (e) {
+    console.error('[assign]', e)
+  } finally {
+    assigning.value = false
+  }
 }
 
 async function fetchActiveAssignments() {
