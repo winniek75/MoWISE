@@ -122,7 +122,13 @@ export const useStudentStore = defineStore('student', () => {
         }
       }
 
-      myAssignments.value = (data ?? []).map(a => ({
+      // Filter: show only assignments targeting this student or the whole class
+      const visible = (data ?? []).filter(a => {
+        const targets = (a as any).target_student_ids
+        return !targets || (Array.isArray(targets) && targets.includes(userId))
+      })
+
+      myAssignments.value = visible.map(a => ({
         ...a,
         game_title_ja: (a as any).game_catalog?.title_ja,
         game_icon: (a as any).game_catalog?.icon,

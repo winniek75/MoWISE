@@ -149,6 +149,33 @@
             </div>
             <button @click="assignGameId = ''" class="text-brand-secondary text-xs font-title font-medium hover:underline shrink-0">変更</button>
           </div>
+          <!-- Target: all or individual -->
+          <div>
+            <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">配信先</label>
+            <div class="flex gap-2 mb-2">
+              <button
+                @click="assignTargetMode = 'all'"
+                class="flex-1 py-2 rounded-xl text-xs font-title font-semibold transition-all"
+                :class="assignTargetMode === 'all' ? 'bg-brand-primary/20 text-white border border-brand-primary/30' : 'bg-white/[0.03] text-white/40 border border-white/[0.06]'"
+              >クラス全員</button>
+              <button
+                @click="assignTargetMode = 'individual'"
+                class="flex-1 py-2 rounded-xl text-xs font-title font-semibold transition-all"
+                :class="assignTargetMode === 'individual' ? 'bg-brand-primary/20 text-white border border-brand-primary/30' : 'bg-white/[0.03] text-white/40 border border-white/[0.06]'"
+              >個別に選ぶ</button>
+            </div>
+            <div v-if="assignTargetMode === 'individual' && store.students.length > 0" class="max-h-40 overflow-y-auto space-y-1 bg-white/[0.02] rounded-xl p-2 border border-white/[0.06]">
+              <label
+                v-for="s in store.students"
+                :key="s.student_id"
+                class="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-white/[0.04] transition-colors"
+              >
+                <input type="checkbox" :value="s.student_id" v-model="assignTargetStudents" class="accent-brand-primary w-4 h-4" />
+                <span class="text-white text-sm font-title">{{ s.display_name }}</span>
+              </label>
+            </div>
+            <p v-if="assignTargetMode === 'individual' && store.students.length === 0" class="text-white/20 text-xs font-title">生徒がまだいません</p>
+          </div>
           <div>
             <label class="block text-white/40 text-[11px] font-title font-semibold uppercase tracking-wider mb-1.5">指示メモ（任意）</label>
             <input v-model="assignInstructions" type="text" placeholder="例：Grade 3を選んで10問やろう" class="neo-input" />
@@ -161,9 +188,9 @@
             <button @click="showAssignForm = false; assignGameId = ''" class="btn-ghost flex-1 py-2.5 border border-white/10 rounded-2xl text-sm">キャンセル</button>
             <button
               @click="handleAssignGame"
-              :disabled="!assignGameId || assigning"
+              :disabled="!assignGameId || assigning || (assignTargetMode === 'individual' && assignTargetStudents.length === 0)"
               class="btn-neo flex-1"
-            >{{ assigning ? '配信中...' : '課題を配信' }}</button>
+            >{{ assigning ? '配信中...' : assignTargetMode === 'individual' ? `${assignTargetStudents.length}人に配信` : '全員に配信' }}</button>
           </div>
         </div>
 
@@ -177,7 +204,11 @@
             <div class="flex-1 min-w-0">
               <p class="text-white font-title font-semibold text-sm truncate">{{ a.game_title_ja || a.game_id }}</p>
               <p v-if="a.instructions" class="text-white/25 text-xs truncate mt-0.5">{{ a.instructions }}</p>
-              <p v-if="a.due_date" class="text-white/15 text-[10px] font-title mt-0.5">期限: {{ formatDate(a.due_date) }}</p>
+              <div class="flex items-center gap-2 mt-0.5">
+                <span v-if="a.target_student_ids" class="text-[10px] font-title text-brand-secondary">{{ a.target_student_ids.length }}人</span>
+                <span v-else class="text-[10px] font-title text-white/20">全員</span>
+                <p v-if="a.due_date" class="text-white/15 text-[10px] font-title">期限: {{ formatDate(a.due_date) }}</p>
+              </div>
             </div>
             <button
               @click="handleDeleteAssignment(a.id)"
@@ -554,6 +585,8 @@ const assignDueDate = ref('')
 const assigning = ref(false)
 const activeAssignments = ref<any[]>([])
 const assignCategoryFilter = ref('')
+const assignTargetMode = ref<'all' | 'individual'>('all')
+const assignTargetStudents = ref<string[]>([])
 
 const selectedAssignGame = computed(() => assignGameId.value ? gameStore.getGameById(assignGameId.value) : null)
 
@@ -600,6 +633,8 @@ function openAssignForm() {
   assignInstructions.value = ''
   assignDueDate.value = ''
   assignCategoryFilter.value = ''
+  assignTargetMode.value = 'all'
+  assignTargetStudents.value = []
   assigning.value = false
   showAssignForm.value = true
   if (gameStore.catalog.length === 0) gameStore.fetchCatalog()
@@ -619,6 +654,7 @@ async function handleAssignGame() {
         title: game?.title_ja ?? null,
         instructions: assignInstructions.value || null,
         due_date: assignDueDate.value || null,
+        target_student_ids: assignTargetMode.value === 'individual' ? assignTargetStudents.value : null,
       })
     if (error) { console.error('[assign]', error); return }
     showAssignForm.value = false
@@ -641,6 +677,7 @@ async function fetchActiveAssignments() {
   activeAssignments.value = (data ?? []).map((a: any) => ({
     ...a,
     game_title_ja: a.game_catalog?.title_ja,
+    target_student_ids: a.target_student_ids,
   }))
 }
 

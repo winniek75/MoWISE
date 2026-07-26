@@ -113,6 +113,42 @@
         </div>
       </section>
 
+      <!-- Weekly progress -->
+      <section v-if="weeklyProgress.length > 0" class="neo-card">
+        <h2 class="neo-section-title">週次推移（直近8週）</h2>
+        <div class="space-y-2">
+          <div v-for="w in weeklyProgress" :key="w.week_start" class="flex items-center gap-3">
+            <span class="text-[11px] font-title text-white/30 w-16 shrink-0">{{ formatWeek(w.week_start) }}</span>
+            <div class="flex-1 h-3 bg-white/[0.06] rounded-full overflow-hidden">
+              <div class="h-full bg-neo-gradient rounded-full transition-all" :style="{ width: `${Math.min(w.games_played * 10, 100)}%` }" />
+            </div>
+            <div class="text-right shrink-0 w-20">
+              <span class="text-xs font-title text-white/50">{{ w.games_played }}回</span>
+              <span v-if="w.avg_accuracy" class="text-xs font-title ml-1" :class="Number(w.avg_accuracy) >= 80 ? 'text-neon-green' : Number(w.avg_accuracy) >= 60 ? 'text-neon-yellow' : 'text-neon-pink'">{{ w.avg_accuracy }}%</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Assignment completion -->
+      <section v-if="studentAssignments.length > 0" class="neo-card">
+        <h2 class="neo-section-title">課題の取り組み</h2>
+        <div class="space-y-2">
+          <div v-for="a in studentAssignments" :key="a.assignment_id"
+            class="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/[0.02]">
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-white font-title font-medium truncate">{{ a.game_title }}</p>
+              <p v-if="a.assignment_title" class="text-[10px] text-white/20 truncate">{{ a.assignment_title }}</p>
+            </div>
+            <div class="text-right shrink-0 ml-3">
+              <span v-if="a.is_completed" class="text-correct text-xs font-title font-bold">{{ a.best_score }}点</span>
+              <span v-else class="text-neon-orange text-xs font-title">未提出</span>
+              <p v-if="a.last_attempt" class="text-[10px] text-white/15">{{ formatDate(a.last_attempt) }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Wrong answers analysis -->
       <section class="neo-card">
         <h2 class="neo-section-title">よく間違えた問題</h2>
@@ -237,6 +273,8 @@ const patternProgress = ref<any[]>([])
 const studentGameStats = ref<any[]>([])
 const wrongAnswersTop  = ref<any[]>([])
 const wrongTagSummary  = ref<{ tag: string; count: number }[]>([])
+const weeklyProgress   = ref<any[]>([])
+const studentAssignments = ref<any[]>([])
 const roblox          = ref<any>(null)
 const feedbacks       = ref<any[]>([])
 const newFeedback     = ref('')
@@ -283,6 +321,23 @@ onMounted(async () => {
     .eq('class_id', classId)
     .order('play_count', { ascending: false })
   studentGameStats.value = gameStatsData ?? []
+
+  // Weekly progress
+  const { data: weeklyData } = await supabase
+    .from('student_weekly_progress')
+    .select('*')
+    .eq('user_id', studentId)
+    .order('week_start', { ascending: false })
+    .limit(8)
+  weeklyProgress.value = (weeklyData ?? []).reverse()
+
+  // Assignment completion for this student
+  const { data: assignData } = await supabase
+    .from('assignment_completion')
+    .select('assignment_id, game_title, assignment_title, is_completed, best_score, best_accuracy, last_attempt')
+    .eq('student_id', studentId)
+    .eq('class_id', classId)
+  studentAssignments.value = assignData ?? []
 
   // Wrong answers (last 30 days)
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
@@ -370,6 +425,11 @@ function feelingEmoji(feeling: string | null, result: string | null): string {
     return map[result] ?? '─'
   }
   return '─'
+}
+
+function formatWeek(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getMonth() + 1}/${d.getDate()}〜`
 }
 
 function formatDate(iso: string): string {
