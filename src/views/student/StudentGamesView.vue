@@ -82,7 +82,8 @@ onMounted(() => {
       >
         <GameIcon :game-id="game.id" :category="game.category" class="mb-3" />
         <p class="text-white font-title font-semibold text-sm leading-tight">{{ game.title_ja }}</p>
-        <p class="text-white/25 text-[10px] font-title mt-1">{{ gameStore.categoryLabels[game.category] }}</p>
+        <p v-if="game.description_ja" class="text-white/30 text-[10px] font-title mt-1 line-clamp-2">{{ game.description_ja }}</p>
+        <p class="text-white/15 text-[9px] font-title mt-1">{{ gameStore.categoryLabels[game.category] }}</p>
         <div v-if="!game.is_free && subStore.currentPlan === 'free'" class="mt-2">
           <span class="neo-badge orange !text-[9px]">PRO</span>
         </div>

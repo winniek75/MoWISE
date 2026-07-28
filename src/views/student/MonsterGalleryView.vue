@@ -47,11 +47,19 @@ function getEmoji(id?: string): string {
   return id ? (animalEmoji[id] ?? '❓') : '❓'
 }
 
+const pageLoaded = ref(false)
+
 onMounted(async () => {
-  await Promise.all([
-    monsterStore.fetchSpecies(),
-    monsterStore.fetchMyMonsters(),
-  ])
+  try {
+    await Promise.all([
+      monsterStore.fetchSpecies(),
+      monsterStore.fetchMyMonsters(),
+    ])
+  } catch (e) {
+    console.error('[MonsterGallery] load error:', e)
+  } finally {
+    pageLoaded.value = true
+  }
 })
 
 function selectMonster(m: UserMonster) {
@@ -112,6 +120,13 @@ function closeMonsterDetail() {
       </div>
     </header>
 
+    <!-- Loading -->
+    <div v-if="!pageLoaded" class="flex flex-col items-center justify-center py-20 gap-3">
+      <div class="w-14 h-14 mowi-orb glow-low animate-float" />
+      <p class="text-white/30 text-sm font-title">よみこみちゅう...</p>
+    </div>
+
+    <template v-else>
     <!-- Tabs -->
     <div class="px-5 mb-4 flex gap-2">
       <button v-for="tab in [
@@ -315,6 +330,8 @@ function closeMonsterDetail() {
         </div>
       </div>
     </div>
+
+    </template>
 
     <BottomNav />
   </div>
