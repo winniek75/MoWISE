@@ -98,7 +98,7 @@ export const useStudentStore = defineStore('student', () => {
       // Fetch assignments with game info
       const { data, error } = await supabase
         .from('assignments')
-        .select('*, game_catalog!game_id(title_ja, icon, url), classes!class_id(class_name)')
+        .select('*, game_catalog!game_id(title_ja, description_ja, icon, url), classes!class_id(class_name)')
         .in('class_id', classIds)
         .eq('status', 'active')
         .order('created_at', { ascending: false })
@@ -131,6 +131,7 @@ export const useStudentStore = defineStore('student', () => {
       myAssignments.value = visible.map(a => ({
         ...a,
         game_title_ja: (a as any).game_catalog?.title_ja,
+        game_description: (a as any).game_catalog?.description_ja,
         game_icon: (a as any).game_catalog?.icon,
         game_url: (a as any).game_catalog?.url,
         class_name: (a as any).classes?.class_name,

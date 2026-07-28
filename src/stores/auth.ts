@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userRow   = ref<UserRow | null>(null)
   const loading   = ref(true)
   const error     = ref<string | null>(null)
-  let _initialized = false
+  let _initPromise: Promise<void> | null = null
 
   // ─── Computed ────────────────────────────────────────────
   const isAuthenticated = computed(() => !!session.value)
@@ -25,10 +25,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   // ─── Actions ─────────────────────────────────────────────
 
-  /** アプリ起動時：セッション復元（二重初期化防止済み） */
+  /** アプリ起動時：セッション復元（二重呼び出し時は同じPromiseを返す） */
   async function initialize() {
-    if (_initialized) return
-    _initialized = true
+    if (_initPromise) return _initPromise
+    _initPromise = _doInitialize()
+    return _initPromise
+  }
+
+  async function _doInitialize() {
     loading.value = true
 
     // デモモード：Supabase未接続時はダミーユーザーで即認証

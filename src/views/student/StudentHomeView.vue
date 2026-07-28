@@ -227,18 +227,29 @@ onMounted(async () => {
             <div class="flex items-center gap-3">
               <GameIcon :game-id="a.game_id" category="mixed" size="sm" />
               <div class="flex-1 min-w-0">
-                <p class="text-white font-title font-semibold text-sm truncate">
+                <p class="text-white font-title font-semibold text-sm">
                   {{ a.title || a.game_title_ja || a.game_id }}
                 </p>
-                <p class="text-white/25 text-xs font-title">{{ a.class_name }}</p>
-              </div>
-              <div v-if="a.due_date" class="text-right">
-                <p class="text-xs font-title" :class="isOverdue(a.due_date) ? 'text-wrong' : 'text-white/30'">
-                  {{ isOverdue(a.due_date) ? '期限切れ' : formatDate(a.due_date) }}
-                </p>
+                <p v-if="a.game_description" class="text-white/30 text-xs font-title mt-0.5 line-clamp-2">{{ a.game_description }}</p>
               </div>
             </div>
-            <div v-if="a.instructions" class="mt-2 text-white/30 text-xs">{{ a.instructions }}</div>
+
+            <!-- Teacher instructions -->
+            <div v-if="a.instructions" class="mt-2.5 bg-brand-primary/[0.06] rounded-xl px-3 py-2 border border-brand-primary/10">
+              <p class="text-[10px] text-brand-secondary font-title font-bold mb-0.5">せんせいからのメッセージ</p>
+              <p class="text-white/50 text-xs font-title">{{ a.instructions }}</p>
+            </div>
+
+            <!-- Action bar -->
+            <div class="flex items-center justify-between mt-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-white/20 text-[10px] font-title">{{ a.class_name }}</span>
+                <span v-if="a.due_date" class="text-[10px] font-title" :class="isOverdue(a.due_date) ? 'text-wrong' : 'text-white/20'">
+                  {{ isOverdue(a.due_date) ? 'きげんすぎてるよ！' : 'きげん: ' + formatDate(a.due_date) }}
+                </span>
+              </div>
+              <span class="text-brand-secondary text-xs font-title font-bold">あそぶ →</span>
+            </div>
           </div>
         </div>
       </section>
