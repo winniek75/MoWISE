@@ -50,24 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
       return
     }
 
-    try {
-      const { data, error: sessionErr } = await supabase.auth.getSession()
-      if (sessionErr) {
-        console.warn('[auth] session restore failed, signing out:', sessionErr.message)
-        await supabase.auth.signOut()
-      } else {
-        session.value  = data.session
-        authUser.value = data.session?.user ?? null
-        if (authUser.value) await fetchUserRow(authUser.value.id)
-      }
-    } catch (e) {
-      console.error('[auth] initialize error:', e)
-      await supabase.auth.signOut().catch(() => {})
-    } finally {
-      loading.value = false
-    }
-
-    // セッション変更を購読
+    // セッション変更を購読（初期化より先に登録してトークンリフレッシュを捕捉）
     supabase.auth.onAuthStateChange(async (_event, newSession) => {
       session.value  = newSession
       authUser.value = newSession?.user ?? null
@@ -77,6 +60,26 @@ export const useAuthStore = defineStore('auth', () => {
         userRow.value = null
       }
     })
+
+    try {
+      // getUser() はトークンを検証し、期限切れなら自動リフレッシュする
+      const { data: { user }, error: userErr } = await supabase.auth.getUser()
+      if (userErr || !user) {
+        // セッションが無効 → ログアウト状態
+        session.value = null
+        authUser.value = null
+      } else {
+        authUser.value = user
+        // getSession() で最新セッションを取得
+        const { data: { session: sess } } = await supabase.auth.getSession()
+        session.value = sess
+        await fetchUserRow(user.id)
+      }
+    } catch (e) {
+      console.error('[auth] initialize error:', e)
+    } finally {
+      loading.value = false
+    }
   }
 
   /** usersテーブルからプロフィール取得 */
