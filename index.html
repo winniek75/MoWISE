@@ -23,6 +23,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <script>
+      // Force clear stale Service Workers and caches on load
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          var stale = false;
+          regs.forEach(function(r) {
+            if (r.waiting) { r.waiting.postMessage({ type: 'SKIP_WAITING' }); stale = true; }
+          });
+          if (stale) location.reload();
+        });
+      }
+    </script>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
