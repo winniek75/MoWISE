@@ -51,19 +51,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     // セッション変更を購読（初期化より先に登録してトークンリフレッシュを捕捉）
-    supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    // 重要: コールバック内でawaitするとauth-jsの内部ロックとデッドロックする。
+    // setTimeoutでディスパッチ外に逃がす（Supabase公式推奨）
+    supabase.auth.onAuthStateChange((_event, newSession) => {
       session.value  = newSession
       authUser.value = newSession?.user ?? null
-      if (authUser.value) {
-        await fetchUserRow(authUser.value.id)
+      if (newSession?.user) {
+        const uid = newSession.user.id
+        setTimeout(() => { void fetchUserRow(uid) }, 0)
       } else {
         userRow.value = null
       }
     })
 
+    const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+      Promise.race([p, new Promise<never>((_, rej) =>
+        setTimeout(() => rej(new Error('auth init timeout')), ms))])
+
     try {
       // getUser() はトークンを検証し、期限切れなら自動リフレッシュする
-      const { data: { user }, error: userErr } = await supabase.auth.getUser()
+      const { data: { user }, error: userErr } = await withTimeout(supabase.auth.getUser(), 10_000)
       if (userErr || !user) {
         // セッションが無効 → ログアウト状態
         session.value = null
